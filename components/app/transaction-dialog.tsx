@@ -1,0 +1,199 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useStore } from "@/lib/store"
+import {
+ Dialog,
+ DialogContent,
+ DialogHeader,
+ DialogTitle,
+ DialogDescription,
+ DialogFooter,
+ DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { CurrencyInput, formatCurrencyInput } from "@/components/ui/currency-input"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+ Select,
+ SelectContent,
+ SelectItem,
+ SelectTrigger,
+ SelectValue,
+} from "@/components/ui/select"
+import { isManageCategoriesSelectValue, ManageCategoriesSelectOption } from "@/components/app/manage-categories-select-option"
+import { ROUTES } from "@/lib/routes"
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/categories"
+import { getCategoryIcon } from "@/lib/category-icons"
+import { parseAmountInput, validateTransaction } from "@/lib/finance"
+import type { Transaction, TransactionType, CategoryId, CategoryRef } from "@/lib/types"
+import { cn } from "@/lib/utils"
+
+interface Props {
+ trigger?: React.ReactNode
+ transaction?: Transaction
+ open?: boolean
+ onOpenChange?: (open: boolean) => void
+ defaultType?: TransactionType
+}
+
+export function TransactionDialog({ trigger, transaction, open, onOpenChange, defaultType = "expense" }: Props) {
+ const router = useRouter()
+ const { addTransaction, updateTransaction, notify } = useStore()
+ const isEdit = !!transaction
+ const [internalOpen, setInternalOpen] = useState(false)
+ const isControlled = open !== undefined
+ const dialogOpen = isControlled ? open : internalOpen
+ const setOpen = isControlled ? onOpenChange! : setInternalOpen
+
+ const [type, setType] = useState<TransactionType>(transaction?.type ?? defaultType)
+ const [description, setDescription] = useState(transaction?.description ?? "")
+ const [amount, setAmount] = useState(transaction ? formatCurrencyInput(transaction.amount) : "")
+ const [category, setCategory] = useState<CategoryRef>(transaction?.category ?? "alimentacao")
+ const [date, setDate] = useState(
+  transaction ? transaction.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+ )
+
+ const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+
+ function handleTypeChange(next: TransactionType) {
+  setType(next)
+  const valid = (next === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).some((c) => c.id === category)
+  if (!valid) setCategory(next === "income" ? "salario" : "alimentacao")
+ }
+
+ function handleSubmit(e: React.FormEvent) {
+  e.preventDefault()
+  const value = parseAmountInput(amount)
+  const payload = {
+   type,
+   description: description.trim(),
+   amount: value,
+   category,
+   date: date ? new Date(date + "T12:00:00").toISOString() : "",
+  }
+  const errors = validateTransaction(payload)
+  if (errors.length > 0) {
+   notify({ kind: "error", type: "error", title: "Transacao invalida", message: errors[0] })
+   return
+  }
+
+  if (isEdit) {
+   updateTransaction({ ...payload, id: transaction!.id })
+  } else {
+   addTransaction(payload)
+   setDescription("")
+   setAmount("")
+  }
+  setOpen(false)
+ }
+
+ return (
+  <Dialog open={dialogOpen} onOpenChange={setOpen}>
+   {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+   <DialogContent>
+    <DialogHeader>
+     <DialogTitle>{isEdit ? "Editar transação" : "Nova transação"}</DialogTitle>
+     <DialogDescription>
+      {isEdit ? "Atualize os dados da movimentação." : "Registre uma nova receita ou despesa."}
+     </DialogDescription>
+    </DialogHeader>
+
+    <form onSubmit={handleSubmit}>
+     <div className="space-y-4 px-6 py-5">
+      <div className="grid grid-cols-2 gap-2 rounded-2xl border bg-muted p-1">
+      {(["expense", "income"] as TransactionType[]).map((t) => (
+       <button
+        key={t}
+        type="button"
+        onClick={() => handleTypeChange(t)}
+        className={cn(
+         "rounded-2xl border border-transparent py-2 text-sm font-semibold transition-colors",
+         type === t
+          ? t === "income"
+           ? "border-success/40 bg-success text-success-foreground "
+           : "border-primary/40 bg-destructive text-destructive-foreground "
+          : "text-muted-foreground hover:text-foreground",
+        )}
+       >
+        {t === "income" ? "Receita" : "Despesa"}
+       </button>
+      ))}
+     </div>
+
+     <div className="space-y-1.5">
+      <Label htmlFor="tx-desc">Descrição</Label>
+      <Input
+       id="tx-desc"
+       value={description}
+       onChange={(e) => setDescription(e.target.value)}
+       placeholder="Ex.: Supermercado"
+      />
+     </div>
+
+     <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
+      <div className="space-y-1.5">
+       <Label htmlFor="tx-amount">Valor</Label>
+       <CurrencyInput
+        id="tx-amount"
+        value={amount}
+        onChange={setAmount}
+       />
+      </div>
+      <div className="space-y-1.5">
+       <Label htmlFor="tx-date">Data</Label>
+       <Input id="tx-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      </div>
+     </div>
+
+     <div className="space-y-1.5">
+      <Label>Categoria</Label>
+      <Select
+       value={category}
+       onValueChange={(v) => {
+        if (isManageCategoriesSelectValue(v)) {
+         setOpen(false)
+         router.push(ROUTES.categories)
+         return
+        }
+        setCategory(v as CategoryId)
+       }}
+      >
+       <SelectTrigger>
+        <SelectValue placeholder="Selecione" />
+       </SelectTrigger>
+       <SelectContent>
+        {categories.map((c) => {
+         const Icon = getCategoryIcon(c.id)
+
+         return (
+          <SelectItem key={c.id} value={c.id}>
+           <span className="flex items-center gap-2">
+            <Icon className="h-4 w-4" style={{ color: c.color }} />
+            {c.label}
+           </span>
+          </SelectItem>
+         )
+        })}
+        <ManageCategoriesSelectOption />
+       </SelectContent>
+      </Select>
+     </div>
+
+     </div>
+
+     <DialogFooter>
+      <Button type="button" variant="outline" size="lg" className="flex-1" onClick={() => setOpen(false)}>
+       Cancelar
+      </Button>
+      <Button type="submit" size="lg" className="flex-1">
+       {isEdit ? "Salvar alterações" : "Adicionar"}
+      </Button>
+     </DialogFooter>
+    </form>
+   </DialogContent>
+  </Dialog>
+ )
+}

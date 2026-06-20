@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PoupaByte</string>
+    <string name="title_activity_main">PoupaByte</string>
+    <string name="package_name">br.com.poupabyte.app</string>
+    <string name="custom_url_scheme">br.com.poupabyte.app</string>
+</resources>

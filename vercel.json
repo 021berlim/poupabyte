@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["gru1"],
+  "functions": {
+    "app/api/assistant/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/import-statement/route.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
+}
