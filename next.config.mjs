@@ -26,6 +26,7 @@ const isVercel = process.env.VERCEL === "1"
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   poweredByHeader: false,
+  serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist", "@thednp/dommatrix"],
   ...(isCapacitorExport
     ? {
         output: "export",
