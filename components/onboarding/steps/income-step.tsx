@@ -46,8 +46,7 @@ export function IncomeStep({
           <CurrencyInput
             id="onboarding-salary"
             value={salary}
-            onValueChange={setSalary}
-            placeholder="R$ 0,00"
+            onChange={setSalary}
           />
         </div>
 
@@ -56,7 +55,7 @@ export function IncomeStep({
           <CurrencyInput
             id="onboarding-extra"
             value={extraIncome}
-            onValueChange={setExtraIncome}
+            onChange={setExtraIncome}
             placeholder="Freelas, bônus, aluguéis…"
           />
         </div>

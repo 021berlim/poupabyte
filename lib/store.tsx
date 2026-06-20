@@ -1007,6 +1007,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       dispatch({
       type: "SYNC_SYSTEM_ALERTS",
       payload: buildSystemAlerts({
+        onboardingCompleted: state.onboardingCompleted,
         financialProfile: state.financialProfile,
         transactions: state.transactions,
         goals: state.goals,
