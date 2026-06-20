@@ -110,7 +110,7 @@ interface FullState extends DataState {
 
 const initialState: FullState = {
   user: null,
-  onboardingCompleted: true,
+  onboardingCompleted: false,
   financialProfile: EMPTY_FINANCIAL_PROFILE,
   transactions: [],
   goals: [],
@@ -291,7 +291,7 @@ function reducer(state: FullState, action: Action): FullState {
 interface StoreContextValue extends FullState {
   // auth
   login: (email: string, password: string) => { ok: boolean; error?: string }
-  register: (name: string, email: string, password: string) => { ok: boolean; error?: string }
+  register: (name: string, email: string, password: string) => { ok: boolean; error?: string; needsOnboarding?: boolean }
   resetPassword: (email: string) => { ok: boolean; error?: string }
   updateProfile: (profile: Pick<User, "name" | "email"> & { avatar?: string }) => { ok: boolean; error?: string }
   changePassword: (currentPassword: string, newPassword: string) => { ok: boolean; error?: string }
@@ -1130,7 +1130,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     storageSet(AUTH_KEY, JSON.stringify(user))
     persistUserData(email, data)
     dispatch({ type: "HYDRATE", payload: { data, user } })
-    return { ok: true }
+    return { ok: true, needsOnboarding: true }
   }, [])
 
   const resetPassword = useCallback((email: string) => {

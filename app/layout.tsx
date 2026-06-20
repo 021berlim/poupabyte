@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Script from "next/script"
 import { Analytics } from "@/components/analytics"
+import { Providers } from "@/components/providers"
 import "./globals.css"
 import "./modal-responsive.css"
 
@@ -52,7 +53,7 @@ export default function RootLayout({
     <Script id="sidebar-state" strategy="beforeInteractive">
      {sidebarStateScript}
     </Script>
-    {children}
+    <Providers>{children}</Providers>
     <Analytics />
    </body>
   </html>

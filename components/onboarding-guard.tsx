@@ -21,7 +21,11 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
   }, [hydrated, user, onboardingCompleted, router])
 
-  if (!hydrated || !user || onboardingCompleted) {
+  if (!hydrated || !user) {
+    return <AppLoadingSkeleton />
+  }
+
+  if (onboardingCompleted) {
     return <AppLoadingSkeleton />
   }
 

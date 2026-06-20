@@ -7,13 +7,17 @@ import { APP_HOME, ROUTES } from "@/lib/routes"
 import { useStore } from "@/lib/store"
 
 export default function Page() {
- const { user, hydrated } = useStore()
+ const { user, hydrated, onboardingCompleted } = useStore()
  const router = useRouter()
 
  useEffect(() => {
   if (!hydrated) return
-  router.replace(user ? APP_HOME : ROUTES.login)
- }, [hydrated, user, router])
+  if (!user) {
+   router.replace(ROUTES.login)
+   return
+  }
+  router.replace(onboardingCompleted ? APP_HOME : ROUTES.onboarding)
+ }, [hydrated, user, onboardingCompleted, router])
 
  return (
   <div className="flex min-h-dvh items-center justify-center overflow-x-hidden bg-background p-[clamp(1rem,5vw,1.5rem)]">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ROUTES } from "@/lib/routes"
@@ -13,13 +13,19 @@ import { Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 
 export default function SignupPage() {
- const { register } = useStore()
+ const { register, user, hydrated, onboardingCompleted } = useStore()
  const router = useRouter()
  const [name, setName] = useState("")
  const [email, setEmail] = useState("")
  const [password, setPassword] = useState("")
  const [show, setShow] = useState(false)
  const [loading, setLoading] = useState(false)
+
+ useEffect(() => {
+  if (hydrated && user && !onboardingCompleted) {
+   router.replace(ROUTES.onboarding)
+  }
+ }, [hydrated, user, onboardingCompleted, router])
 
  function handleSubmit(e: React.FormEvent) {
   e.preventDefault()
@@ -28,16 +34,14 @@ export default function SignupPage() {
    return
   }
   setLoading(true)
-  setTimeout(() => {
-   const res = register(name.trim(), email.trim(), password)
-   if (res.ok) {
-    toast.success("Conta criada com sucesso!")
-    router.replace(ROUTES.onboarding)
-   } else {
-    toast.error(res.error ?? "Não foi possível cadastrar.")
-    setLoading(false)
-   }
-  }, 700)
+  const res = register(name.trim(), email.trim(), password)
+  if (res.ok) {
+   toast.success("Conta criada com sucesso!")
+   router.replace(ROUTES.onboarding)
+   return
+  }
+  toast.error(res.error ?? "Não foi possível cadastrar.")
+  setLoading(false)
  }
 
  return (
