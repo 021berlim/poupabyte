@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { APP_HOME } from "@/lib/routes"
+import { APP_HOME, ROUTES } from "@/lib/routes"
 import { useStore } from "@/lib/store"
 import { AuthShell } from "@/components/auth/auth-shell"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 
 export default function LoginPage() {
- const { login, user, hydrated } = useStore()
+ const { login, user, hydrated, onboardingCompleted } = useStore()
  const router = useRouter()
  const [email, setEmail] = useState("")
  const [password, setPassword] = useState("")
@@ -21,8 +21,8 @@ export default function LoginPage() {
  const [loading, setLoading] = useState(false)
 
  useEffect(() => {
-  if (hydrated && user) router.replace(APP_HOME)
- }, [hydrated, user, router])
+  if (hydrated && user) router.replace(onboardingCompleted ? APP_HOME : ROUTES.onboarding)
+ }, [hydrated, user, onboardingCompleted, router])
 
  function handleSubmit(e: React.FormEvent) {
   e.preventDefault()

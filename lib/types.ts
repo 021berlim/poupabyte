@@ -258,6 +258,8 @@ export interface User {
 
 export interface AppState {
   user: User | null
+  /** false para contas novas até concluir ou pular o onboarding */
+  onboardingCompleted: boolean
   financialProfile: FinancialProfile
   lastImport: ImportSummary | null
   transactions: Transaction[]

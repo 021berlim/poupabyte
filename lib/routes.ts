@@ -14,6 +14,7 @@ export const ROUTES = {
   profilePrivacy: "/profile/privacy",
   login: "/login",
   signup: "/signup",
+  onboarding: "/onboarding",
 } as const
 
 export const APP_HOME = ROUTES.dashboard

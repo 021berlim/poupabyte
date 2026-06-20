@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { APP_HOME } from "@/lib/routes"
+import { ROUTES } from "@/lib/routes"
 import { useStore } from "@/lib/store"
 import { AuthShell } from "@/components/auth/auth-shell"
 import { Button } from "@/components/ui/button"
@@ -32,7 +32,7 @@ export default function SignupPage() {
    const res = register(name.trim(), email.trim(), password)
    if (res.ok) {
     toast.success("Conta criada com sucesso!")
-    router.replace(APP_HOME)
+    router.replace(ROUTES.onboarding)
    } else {
     toast.error(res.error ?? "Não foi possível cadastrar.")
     setLoading(false)

@@ -99,6 +99,9 @@ type Action =
   | { type: "HIDE_SYSTEM_CATEGORY"; payload: CategoryId }
   | { type: "SHOW_SYSTEM_CATEGORY"; payload: CategoryId }
   | { type: "SET_CATEGORY_RULES"; payload: CategoryRule[] }
+  | { type: "COMPLETE_ONBOARDING" }
+  | { type: "SET_FINANCIAL_PROFILE_SILENT"; payload: FinancialProfile }
+  | { type: "ADD_USER_CATEGORY_SILENT"; payload: UserCategory }
 
 interface FullState extends DataState {
   user: User | null
@@ -107,6 +110,7 @@ interface FullState extends DataState {
 
 const initialState: FullState = {
   user: null,
+  onboardingCompleted: true,
   financialProfile: EMPTY_FINANCIAL_PROFILE,
   transactions: [],
   goals: [],
@@ -273,6 +277,12 @@ function reducer(state: FullState, action: Action): FullState {
       }
     case "SET_CATEGORY_RULES":
       return { ...state, categoryRules: action.payload }
+    case "COMPLETE_ONBOARDING":
+      return { ...state, onboardingCompleted: true }
+    case "SET_FINANCIAL_PROFILE_SILENT":
+      return { ...state, financialProfile: action.payload }
+    case "ADD_USER_CATEGORY_SILENT":
+      return { ...state, userCategories: [...state.userCategories, action.payload] }
     default:
       return state
   }
@@ -341,6 +351,13 @@ interface StoreContextValue extends FullState {
   hideSystemCategory: (id: CategoryId) => void
   showSystemCategory: (id: CategoryId) => void
   learnFromTransaction: (tx: Transaction) => void
+  completeOnboarding: () => void
+  saveOnboardingIncome: (input: {
+    monthlySalary: number
+    salaryDay: number
+    expectedExtraIncome: number
+  }) => void
+  addUserCategorySilent: (category: UserCategory) => void
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null)
@@ -634,8 +651,18 @@ function normalizeCategoryRules(value: unknown): CategoryRule[] {
     .filter((item) => item.pattern.length >= 3)
 }
 
+function inferOnboardingCompleted(data: Partial<DataState>): boolean {
+  if (typeof data.onboardingCompleted === "boolean") return data.onboardingCompleted
+  const hasUsage =
+    (Array.isArray(data.transactions) && data.transactions.length > 0) ||
+    data.financialProfile?.configured === true ||
+    (Array.isArray(data.userCategories) && data.userCategories.length > 0)
+  return hasUsage
+}
+
 function normalizeData(data: Partial<DataState>): DataState {
   return normalizeThemeColors({
+    onboardingCompleted: inferOnboardingCompleted(data),
     financialProfile: normalizeFinancialProfile(data.financialProfile),
     lastImport: normalizeLastImport(data.lastImport),
     transactions: Array.isArray(data.transactions) ? data.transactions : [],
@@ -1013,6 +1040,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!state.hydrated || !state.user) return
     const data: DataState = {
+      onboardingCompleted: state.onboardingCompleted,
       financialProfile: state.financialProfile,
       lastImport: state.lastImport,
       transactions: state.transactions,
@@ -1029,6 +1057,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     persistUserData(state.user.email, data)
   }, [
+    state.onboardingCompleted,
     state.financialProfile,
     state.transactions,
     state.goals,
@@ -1779,6 +1808,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [state.categoryRules],
   )
 
+  const completeOnboarding = useCallback(() => {
+    dispatch({ type: "COMPLETE_ONBOARDING" })
+  }, [])
+
+  const saveOnboardingIncome = useCallback(
+    (input: { monthlySalary: number; salaryDay: number; expectedExtraIncome: number }) => {
+      if (!Number.isFinite(input.monthlySalary) || input.monthlySalary <= 0) return
+      const day = Number.isFinite(input.salaryDay) && input.salaryDay >= 1 && input.salaryDay <= 31 ? input.salaryDay : 1
+      const updated = applyIncomeUpdate(
+        state.financialProfile,
+        {
+          monthlySalary: input.monthlySalary,
+          salaryDay: day,
+          expectedExtraIncome: Math.max(0, input.expectedExtraIncome),
+          monthlyReserve: state.financialProfile.monthlyReserve ?? 0,
+          objective: state.financialProfile.objective,
+          scope: "current-month",
+        },
+      )
+      dispatch({ type: "SET_FINANCIAL_PROFILE_SILENT", payload: updated })
+    },
+    [state.financialProfile],
+  )
+
+  const addUserCategorySilent = useCallback((category: UserCategory) => {
+    dispatch({ type: "ADD_USER_CATEGORY_SILENT", payload: category })
+  }, [])
+
   const value = useMemo<StoreContextValue>(
     () => ({
       ...state,
@@ -1826,6 +1883,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       hideSystemCategory,
       showSystemCategory,
       learnFromTransaction,
+      completeOnboarding,
+      saveOnboardingIncome,
+      addUserCategorySilent,
     }),
     [
       state,
@@ -1873,6 +1933,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       hideSystemCategory,
       showSystemCategory,
       learnFromTransaction,
+      completeOnboarding,
+      saveOnboardingIncome,
+      addUserCategorySilent,
     ],
   )
 

@@ -66,6 +66,7 @@ export const DEFAULT_FINANCIAL_PROFILE: FinancialProfile = {
 
 export function buildEmptyState(): Omit<AppState, "user"> {
   return {
+    onboardingCompleted: false,
     financialProfile: EMPTY_FINANCIAL_PROFILE,
     transactions: [],
     goals: [],
@@ -239,6 +240,7 @@ function buildInvestments(): Investment[] {
 export function buildSeedState(): Omit<AppState, "user"> {
   const creditCards = buildCreditCards()
   return {
+    onboardingCompleted: true,
     financialProfile: DEFAULT_FINANCIAL_PROFILE,
     transactions: buildTransactions(),
     goals: buildGoals(),
