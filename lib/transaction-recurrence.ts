@@ -254,7 +254,7 @@ export function normalizeTransactionRecurrence(transaction: Transaction): Transa
 
 export type SubscriptionSyncPlan = {
   subscriptionId?: string
-  add?: Subscription
+  add?: Omit<Subscription, "id">
   update?: Subscription
   deactivateId?: string
 }
