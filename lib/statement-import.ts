@@ -1,5 +1,10 @@
 import { suggestCategory } from "./auto-categorize"
 import type { CategoryContext } from "./category-system"
+import {
+  parseInterStatementStructured,
+  type InterStatementTransaction,
+  type InterStatementValidation,
+} from "./inter-statement-parser"
 import type { CategoryId, CategoryRef, CategoryRule, TransactionType, UserCategory } from "./types"
 
 export type StatementBank = "auto" | "inter" | "bradesco" | "itau" | "nubank" | "other"
@@ -19,6 +24,7 @@ export interface StatementParseResult {
   bank: DetectedStatementBank
   transactions: ParsedStatementTransaction[]
   usedAi: boolean
+  interValidation?: InterStatementValidation
 }
 
 const INTER_MARKERS = [
@@ -39,21 +45,6 @@ const BRADESCO_TYPES = [
   "PAGAMENTO GOVERNO RJ",
   "RENDIMENTOS",
 ] as const
-
-const MONTHS: Record<string, string> = {
-  janeiro: "01",
-  fevereiro: "02",
-  marco: "03",
-  abril: "04",
-  maio: "05",
-  junho: "06",
-  julho: "07",
-  agosto: "08",
-  setembro: "09",
-  outubro: "10",
-  novembro: "11",
-  dezembro: "12",
-}
 
 const CATEGORY_RULES: Array<{ category: CategoryId; terms: string[] }> = [
   { category: "alimentacao", terms: ["MERCADO", "SUPERMERCADO", "HORTIFRUTI", "PADARIA", "RESTAURANTE", "IFOOD", "RAPPI", "DELIVERY", "LANCHONETE", "BURGER", "PIZZA"] },
@@ -101,10 +92,6 @@ function brDateToIso(value: string, fallbackYear?: number) {
     return `${fallbackYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
   }
   return ""
-}
-
-function interDateToIso(day: string, month: string, year: string) {
-  return `${year}-${MONTHS[normalized(month).toLowerCase()]}-${day.padStart(2, "0")}`
 }
 
 function containsAny(text: string, terms: string[]) {
@@ -160,51 +147,46 @@ export function detectStatementBank(text: string): DetectedStatementBank {
   return "other"
 }
 
-function cleanInterDescription(kind: string, description: string) {
-  const cleaned = description
-    .replace(/^"|"$/g, "")
-    .replace(/^Cp\s*:\s*\d+\s*-\s*/i, "")
-    .replace(/^No estabelecimento\s+/i, "")
-    .trim()
-  if (normalized(kind) === "COMPRA NO DEBITO") return cleaned
-  if (normalized(kind) === "COMPRA INTER CEL" || normalized(kind) === "CASHBACK") return cleaned
-  return `${kind} - ${cleaned}`
+function interTransactionDescription(tx: InterStatementTransaction): string {
+  if (tx.contraparte) return `${tx.tipo_raw} - ${tx.contraparte}`
+  if (tx.estabelecimento) return tx.estabelecimento
+  if (
+    tx.tipo_categoria === "COMPRA_INTER_CEL" ||
+    tx.tipo_categoria === "CASHBACK" ||
+    tx.tipo_categoria === "OUTROS"
+  ) {
+    return tx.descricao_raw
+  }
+  return `${tx.tipo_raw} - ${tx.descricao_raw}`
+}
+
+function interTransactionToParsed(tx: InterStatementTransaction): ParsedStatementTransaction {
+  const description = interTransactionDescription(tx)
+  const signedValue = tx.valor < 0 ? `-${tx.valor}` : String(tx.valor)
+  const type = inferType(description, signedValue)
+  const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
+  return {
+    date: tx.data,
+    description,
+    amount: Math.abs(tx.valor),
+    type,
+    category: suggestion.category,
+    subcategoryId: suggestion.subcategoryId,
+    confidence: type === "transfer" ? 0.7 : suggestion.confidence,
+  }
 }
 
 export function parseInterStatement(text: string): ParsedStatementTransaction[] {
-  const transactions: ParsedStatementTransaction[] = []
-  const transactionPattern = /^(Pix recebido devolvido|Pix recebido|Pix enviado|Compra no debito|Compra Inter Cel|Cashback):\s*(.*?)\s+(-?R\$\s*[\d.]+,\d{2})\s+(-?R\$\s*[\d.]+,\d{2})$/i
-  const datePattern = /^(\d{1,2})\s+de\s+([\p{L}]+)\s+de\s+(\d{4})/iu
-  let currentDate = ""
+  return parseInterStatementStructured(text).transacoes.map(interTransactionToParsed)
+}
 
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.replace(/\s+/g, " ").trim()
-    const dateMatch = line.match(datePattern)
-    if (dateMatch) {
-      currentDate = interDateToIso(dateMatch[1], dateMatch[2], dateMatch[3])
-      continue
-    }
-    if (!currentDate || normalized(line).startsWith("SALDO ")) continue
-
-    const match = line.match(transactionPattern)
-    if (!match) continue
-    const kind = match[1]
-    const signedValue = match[3].replace(/\s+/g, "")
-    const description = cleanInterDescription(kind, match[2])
-    const type = inferType(description, signedValue)
-    const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
-    transactions.push({
-      date: currentDate,
-      description,
-      amount: parseMoney(signedValue),
-      type,
-      category: suggestion.category,
-      subcategoryId: suggestion.subcategoryId,
-      confidence: type === "transfer" ? 0.7 : suggestion.confidence,
-    })
+export function parseInterStatementWithValidation(text: string) {
+  const result = parseInterStatementStructured(text)
+  return {
+    transactions: result.transacoes.map(interTransactionToParsed),
+    validation: result.validacao,
+    conta: result.conta,
   }
-
-  return transactions
 }
 
 function isBradescoType(line: string): line is (typeof BRADESCO_TYPES)[number] {
@@ -346,9 +328,18 @@ export function parseGenericBrazilianStatement(text: string): ParsedStatementTra
 export function parseStatement(text: string, requestedBank: StatementBank = "auto"): StatementParseResult {
   const bank = requestedBank === "auto" ? detectStatementBank(text) : requestedBank
   let transactions: ParsedStatementTransaction[] = []
-  if (bank === "inter") transactions = parseInterStatement(text)
-  else if (bank === "bradesco") transactions = parseBradescoStatement(text)
-  else transactions = parseGenericBrazilianStatement(text)
+  let interValidation: InterStatementValidation | undefined
+
+  if (bank === "inter") {
+    const parsed = parseInterStatementWithValidation(text)
+    transactions = parsed.transactions
+    interValidation = parsed.validation
+  } else if (bank === "bradesco") {
+    transactions = parseBradescoStatement(text)
+  } else {
+    transactions = parseGenericBrazilianStatement(text)
+  }
+
   if (transactions.length === 0) transactions = parseGenericBrazilianStatement(text)
-  return { bank, transactions, usedAi: false }
+  return { bank, transactions, usedAi: false, interValidation }
 }
