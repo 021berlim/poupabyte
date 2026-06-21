@@ -1,10 +1,12 @@
 "use client"
 
 import { createElement, type ReactNode } from "react"
+import { Badge } from "@/components/ui/badge"
 import type { Transaction } from "@/lib/types"
 import { resolveTransactionCategory } from "@/lib/category-system"
 import { getCategoryIcon } from "@/lib/category-icons"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { formatRecurrenceSummary } from "@/lib/transaction-recurrence"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
@@ -57,6 +59,7 @@ export function TransactionRow({
  const date = ledgerDateParts(tx.date)
  const categoryPath = cat.parentLabel ? `${cat.parentLabel} › ${cat.label}` : cat.label
  const typeLabel = income ? "Receita" : tx.type === "expense" ? "Despesa" : "Transferência"
+ const recurrenceLabel = tx.type === "expense" ? formatRecurrenceSummary(tx) : null
 
  if (variant === "ledger" || variant === "statement") {
   const grouped = variant === "statement"
@@ -85,8 +88,17 @@ export function TransactionRow({
       {createElement(Icon, { className: "size-5" })}
      </span>
      <div className="min-w-0">
-      <p className="truncate text-sm font-bold text-foreground">{tx.description}</p>
-      <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{categoryPath} · {typeLabel}</p>
+      <div className="flex min-w-0 items-center gap-2">
+       <p className="truncate text-sm font-bold text-foreground">{tx.description}</p>
+       {recurrenceLabel ? (
+        <Badge variant="outline" className="hidden shrink-0 text-[10px] font-medium sm:inline-flex">
+         Recorrente
+        </Badge>
+       ) : null}
+      </div>
+      <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">
+       {categoryPath} · {typeLabel}{recurrenceLabel ? ` · ${recurrenceLabel}` : ""}
+      </p>
      </div>
     </div>
 
@@ -130,9 +142,17 @@ export function TransactionRow({
     {createElement(Icon, { className: "size-[clamp(1.125rem,5vw,1.25rem)]" })}
    </span>
    <div className="min-w-0 flex-1">
-    <p className="truncate text-sm font-bold text-foreground">{tx.description}</p>
+    <div className="flex min-w-0 items-center gap-2">
+     <p className="truncate text-sm font-bold text-foreground">{tx.description}</p>
+     {recurrenceLabel ? (
+      <Badge variant="outline" className="shrink-0 text-[10px] font-medium">
+       Recorrente
+      </Badge>
+     ) : null}
+    </div>
     <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">
      {categoryPath} &bull; {typeLabel} &bull; {formatDate(tx.date)}
+     {recurrenceLabel ? ` · ${recurrenceLabel}` : ""}
     </p>
    </div>
    <div

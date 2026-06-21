@@ -17,6 +17,12 @@ import { formatCurrency } from "@/lib/format"
 import { apiUrl } from "@/lib/api-url"
 import type { ParsedStatementTransaction, StatementBank } from "@/lib/statement-import"
 import { useStore } from "@/lib/store"
+import {
+  applyRecurrenceFlags,
+  buildRecurrenceFromForm,
+  defaultRecurrenceFormState,
+  type RecurrenceFormState,
+} from "@/lib/transaction-recurrence"
 import type { CategoryId, TransactionType } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -25,9 +31,7 @@ type ReviewItem = ParsedStatementTransaction & {
   id: string
   selected: boolean
   duplicate: boolean
-  isFixed?: boolean
-  isRecurring?: boolean
-  isSubscription?: boolean
+  recurrenceForm: RecurrenceFormState
   isInstallment?: boolean
 }
 
@@ -137,12 +141,64 @@ function ReviewImportItem({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs">
-              <label className="flex items-center gap-1.5"><Checkbox checked={item.isFixed ?? false} onCheckedChange={(checked) => updateItem(item.id, { isFixed: checked === true })} />Fixa</label>
-              <label className="flex items-center gap-1.5"><Checkbox checked={item.isRecurring ?? false} onCheckedChange={(checked) => updateItem(item.id, { isRecurring: checked === true })} />Recorrente</label>
-              <label className="flex items-center gap-1.5"><Checkbox checked={item.isSubscription ?? false} onCheckedChange={(checked) => updateItem(item.id, { isSubscription: checked === true })} />Assinatura</label>
-              <label className="flex items-center gap-1.5"><Checkbox checked={item.isInstallment ?? false} onCheckedChange={(checked) => updateItem(item.id, { isInstallment: checked === true })} />Parcelamento</label>
-            </div>
+            {item.type === "expense" ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Select
+                  value={item.recurrenceForm.enabled ? item.recurrenceForm.kind : "none"}
+                  onValueChange={(value) => {
+                    if (value === "none") {
+                      updateItem(item.id, { recurrenceForm: defaultRecurrenceFormState(item.date) })
+                      return
+                    }
+                    updateItem(item.id, {
+                      recurrenceForm: {
+                        ...item.recurrenceForm,
+                        enabled: true,
+                        kind: value as RecurrenceFormState["kind"],
+                        frequency: value === "fixed" ? "monthly" : item.recurrenceForm.frequency,
+                        durationKind: value === "fixed" ? "indefinite" : item.recurrenceForm.durationKind,
+                      },
+                    })
+                  }}
+                >
+                  <SelectTrigger size="sm" className="h-8 w-full rounded-lg text-xs">
+                    <SelectValue placeholder="Recorrência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem recorrência</SelectItem>
+                    <SelectItem value="subscription">Assinatura</SelectItem>
+                    <SelectItem value="fixed">Conta fixa</SelectItem>
+                    <SelectItem value="custom">Outra recorrência</SelectItem>
+                  </SelectContent>
+                </Select>
+                {item.recurrenceForm.enabled ? (
+                  <Select
+                    value={item.recurrenceForm.durationKind}
+                    onValueChange={(value) =>
+                      updateItem(item.id, {
+                        recurrenceForm: {
+                          ...item.recurrenceForm,
+                          durationKind: value as RecurrenceFormState["durationKind"],
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger size="sm" className="h-8 w-full rounded-lg text-xs">
+                      <SelectValue placeholder="Duração" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="indefinite">Sem prazo</SelectItem>
+                      <SelectItem value="until">Até uma data</SelectItem>
+                      <SelectItem value="count">Número de cobranças</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : null}
+              </div>
+            ) : null}
+            <label className="flex items-center gap-1.5 text-xs">
+              <Checkbox checked={item.isInstallment ?? false} onCheckedChange={(checked) => updateItem(item.id, { isInstallment: checked === true })} />
+              Parcelamento
+            </label>
             <div className="flex flex-wrap items-center gap-2">
               {item.duplicate ? <Badge variant="outline" className="border-amber-500/45 text-amber-700 dark:text-amber-300">Possível duplicata</Badge> : null}
               {flagged ? <Badge variant="outline" className="border-amber-500/45 text-amber-700 dark:text-amber-300">Verificar categoria</Badge> : null}
@@ -276,6 +332,7 @@ export function StatementImportSheet() {
           id: `${transaction.date}-${index}`,
           duplicate,
           selected: !duplicate,
+          recurrenceForm: defaultRecurrenceFormState(`${transaction.date}T12:00:00.000Z`),
         }
       })
       setDetectedBank(result.bank ?? bank)
@@ -309,20 +366,20 @@ export function StatementImportSheet() {
     const duplicates = selected.filter((item) => item.duplicate).length
 
     const imported = addTransactions(
-      selected.map((item) => ({
-        type: item.type,
-        description: item.description,
-        amount: item.amount,
-        category: item.category,
-        subcategoryId: item.subcategoryId,
-        date: new Date(`${item.date}T12:00:00`).toISOString(),
-        source: "pdf-import" as const,
-        needsReview: item.category === "nao-categorizado" || item.confidence < 0.85,
-        isFixed: item.isFixed,
-        isRecurring: item.isRecurring,
-        isSubscription: item.isSubscription,
-        isInstallment: item.isInstallment,
-      })),
+      selected.map((item) =>
+        applyRecurrenceFlags({
+          type: item.type,
+          description: item.description,
+          amount: item.amount,
+          category: item.category,
+          subcategoryId: item.subcategoryId,
+          date: new Date(`${item.date}T12:00:00`).toISOString(),
+          source: "pdf-import" as const,
+          needsReview: item.category === "nao-categorizado" || item.confidence < 0.85,
+          recurrence: item.type === "expense" ? buildRecurrenceFromForm(item.recurrenceForm) : undefined,
+          isInstallment: item.isInstallment,
+        }),
+      ),
     )
     if (imported > 0) {
       setLastImport({

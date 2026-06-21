@@ -81,6 +81,8 @@ export interface Transaction {
   isRecurring?: boolean
   isSubscription?: boolean
   isInstallment?: boolean
+  recurrence?: TransactionRecurrence
+  subscriptionId?: string
   needsReview?: boolean
   cardId?: string
 }
@@ -130,6 +132,21 @@ export interface ImportSummary {
 }
 
 export type SubscriptionFrequency = "monthly" | "yearly"
+
+export type RecurrenceKind = "subscription" | "fixed" | "custom"
+
+export type RecurrenceFrequency = "weekly" | "monthly" | "yearly"
+
+export type RecurrenceDurationKind = "indefinite" | "until" | "count"
+
+export interface TransactionRecurrence {
+  kind: RecurrenceKind
+  frequency: RecurrenceFrequency
+  durationKind: RecurrenceDurationKind
+  billingDay: number
+  endDate?: string
+  occurrenceCount?: number
+}
 
 export interface Subscription {
   id: string

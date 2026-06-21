@@ -26,6 +26,11 @@ import type {
 import { learnCategoryRule, suggestCategory } from "./auto-categorize"
 import type { CategoryContext } from "./category-system"
 import { buildUpdatedTransactions, type AssistedWritePlan } from "./penny-assisted-write"
+import {
+  applyRecurrenceFlags,
+  normalizeTransactionRecurrence,
+  planSubscriptionSync,
+} from "./transaction-recurrence"
 import { findSimilarPending, isPendingReview } from "./transaction-utils"
 import { applyIncomeUpdate, normalizeSalaryHistory, SALARY_SCOPE_LABELS } from "./income"
 import { buildEmptyState, buildSeedState, EMPTY_FINANCIAL_PROFILE, DEMO_USER, generateId } from "./seed"
@@ -675,12 +680,65 @@ function inferOnboardingCompleted(data: Partial<DataState>): boolean {
   return hasUsage
 }
 
+function normalizeTransactions(value: unknown): Transaction[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item): item is Transaction => typeof item === "object" && item !== null && typeof item.id === "string")
+    .map((transaction) => normalizeTransactionRecurrence(transaction))
+}
+
+function deactivateLinkedSubscription(
+  dispatch: (action: Action) => void,
+  subscriptions: Subscription[],
+  subscriptionId?: string,
+) {
+  if (!subscriptionId) return
+  const existing = subscriptions.find((item) => item.id === subscriptionId)
+  if (!existing || !existing.active) return
+  dispatch({ type: "UPDATE_SUBSCRIPTION", payload: { ...existing, active: false } })
+}
+
+function runSubscriptionSync(
+  dispatch: (action: Action) => void,
+  subscriptions: Subscription[],
+  transaction: Omit<Transaction, "id"> | Transaction,
+): { subscriptions: Subscription[]; subscriptionId?: string } {
+  const plan = planSubscriptionSync(transaction, subscriptions)
+  let next = subscriptions
+  let subscriptionId = plan.subscriptionId
+
+  if (plan.deactivateId) {
+    const existing = next.find((item) => item.id === plan.deactivateId)
+    if (existing?.active) {
+      const updated = { ...existing, active: false }
+      dispatch({ type: "UPDATE_SUBSCRIPTION", payload: updated })
+      next = next.map((item) => (item.id === updated.id ? updated : item))
+    }
+    subscriptionId = undefined
+  }
+
+  if (plan.update) {
+    dispatch({ type: "UPDATE_SUBSCRIPTION", payload: plan.update })
+    next = next.map((item) => (item.id === plan.update!.id ? plan.update! : item))
+    subscriptionId = plan.update.id
+  }
+
+  if (plan.add) {
+    const created = { ...plan.add, id: generateId("sub") }
+    dispatch({ type: "ADD_SUBSCRIPTION", payload: created })
+    next = [...next, created]
+    subscriptionId = created.id
+  }
+
+  return { subscriptions: next, subscriptionId }
+}
+
 function normalizeData(data: Partial<DataState>): DataState {
   return normalizeThemeColors({
     onboardingCompleted: inferOnboardingCompleted(data),
     financialProfile: normalizeFinancialProfile(data.financialProfile),
     lastImport: normalizeLastImport(data.lastImport),
-    transactions: Array.isArray(data.transactions) ? data.transactions : [],
+    transactions: normalizeTransactions(data.transactions),
     goals: Array.isArray(data.goals) ? data.goals : [],
     limits: Array.isArray(data.limits) ? data.limits : [],
     subscriptions: normalizeSubscriptions(data.subscriptions),
@@ -1220,13 +1278,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const addTransaction = useCallback(
     (tx: Omit<Transaction, "id">) => {
-      const errors = validateTransaction(tx)
+      const prepared = applyRecurrenceFlags(tx)
+      const errors = validateTransaction(prepared)
       if (errors.length > 0) {
         notify({ kind: "error", type: "error", title: "Transacao invalida", message: errors[0] })
         return
       }
 
-      const created = { ...tx, id: generateId("tx") }
+      const { subscriptionId } = runSubscriptionSync(dispatch, state.subscriptions, prepared)
+      const created = { ...prepared, id: generateId("tx"), subscriptionId }
       dispatch({ type: "ADD_TX", payload: created })
       notify({
         kind: "transaction",
@@ -1256,12 +1316,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (alert) notify(alert)
       }
     },
-    [notify, state.limits, state.transactions, state.categoryRules],
+    [dispatch, notify, state.limits, state.subscriptions, state.transactions, state.categoryRules],
   )
 
   const addTransactions = useCallback(
     (transactions: Array<Omit<Transaction, "id">>) => {
-      const valid = transactions.filter((transaction) => validateTransaction(transaction).length === 0)
+      const prepared = transactions.map((transaction) => applyRecurrenceFlags(transaction))
+      const valid = prepared.filter((transaction) => validateTransaction(transaction).length === 0)
       if (valid.length === 0) {
         notify({
           kind: "error",
@@ -1272,7 +1333,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return 0
       }
 
-      const created = valid.map((transaction) => ({ ...transaction, id: generateId("tx") }))
+      let subscriptionSnapshot = state.subscriptions
+      const created = valid.map((transaction) => {
+        const sync = runSubscriptionSync(dispatch, subscriptionSnapshot, transaction)
+        subscriptionSnapshot = sync.subscriptions
+        return { ...transaction, id: generateId("tx"), subscriptionId: sync.subscriptionId }
+      })
       dispatch({ type: "ADD_TXS", payload: created })
       notify({
         kind: "transaction",
@@ -1282,24 +1348,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })
       return created.length
     },
-    [notify],
+    [dispatch, notify, state.subscriptions],
   )
 
   const updateTransaction = useCallback(
     (tx: Transaction) => {
-      const errors = validateTransaction(tx)
+      const prepared = applyRecurrenceFlags(tx)
+      const errors = validateTransaction(prepared)
       if (errors.length > 0) {
         notify({ kind: "error", type: "error", title: "Transacao invalida", message: errors[0] })
         return
       }
 
-      dispatch({ type: "UPDATE_TX", payload: tx })
-      if (!tx.needsReview && tx.category !== "nao-categorizado") {
+      const { subscriptionId } = runSubscriptionSync(dispatch, state.subscriptions, prepared)
+      const next = { ...prepared, subscriptionId }
+      dispatch({ type: "UPDATE_TX", payload: next })
+      if (!next.needsReview && next.category !== "nao-categorizado") {
         const rules = learnCategoryRule(
-          tx.description,
-          tx.category,
-          tx.subcategoryId,
-          tx.type,
+          next.description,
+          next.category,
+          next.subcategoryId,
+          next.type,
           state.categoryRules,
         )
         if (rules !== state.categoryRules) dispatch({ type: "SET_CATEGORY_RULES", payload: rules })
@@ -1308,20 +1377,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "transaction",
         type: "success",
         title: "Transacao editada",
-        message: `"${tx.description}" foi atualizada.`,
+        message: `"${next.description}" foi atualizada.`,
       })
-      if (tx.type === "expense") {
-        const nextTransactions = state.transactions.map((t) => (t.id === tx.id ? tx : t))
+      if (next.type === "expense") {
+        const nextTransactions = state.transactions.map((t) => (t.id === next.id ? next : t))
         const limit = state.limits.find(
           (l) =>
-            l.category === tx.category &&
-            (l.subcategoryId ? l.subcategoryId === tx.subcategoryId : !tx.subcategoryId),
+            l.category === next.category &&
+            (l.subcategoryId ? l.subcategoryId === next.subcategoryId : !next.subcategoryId),
         )
         const alert = limit ? limitAlert(limit, spentForLimit(nextTransactions, limit)) : null
         if (alert) notify(alert)
       }
     },
-    [notify, state.limits, state.transactions, state.categoryRules],
+    [dispatch, notify, state.limits, state.subscriptions, state.transactions, state.categoryRules],
   )
 
   const confirmSimilarTransactions = useCallback(
@@ -1476,6 +1545,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const deleteTransaction = useCallback(
     (id: string) => {
       const removed = state.transactions.find((tx) => tx.id === id)
+      if (removed?.subscriptionId) {
+        deactivateLinkedSubscription(dispatch, state.subscriptions, removed.subscriptionId)
+      }
       dispatch({ type: "DELETE_TX", payload: id })
       notify({
         kind: "transaction",
@@ -1484,7 +1556,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         message: removed ? `"${removed.description}" foi removida.` : "A movimentacao foi removida.",
       })
     },
-    [notify, state.transactions],
+    [dispatch, notify, state.subscriptions, state.transactions],
   )
 
   const addGoal = useCallback(

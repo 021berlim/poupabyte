@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useStore } from "@/lib/store"
 import {
@@ -23,11 +23,19 @@ import {
  SelectTrigger,
  SelectValue,
 } from "@/components/ui/select"
+import { TransactionRecurrenceFields } from "@/components/app/transaction-recurrence-fields"
 import { isManageCategoriesSelectValue, ManageCategoriesSelectOption } from "@/components/app/manage-categories-select-option"
 import { ROUTES } from "@/lib/routes"
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/categories"
 import { getCategoryIcon } from "@/lib/category-icons"
 import { parseAmountInput, validateTransaction } from "@/lib/finance"
+import {
+ applyRecurrenceFlags,
+ buildRecurrenceFromForm,
+ defaultRecurrenceFormState,
+ recurrenceFormStateFromTransaction,
+ validateRecurrenceForm,
+} from "@/lib/transaction-recurrence"
 import type { Transaction, TransactionType, CategoryId, CategoryRef } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -55,6 +63,17 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
  const [date, setDate] = useState(
   transaction ? transaction.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
  )
+ const [recurrenceForm, setRecurrenceForm] = useState(() => recurrenceFormStateFromTransaction(transaction))
+
+ useEffect(() => {
+  if (!dialogOpen) return
+  setType(transaction?.type ?? defaultType)
+  setDescription(transaction?.description ?? "")
+  setAmount(transaction ? formatCurrencyInput(transaction.amount) : "")
+  setCategory(transaction?.category ?? "alimentacao")
+  setDate(transaction ? transaction.date.slice(0, 10) : new Date().toISOString().slice(0, 10))
+  setRecurrenceForm(recurrenceFormStateFromTransaction(transaction))
+ }, [dialogOpen, transaction, defaultType])
 
  const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
 
@@ -62,18 +81,29 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
   setType(next)
   const valid = (next === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).some((c) => c.id === category)
   if (!valid) setCategory(next === "income" ? "salario" : "alimentacao")
+  if (next !== "expense") setRecurrenceForm(defaultRecurrenceFormState(date))
  }
 
  function handleSubmit(e: React.FormEvent) {
   e.preventDefault()
   const value = parseAmountInput(amount)
-  const payload = {
+  const isoDate = date ? new Date(date + "T12:00:00").toISOString() : ""
+  const recurrenceErrors = type === "expense" ? validateRecurrenceForm(recurrenceForm, isoDate) : []
+  if (recurrenceErrors.length > 0) {
+   notify({ kind: "error", type: "error", title: "Recorrência inválida", message: recurrenceErrors[0] })
+   return
+  }
+
+  const recurrence = type === "expense" ? buildRecurrenceFromForm(recurrenceForm) : undefined
+  const payload = applyRecurrenceFlags({
    type,
    description: description.trim(),
    amount: value,
    category,
-   date: date ? new Date(date + "T12:00:00").toISOString() : "",
-  }
+   date: isoDate,
+   recurrence,
+   subscriptionId: recurrence?.kind === "subscription" ? transaction?.subscriptionId : undefined,
+  })
   const errors = validateTransaction(payload)
   if (errors.length > 0) {
    notify({ kind: "error", type: "error", title: "Transacao invalida", message: errors[0] })
@@ -86,6 +116,7 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
    addTransaction(payload)
    setDescription("")
    setAmount("")
+   setRecurrenceForm(defaultRecurrenceFormState())
   }
   setOpen(false)
  }
@@ -93,7 +124,7 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
  return (
   <Dialog open={dialogOpen} onOpenChange={setOpen}>
    {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-   <DialogContent>
+   <DialogContent className="max-h-[min(92vh,48rem)] overflow-y-auto">
     <DialogHeader>
      <DialogTitle>{isEdit ? "Editar transação" : "Nova transação"}</DialogTitle>
      <DialogDescription>
@@ -181,6 +212,10 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
        </SelectContent>
       </Select>
      </div>
+
+     {type === "expense" ? (
+      <TransactionRecurrenceFields value={recurrenceForm} onChange={setRecurrenceForm} />
+     ) : null}
 
      </div>
 
