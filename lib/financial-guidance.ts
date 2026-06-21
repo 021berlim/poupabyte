@@ -1,6 +1,6 @@
 import { ESSENTIAL_CATEGORY_IDS, getCategory } from "./categories"
 import { buildLongTermPlanning } from "./long-term-planning"
-import { buildMonthlyPlanning } from "./planning"
+import { buildMonthlyPlanning, monthExpenses } from "./planning"
 import {
   investmentSummary,
   monthlySeries,
@@ -174,15 +174,7 @@ function computeAverageEssentialExpenses(transactions: Transaction[], ref: Date,
     return values.reduce((total, value) => total + value, 0) / values.length
   }
 
-  return buildLongTermPlanning(
-    { monthlySalary: 0, salaryDay: 1, objective: "controlar-gastos", configured: false },
-    transactions,
-    [],
-    [],
-    [],
-    [],
-    ref,
-  ).essentialExpenses
+  return monthExpenses(transactions, ref) * 0.45
 }
 
 function isEmergencyGoal(goal: Goal): boolean {
