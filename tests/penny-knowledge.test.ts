@@ -111,6 +111,32 @@ describe("P.E.N.N.Y knowledge catalog", () => {
     expect(sourceIds("Onde vejo minhas metas?")).toEqual(["app-capabilities"])
   })
 
+  it("routes short greetings to financial overview for attention panel data", () => {
+    const data = snapshot()
+    data.transactions = [
+      ...data.transactions,
+      {
+        id: "tx-pending",
+        type: "expense",
+        description: "Uber",
+        amount: 25,
+        category: "nao-categorizado",
+        date: "2026-06-18T12:00:00.000Z",
+        needsReview: true,
+      },
+    ]
+    const context = queryPennyKnowledge(data, { question: "hey penny", now: NOW })
+    expect(context.routing.selectedSources.map((source) => source.id)).toEqual(["financial-overview"])
+    expect(context.data["financial-overview"]).toMatchObject({
+      attentionPanel: {
+        type: "pending-review",
+        title: "Revisar lançamentos",
+        message: "1 movimentação(ões) aguardando confirmação",
+        screen: "Movimentações",
+      },
+    })
+  })
+
   it("uses the consolidated source for a broad overview", () => {
     expect(sourceIds("Dê um panorama geral das minhas finanças.")).toEqual(
       expect.arrayContaining(["financial-overview", "monthly-planning"]),

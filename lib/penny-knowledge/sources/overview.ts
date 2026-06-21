@@ -1,4 +1,5 @@
-import { buildPennyFinancialContext } from "../../penny-context"
+import { buildAttentionPanelItem, buildPennyFinancialContext } from "../../penny-context"
+import { isShortGreetingMessage } from "../../penny"
 import {
   expenseByCategory,
   financialHealthScore,
@@ -27,7 +28,10 @@ export const overviewSource: PennyKnowledgeSource = {
   ],
   examples: ["Como está minha saúde financeira?", "Dê um panorama geral.", "Qual é meu patrimônio?"],
   sourceOfTruth: "agregação de transactions, goals, limits e investments",
-  shouldQuery: (analysis) => analysis.broad || analysis.topics.has("overview"),
+  shouldQuery: (analysis) =>
+    analysis.broad ||
+    analysis.topics.has("overview") ||
+    isShortGreetingMessage(analysis.question),
   query: (snapshot, analysis) => {
     const availableTransactions = snapshot.transactions.filter((transaction) => new Date(transaction.date) <= analysis.now)
     const monthRange = currentMonthRange(analysis.now)
@@ -48,10 +52,19 @@ export const overviewSource: PennyKnowledgeSource = {
     })
     const alertKeys = insights.pendingAlerts.map((alert) => alert.key)
 
+    const attentionPanel = buildAttentionPanelItem({
+      transactions: snapshot.transactions,
+      limits: snapshot.limits,
+      goals: snapshot.goals,
+      subscriptions: snapshot.subscriptions,
+      now: analysis.now,
+    })
+
     return {
       reason: "A pergunta solicita uma visão consolidada, patrimônio ou saúde financeira.",
       alertKeys,
       data: {
+        attentionPanel,
         generatedForPeriod: monthRange.label,
         monthlyPlanning: insights.monthlyPlanning,
         totalNetWorth: totalNetWorth(availableTransactions, snapshot.investments),

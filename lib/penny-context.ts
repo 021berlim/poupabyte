@@ -40,6 +40,74 @@ export type PennyAlert = {
   impact: string
 }
 
+export type AttentionPanelItem = {
+  type: "pending-review" | "budget" | "goal-at-risk" | "upcoming-subscription"
+  title: string
+  message: string
+  screen: string
+}
+
+export function buildAttentionPanelItem({
+  transactions,
+  limits,
+  goals,
+  subscriptions,
+  now = new Date(),
+}: {
+  transactions: Transaction[]
+  limits: SpendingLimit[]
+  goals: Goal[]
+  subscriptions: Subscription[]
+  now?: Date
+}): AttentionPanelItem | null {
+  const pendingReview = transactions.filter((tx) => tx.needsReview || tx.category === "nao-categorizado").length
+  if (pendingReview > 0) {
+    return {
+      type: "pending-review",
+      title: "Revisar lançamentos",
+      message: `${pendingReview} movimentação(ões) aguardando confirmação`,
+      screen: "Movimentações",
+    }
+  }
+
+  const limitAlerts = limitUsage(limits, transactions, now).filter((item) => item.status !== "healthy")
+  if (limitAlerts.length > 0) {
+    const item = limitAlerts[0]
+    const category = getCategory(item.limit.category).label
+    return {
+      type: "budget",
+      title: `Orçamento de ${category}`,
+      message: `${Math.round(item.percent)}% utilizado`,
+      screen: "Orçamentos",
+    }
+  }
+
+  const goalAlerts = goals
+    .map((goal) => ({ goal, progress: goalProgress(goal) }))
+    .filter((item) => item.progress.atRisk)
+  if (goalAlerts.length > 0) {
+    const { goal, progress } = goalAlerts[0]
+    return {
+      type: "goal-at-risk",
+      title: `Meta em risco: ${goal.name}`,
+      message: `${progress.percent}% concluída`,
+      screen: "Objetivos",
+    }
+  }
+
+  const upcoming = upcomingSubscriptions(subscriptions, 7, now)
+  if (upcoming.length > 0) {
+    return {
+      type: "upcoming-subscription",
+      title: "Assinaturas nos próximos 7 dias",
+      message: `${upcoming.length} cobrança(s) prevista(s)`,
+      screen: "Movimentações",
+    }
+  }
+
+  return null
+}
+
 export type PennyFinancialContext = {
   generatedAt: string
   monthlyPlanning: ReturnType<typeof buildMonthlyPlanning>

@@ -48,6 +48,10 @@ describe("P.E.N.N.Y master prompt", () => {
     expect(messages.some((message) => message.content.includes("longo prazo"))).toBe(true)
     expect(messages.some((message) => message.content.includes("diversificação"))).toBe(true)
     expect(messages.some((message) => message.content.includes("consultoria regulada pela CVM"))).toBe(true)
+    expect(messages.some((message) => message.content.includes("Mapa do produto"))).toBe(true)
+    expect(messages.some((message) => message.content.includes("Modo de foco"))).toBe(true)
+    expect(messages.some((message) => message.content.includes("Escrita assistida"))).toBe(true)
+    expect(messages.some((message) => message.content.includes("Plano de investimento por objetivo"))).toBe(true)
     expect(messages.some((message) => message.content.includes("Não revele qual provedor de IA"))).toBe(true)
   })
 
@@ -60,6 +64,7 @@ describe("P.E.N.N.Y master prompt", () => {
 
     expect(messages.some((message) => message.content.includes("saudação curta ou vaga"))).toBe(true)
     expect(messages.some((message) => message.content.includes("Nunca liste automaticamente as funcionalidades do app"))).toBe(true)
+    expect(messages.some((message) => message.content.includes("attentionPanel"))).toBe(true)
   })
 
   it("skips greeting guidance when the conversation is already in progress", () => {

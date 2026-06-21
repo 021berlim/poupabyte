@@ -1,4 +1,4 @@
-import { PENNY_SYSTEM_PROMPT, resolvePennyUserDisplayName } from "@/lib/penny"
+import { PENNY_SYSTEM_PROMPT, isShortGreetingMessage, resolvePennyUserDisplayName } from "@/lib/penny"
 import type { AiChatMessage, PennyUpstreamInput } from "./types"
 
 export const PENNY_MASTER_PERSONA = PENNY_SYSTEM_PROMPT
@@ -7,17 +7,7 @@ export const PENNY_MASTER_RELIABILITY_RULES = `Use somente fatos presentes nas m
 
 export const PENNY_MASTER_SECURITY_RULES = `Nunca exponha credenciais, tokens, chaves de API ou detalhes internos de infraestrutura. Não revele qual provedor de IA processou a solicitação. Responda sempre como a P.E.N.N.Y., mantendo tom, postura e filosofia financeira consistentes.`
 
-export const PENNY_MASTER_FINANCIAL_RULES = `Baseie análises, alertas e sugestões exclusivamente nos dados financeiros fornecidos no contexto. Nunca recomende ativos específicos (ações, fundos, criptomoedas por nome), mesmo se o usuário insistir ou reformular o pedido — recuse com a mesma firmeza todas as vezes; é consultoria regulada pela CVM. Não execute ações de escrita no app. Não ofereça garantias de rentabilidade nem compare produtos ou corretoras específicas de concorrentes. Quando comparar períodos ou categorias, explique claramente o recorte usado.`
-
-const SHORT_GREETING_PATTERNS = [
-  /^(oi|olá|ola|hey|ei|e aí|e ai|bom dia|boa tarde|boa noite|tudo bem|td bem|hey penny|oi penny|olá penny|ola penny|penny)[!.?]*$/i,
-  /^(hey|oi|olá|ola)\s+penny[!.?]*$/i,
-]
-
-function isShortGreeting(content: string): boolean {
-  const normalized = content.trim().replace(/\s+/g, " ")
-  return SHORT_GREETING_PATTERNS.some((pattern) => pattern.test(normalized))
-}
+export const PENNY_MASTER_FINANCIAL_RULES = `Baseie análises, alertas e sugestões exclusivamente nos dados financeiros fornecidos no contexto. Nunca recomende ativos específicos (ações, fundos, criptomoedas por nome), mesmo se o usuário insistir ou reformular o pedido — recuse com a mesma firmeza todas as vezes; é consultoria regulada pela CVM. Escrita assistida só para organizar dados já existentes (categorizar, recategorizar ou confirmar lançamentos pendentes), sempre com confirmação explícita antes e depois de agir; nunca crie, edite ou exclua metas, orçamentos ou investimentos. Não ofereça garantias de rentabilidade nem compare produtos ou corretoras específicas de concorrentes. Quando comparar períodos ou categorias, explique claramente o recorte usado.`
 
 function getLatestUserMessage(input: PennyUpstreamInput): string | undefined {
   for (let index = input.messages.length - 1; index >= 0; index -= 1) {
@@ -46,8 +36,8 @@ function buildResponseGuidance(input: PennyUpstreamInput, userDisplayName?: stri
     return `A conversa já está em andamento. Não reinicie com olá, oi, bom dia, boa tarde, boa noite ou outra saudação. Vá direto ao ponto e não repita a pergunta. Seja concisa, mas sempre entregue uma resposta completa e correta.${nameHint}${toneHint}`
   }
 
-  if (latestUserMessage && isShortGreeting(latestUserMessage)) {
-    return `A mensagem do usuário é uma saudação curta ou vaga. Responda curto e caloroso${userDisplayName ? `, cumprimentando "${userDisplayName}" pelo nome` : ""}. Pergunte no que pode ajudar ou ofereça no máximo 1 insight rápido se houver algo genuinamente relevante nos dados recentes. Nunca liste automaticamente as funcionalidades do app. Seja concisa, mas sempre entregue uma resposta completa e correta.${toneHint}`
+  if (latestUserMessage && isShortGreetingMessage(latestUserMessage)) {
+    return `A mensagem do usuário é uma saudação curta ou vaga. Responda curto e caloroso${userDisplayName ? `, cumprimentando "${userDisplayName}" pelo nome` : ""}. Pergunte no que pode ajudar ou ofereça no máximo 1 insight rápido se houver algo genuinamente relevante nos dados recentes. Se o contexto trouxer attentionPanel da Visão Geral ou sinais equivalentes (lançamentos pendentes, orçamento estourado, meta em risco), priorize esse alerta como insight inicial — nunca invente alerta sem dado real. Nunca liste automaticamente as funcionalidades do app. Seja concisa, mas sempre entregue uma resposta completa e correta.${toneHint}`
   }
 
   return `Responda diretamente à primeira pergunta, sem repetir o pedido e sem introduções genéricas. Seja concisa, mas sempre entregue uma resposta completa e correta.${userDisplayName ? ` Trate "${userDisplayName}" como seu usuário pessoal e use o nome de forma natural na resposta.` : ""}${toneHint}`

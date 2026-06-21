@@ -1,97 +1,96 @@
 import { ROUTES } from "../../routes"
+import { isShortGreetingMessage } from "../../penny"
 import type { PennyKnowledgeSource } from "../types"
 
 const APP_AREAS = [
   {
     route: ROUTES.dashboard,
-    name: "Visão geral",
+    name: "Visão Geral",
     capabilities: [
-      "disponível para gastar no mês atual (renda do mês)",
-      "salário fixo, renda extra e margem segura para decisões longas",
-      "despesas, orçamento usado e economia prevista",
-      "alertas de orçamentos e objetivos",
-      "editar renda a qualquer momento",
+      "disponível para gastar (renda do mês menos despesas confirmadas e comprometidas)",
+      "renda cadastrada, entradas, despesas e % de renda comprometida",
+      "economia prevista e gráfico dos últimos meses",
+      "painel o que precisa de atenção (ex.: lançamentos sem confirmação)",
+      "dicas rápidas",
     ],
   },
   {
     route: ROUTES.transactions,
     name: "Movimentações",
     capabilities: [
-      "cadastrar, editar e excluir receitas e despesas",
-      "buscar e filtrar por tipo, categoria e período",
-      "importar PDF bancário com revisão antes de salvar",
-      "ver origem (manual, PDF), pendências e duplicatas",
+      "listar receitas e despesas",
+      "importar extrato em PDF",
+      "criar transação manual",
+      "confirmar ou categorizar lançamentos pendentes",
+      "filtrar e buscar",
+      "lançamentos importados chegam sem categoria até revisão",
     ],
   },
   {
     route: ROUTES.cashflow,
     name: "Planejamento",
     capabilities: [
-      "realizado vs previsto por mês",
-      "projeção de fim do mês",
-      "renda comprometida e despesas fixas pendentes",
-      "recalcula automaticamente quando salário ou transações mudam",
-    ],
-  },
-  {
-    route: ROUTES.investments,
-    name: "Patrimônio",
-    capabilities: [
-      "acompanhar reservas e investimentos",
-      "registrar aportes, resgates e atualizações de valor",
-      "consultar evolução patrimonial e relação com objetivos",
+      "comparar realizado vs previsto em janelas de 3, 6 ou 12 meses",
+      "projeção de fim do mês com alerta de risco de déficit",
+      "maior receita e maior despesa do período",
     ],
   },
   {
     route: ROUTES.goals,
     name: "Objetivos",
     capabilities: [
-      "criar e acompanhar objetivos financeiros",
-      "consultar viabilidade com base na renda atual",
-      "ver valor por dia, prazo e risco de atraso",
+      "metas financeiras conectadas à renda mensal",
+      "valor total guardado e progresso geral",
+      "metas com risco de atraso",
+      "criar meta nova",
     ],
   },
   {
     route: ROUTES.limits,
     name: "Orçamentos",
     capabilities: [
-      "definir orçamento mensal por categoria ou subcategoria",
-      "consultar planejado, gasto, restante e status",
-      "sugestões de percentual com base no salário fixo",
+      "orçamento mensal por categoria",
+      "quanto já foi gasto e % de uso do orçamento",
+      "categorias estouradas",
+      "criar e editar orçamento",
     ],
   },
   {
-    route: ROUTES.categories,
-    name: "Categorias",
+    route: ROUTES.investments,
+    name: "Patrimônio",
     capabilities: [
-      "usar categorias padrão do sistema sem editar",
-      "criar categorias e subcategorias personalizadas",
-      "definir palavras-chave para categorização automática de PDF",
-      "ocultar, duplicar ou personalizar categorias padrão",
+      "reservas e investimentos cadastrados manualmente",
+      "total guardado, total investido e rendimento acumulado",
+      "cadastrar ativo",
     ],
   },
   {
     route: ROUTES.reports,
     name: "Análises",
     capabilities: [
-      "interpretações sobre categorias, renda comprometida e projeção",
-      "comparativos mensais e anuais",
-      "objetivos em risco e patrimônio consolidado",
+      "receitas, despesas e resultado (receitas − despesas)",
+      "% de renda comprometida",
+      "despesas por categoria",
+      "comparativo mensal de receitas vs despesas",
+    ],
+  },
+  {
+    route: ROUTES.categories,
+    name: "Categorias",
+    capabilities: [
+      "acessível pelo menu da conta, no avatar do usuário",
+      "categorias padrão do sistema",
+      "categorias personalizadas para classificar lançamentos",
     ],
   },
   {
     route: ROUTES.assistant,
-    name: "P.E.N.N.Y",
+    name: "P.E.N.N.Y.",
     capabilities: [
-      "interpretar dados financeiros em modo leitura",
-      "explicar impactos de mudança de salário e importação de PDF",
+      "interpretar dados financeiros do usuário",
       "orientar sobre funcionalidades do PoupaByte",
+      "organizar lançamentos existentes com confirmação explícita",
     ],
-  },
-  {
-    route: "global",
-    name: "Notificações",
-    capabilities: ["consultar alertas de planejamento", "marcar alertas como lidos ou removê-los"],
   },
 ]
 
@@ -103,7 +102,9 @@ export const appCapabilitiesSource: PennyKnowledgeSource = {
   availableInformation: ["rotas", "nomes das áreas", "ações disponíveis", "limitações operacionais"],
   examples: ["Como importar um extrato?", "Onde vejo meus objetivos?", "O app compra investimentos?"],
   sourceOfTruth: "rotas e componentes da aplicação",
-  shouldQuery: (analysis) => analysis.appHelp || (analysis.topics.has("app") && analysis.topics.size === 1),
+  shouldQuery: (analysis) =>
+    !isShortGreetingMessage(analysis.question) &&
+    (analysis.appHelp || (analysis.topics.has("app") && analysis.topics.size === 1)),
   query: () => ({
     reason: "A pergunta solicita orientação sobre o funcionamento do aplicativo.",
     data: {
@@ -129,7 +130,8 @@ export const appCapabilitiesSource: PennyKnowledgeSource = {
         impact: "dashboard, planejamento, orçamentos, objetivos, análises e alertas recalculam automaticamente",
       },
       operatingLimits: [
-        "A P.E.N.N.Y consulta dados em modo leitura e não cria, edita ou exclui registros.",
+        "Escrita assistida: pode categorizar, recategorizar e confirmar lançamentos pendentes com confirmação explícita do usuário.",
+        "Não cria, edita ou exclui metas, orçamentos ou investimentos, e não move dinheiro.",
         "O acompanhamento de patrimônio é informativo e não envia ordens de compra ou venda.",
         "Não existe sincronização bancária automática nem Open Finance.",
       ],
