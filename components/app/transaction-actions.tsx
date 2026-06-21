@@ -19,7 +19,6 @@ import {
  AlertDialogHeader,
  AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ConfirmSimilarButton } from "@/components/app/confirm-similar-button"
 import { TransactionDialog } from "@/components/app/transaction-dialog"
 import { MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { useStore } from "@/lib/store"
@@ -41,7 +40,6 @@ export function TransactionActions({
  return (
   <>
    <div className="flex items-center gap-1">
-    <ConfirmSimilarButton tx={tx} />
    <DropdownMenu>
     <DropdownMenuTrigger asChild>
      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-xl text-muted-foreground hover:bg-muted/70 hover:text-foreground" aria-label="Ações">

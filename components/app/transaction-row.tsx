@@ -1,6 +1,7 @@
 "use client"
 
 import { createElement, type ReactNode } from "react"
+import { ConfirmSimilarButton } from "@/components/app/confirm-similar-button"
 import { Badge } from "@/components/ui/badge"
 import type { Transaction } from "@/lib/types"
 import { resolveTransactionCategory } from "@/lib/category-system"
@@ -69,8 +70,8 @@ export function TransactionRow({
     className={cn(
      "app-row-hover grid min-w-0 items-center gap-x-3 gap-y-2 px-[clamp(0.75rem,3vw,1rem)] py-3.5 md:gap-x-4",
      grouped
-      ? "grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(13rem,1fr)_minmax(8rem,0.35fr)_minmax(8rem,0.25fr)_2rem]"
-      : "grid-cols-[3.25rem_minmax(0,1fr)_auto] md:grid-cols-[3.75rem_minmax(13rem,1fr)_minmax(8rem,0.35fr)_minmax(8rem,0.25fr)_2rem]",
+      ? "grid-cols-[minmax(0,1fr)_2.5rem] md:grid-cols-[minmax(13rem,1fr)_minmax(8rem,0.35fr)_minmax(7rem,0.22fr)_2.5rem]"
+      : "grid-cols-[3.25rem_minmax(0,1fr)_auto] md:grid-cols-[3.75rem_minmax(13rem,1fr)_minmax(8rem,0.35fr)_minmax(7rem,0.22fr)_2.5rem]",
     )}
    >
     {!grouped ? (
@@ -99,6 +100,11 @@ export function TransactionRow({
       <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">
        {categoryPath} · {typeLabel}{recurrenceLabel ? ` · ${recurrenceLabel}` : ""}
       </p>
+      {actionSlot ? (
+       <div className="mt-2 w-fit max-w-full">
+        <ConfirmSimilarButton tx={tx} />
+       </div>
+      ) : null}
      </div>
     </div>
 
@@ -111,7 +117,7 @@ export function TransactionRow({
 
     <div
      className={cn(
-      "text-left tabular-nums md:col-auto md:ml-0 md:text-right",
+      "shrink-0 text-left tabular-nums md:col-auto md:ml-0 md:justify-self-end md:text-right",
       grouped ? "col-start-1 ml-[3.25rem]" : "col-start-2 ml-[3.25rem]",
      )}
     >
@@ -123,7 +129,7 @@ export function TransactionRow({
 
     <div
      className={cn(
-      "row-span-2 row-start-1 flex justify-end md:col-auto md:row-auto",
+      "row-span-2 row-start-1 flex shrink-0 justify-end self-start md:col-auto md:row-auto",
       grouped ? "col-start-2" : "col-start-3",
      )}
     >
@@ -154,10 +160,15 @@ export function TransactionRow({
      {categoryPath} &bull; {typeLabel} &bull; {formatDate(tx.date)}
      {recurrenceLabel ? ` · ${recurrenceLabel}` : ""}
     </p>
+    {actionSlot ? (
+     <div className="mt-2 w-fit max-w-full">
+      <ConfirmSimilarButton tx={tx} />
+     </div>
+    ) : null}
    </div>
    <div
     className={cn(
-     "col-start-2 w-fit max-w-full py-1.5 text-left text-[clamp(0.75rem,3.4vw,0.875rem)] font-extrabold tabular-nums min-[460px]:col-auto min-[460px]:ml-auto min-[460px]:min-w-[112px] min-[460px]:text-right",
+     "col-start-2 w-fit max-w-full shrink-0 py-1.5 text-left text-[clamp(0.75rem,3.4vw,0.875rem)] font-extrabold tabular-nums min-[460px]:col-auto min-[460px]:ml-auto min-[460px]:min-w-[112px] min-[460px]:text-right",
      actionSlot ? "col-end-3" : "col-end-4",
      income ? "text-success" : "text-destructive",
     )}
