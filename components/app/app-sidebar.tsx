@@ -131,33 +131,38 @@ function SidebarNav({
    ))}
 
    {nav.more.length > 0 ? (
-    <Collapsible open={moreOpen || moreActive} onOpenChange={setMoreOpen} className="pt-2">
-     <CollapsibleTrigger asChild>
-      <button
-       type="button"
-       className={cn(
-        "app-sidebar-nav-link group relative flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/35",
-        isCollapsed && "mx-auto w-11 justify-center gap-0 px-0",
-        moreActive
-         ? "bg-sidebar-accent/80 text-sidebar-foreground"
-         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground",
-       )}
-       aria-expanded={moreOpen || moreActive}
-      >
-       <span className="app-sidebar-nav-icon flex h-8 w-8 shrink-0 items-center justify-center text-sidebar-foreground/70 group-hover:text-primary">
-        <ChevronDown className={cn("h-[18px] w-[18px] transition-transform", (moreOpen || moreActive) && "rotate-180")} />
-       </span>
-       {!isCollapsed ? <span className="app-sidebar-text min-w-0 flex-1 truncate text-left">Mais</span> : null}
-      </button>
-     </CollapsibleTrigger>
-     {!isCollapsed ? (
+    isCollapsed ? (
+     <div className="space-y-1 pt-2">
+      {nav.more.map((item) => (
+       <SidebarNavItem key={item.href} item={item} pathname={pathname} isCollapsed={isCollapsed} />
+      ))}
+     </div>
+    ) : (
+     <Collapsible open={moreOpen || moreActive} onOpenChange={setMoreOpen} className="pt-2">
+      <CollapsibleTrigger asChild>
+       <button
+        type="button"
+        className={cn(
+         "app-sidebar-nav-link group relative flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/35",
+         moreActive
+          ? "bg-sidebar-accent/80 text-sidebar-foreground"
+          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground",
+        )}
+        aria-expanded={moreOpen || moreActive}
+       >
+        <span className="app-sidebar-nav-icon flex h-8 w-8 shrink-0 items-center justify-center text-sidebar-foreground/70 group-hover:text-primary">
+         <ChevronDown className={cn("h-[18px] w-[18px] transition-transform", (moreOpen || moreActive) && "rotate-180")} />
+        </span>
+        <span className="app-sidebar-text min-w-0 flex-1 truncate text-left">Mais</span>
+       </button>
+      </CollapsibleTrigger>
       <CollapsibleContent className="mt-1 space-y-1 pl-2">
        {nav.more.map((item) => (
         <SidebarNavItem key={item.href} item={item} pathname={pathname} isCollapsed={isCollapsed} nested />
        ))}
       </CollapsibleContent>
-     ) : null}
-    </Collapsible>
+     </Collapsible>
+    )
    ) : null}
   </nav>
  )
