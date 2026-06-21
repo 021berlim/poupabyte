@@ -15,12 +15,33 @@ export function isPendingReview(tx: Transaction): boolean {
   return Boolean(tx.needsReview || tx.category === "nao-categorizado")
 }
 
+/** Tolerância de R$ 0,01 — mesmo valor ou diferença de até um centavo. */
+export const AMOUNT_SIMILARITY_TOLERANCE = 0.01
+
+export function amountsAreSimilar(
+  a: number,
+  b: number,
+  tolerance = AMOUNT_SIMILARITY_TOLERANCE,
+): boolean {
+  return Math.abs(a - b) <= tolerance
+}
+
 export function findSimilarPending(transactions: Transaction[], source: Transaction): Transaction[] {
   const key = establishmentKey(source.description)
-  if (key.length < 4) return transactions.filter((tx) => tx.id === source.id && isPendingReview(tx))
+  if (key.length < 4) {
+    return transactions.filter(
+      (tx) =>
+        tx.id === source.id &&
+        isPendingReview(tx) &&
+        amountsAreSimilar(tx.amount, source.amount),
+    )
+  }
 
   return transactions.filter(
-    (tx) => isPendingReview(tx) && establishmentKey(tx.description) === key,
+    (tx) =>
+      isPendingReview(tx) &&
+      establishmentKey(tx.description) === key &&
+      amountsAreSimilar(tx.amount, source.amount),
   )
 }
 
