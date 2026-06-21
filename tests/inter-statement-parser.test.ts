@@ -36,6 +36,19 @@ Saldo disponível: R$ 0,00
 Compra no debito: "No estabelecimento TEST SHOP SAO PAULO BRA" -R$ 0,09 -R$ 0,00
 `.trim()
 
+const SAMPLE_LAYOUT_REAL_INTER = `
+Solicitado em: 19/06/2026 - 16h07
+CLIENTE TESTE
+CPF/CNPJ: 123.456.789-00 , Instituição: Banco Inter , Agência: 0001-9 , Conta: 12345678-9
+Período: 19/05/2026 a 19/06/2026
+Saldo total Saldo disponível: Saldo bloqueado:
+R$ 1,80 R$ 1,80 R$ 0,00
+(bloqueado + disponível)
+Valor Saldo por transação
+18 de Junho de 2026 Saldo do dia: R$ 1,80
+Cashback: "INTER PRE 20GB MENSAL" R$ 1,80 R$ 1,80
+`.trim()
+
 describe("parseMoneyBrl", () => {
   it("converte valores positivos e negativos", () => {
     expect(parseMoneyBrl("R$ 1.234,56")).toBe(1234.56)
@@ -147,8 +160,35 @@ describe("parseInterStatementWithValidation", () => {
 
     expect(transactions).toHaveLength(3)
     expect(transactions[0].description).toBe("JACK STUDIO RIO DE JANEIR")
+    expect(transactions[0].type).toBe("expense")
     expect(transactions[1].description).toContain("Joao David Ferreira da Motta")
     expect(transactions[1].type).toBe("transfer")
+    expect(transactions[2].type).toBe("income")
+    expect(validation.saldo_final_confere).toBe(true)
+    expect(validation.inconsistencias).toEqual([])
+  })
+
+  it("usa o sinal do valor como fonte de verdade e preserva o tipo Cashback", () => {
+    const { transactions, validation, conta } =
+      parseInterStatementWithValidation(SAMPLE_LAYOUT_REAL_INTER)
+
+    expect(conta).toMatchObject({
+      titular: "CLIENTE TESTE",
+      cpf_cnpj: "123.456.789-00",
+      instituicao: "Banco Inter",
+      agencia: "0001-9",
+      conta: "12345678-9",
+      saldo_total: 1.8,
+      saldo_disponivel: 1.8,
+      saldo_bloqueado: 0,
+    })
+    expect(transactions).toEqual([
+      expect.objectContaining({
+        description: "Cashback - INTER PRE 20GB MENSAL",
+        amount: 1.8,
+        type: "income",
+      }),
+    ])
     expect(validation.saldo_final_confere).toBe(true)
     expect(validation.inconsistencias).toEqual([])
   })

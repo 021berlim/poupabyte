@@ -73,10 +73,11 @@ const MESES: Record<string, number> = {
 }
 
 const RE_MONEY = /-?R\$\s*[\d.,]+/
-const RE_DIA = /^(\d{1,2}) de (\w+) de (\d{4})\s+Saldo do dia:\s*(-?R\$\s*[\d.,]+)\s*$/i
+const RE_MONEY_GLOBAL = /-?R\$\s*[\d.,]+/g
+const RE_DIA = /^(\d{1,2}) de (\S+) de (\d{4})\s+Saldo do dia:\s*(-?R\$\s*[\d.,]+)\s*$/i
 const RE_TX = /^([^:"]+):\s*"([^"]*)"\s+(-?R\$\s*[\d.,]+)\s+(-?R\$\s*[\d.,]+)\s*$/
 const RE_HEADER_LINE =
-  /CPF\/CNPJ:\s*([\d./-]+),\s*Institui[cç][aã]o:\s*([^,]+),\s*Ag[eê]ncia:\s*([\w-]+),\s*Conta:\s*([\w-]+)/i
+  /CPF\/CNPJ:\s*([\d./-]+)\s*,\s*Institui[cç][aã]o:\s*([^,]+?)\s*,\s*Ag[eê]ncia:\s*([\w-]+)\s*,\s*Conta:\s*([\w-]+)/i
 const RE_PERIODO = /Per[ií]odo:\s*(\d{2}\/\d{2}\/\d{4})\s*a\s*(\d{2}\/\d{2}\/\d{4})/i
 const RE_SOLICITADO = /Solicitado em:\s*(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2})h(\d{2})/i
 
@@ -167,8 +168,43 @@ function extrairValorAposLabel(linhas: string[], idxLabel: number): string | nul
   return null
 }
 
+function textoSemAcentos(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+}
+
+function parseResumoSaldosEmColunas(
+  linhas: string[],
+): Pick<InterStatementAccount, "saldo_total" | "saldo_disponivel" | "saldo_bloqueado"> {
+  for (let i = 0; i < linhas.length; i += 1) {
+    const label = textoSemAcentos(linhas[i])
+    if (
+      !label.includes("saldo total") ||
+      !label.includes("saldo disponivel") ||
+      !label.includes("saldo bloqueado")
+    ) {
+      continue
+    }
+
+    const valores: string[] = []
+    for (let j = i; j < Math.min(i + 4, linhas.length) && valores.length < 3; j += 1) {
+      valores.push(...(linhas[j].match(RE_MONEY_GLOBAL) ?? []))
+    }
+    if (valores.length >= 3) {
+      return {
+        saldo_total: parseMoneyBrl(valores[0]),
+        saldo_disponivel: parseMoneyBrl(valores[1]),
+        saldo_bloqueado: parseMoneyBrl(valores[2]),
+      }
+    }
+  }
+  return {}
+}
+
 function parseCabecalho(linhas: string[]): InterStatementAccount {
-  const cab: InterStatementAccount = {}
+  const cab: InterStatementAccount = { ...parseResumoSaldosEmColunas(linhas) }
   const textoCompleto = linhas.join("\n")
 
   const solicitado = textoCompleto.match(RE_SOLICITADO)

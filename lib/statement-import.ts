@@ -5,6 +5,12 @@ import {
   type InterStatementTransaction,
   type InterStatementValidation,
 } from "./inter-statement-parser"
+import {
+  parseBradescoStatementStructured,
+  type BradescoStatementResult,
+  type BradescoStatementTransaction,
+  type BradescoStatementValidation,
+} from "./bradesco-statement-parser"
 import type { CategoryId, CategoryRef, CategoryRule, TransactionType, UserCategory } from "./types"
 
 export type StatementBank = "auto" | "inter" | "bradesco" | "itau" | "nubank" | "other"
@@ -25,6 +31,8 @@ export interface StatementParseResult {
   transactions: ParsedStatementTransaction[]
   usedAi: boolean
   interValidation?: InterStatementValidation
+  bradescoValidation?: BradescoStatementValidation
+  bradescoStructured?: BradescoStatementResult
 }
 
 const INTER_MARKERS = [
@@ -150,9 +158,11 @@ export function detectStatementBank(text: string): DetectedStatementBank {
 function interTransactionDescription(tx: InterStatementTransaction): string {
   if (tx.contraparte) return `${tx.tipo_raw} - ${tx.contraparte}`
   if (tx.estabelecimento) return tx.estabelecimento
+  if (tx.tipo_categoria === "CASHBACK") {
+    return `${tx.tipo_raw} - ${tx.descricao_raw}`
+  }
   if (
     tx.tipo_categoria === "COMPRA_INTER_CEL" ||
-    tx.tipo_categoria === "CASHBACK" ||
     tx.tipo_categoria === "OUTROS"
   ) {
     return tx.descricao_raw
@@ -160,10 +170,19 @@ function interTransactionDescription(tx: InterStatementTransaction): string {
   return `${tx.tipo_raw} - ${tx.descricao_raw}`
 }
 
+function inferInterTransactionType(tx: InterStatementTransaction): TransactionType {
+  if (
+    tx.valor < 0 &&
+    (tx.tipo_categoria === "PIX_ENVIADO" || tx.tipo_categoria === "TED_ENVIADA")
+  ) {
+    return "transfer"
+  }
+  return tx.valor < 0 ? "expense" : "income"
+}
+
 function interTransactionToParsed(tx: InterStatementTransaction): ParsedStatementTransaction {
   const description = interTransactionDescription(tx)
-  const signedValue = tx.valor < 0 ? `-${tx.valor}` : String(tx.valor)
-  const type = inferType(description, signedValue)
+  const type = inferInterTransactionType(tx)
   const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
   return {
     date: tx.data,
@@ -189,100 +208,46 @@ export function parseInterStatementWithValidation(text: string) {
   }
 }
 
-function isBradescoType(line: string): line is (typeof BRADESCO_TYPES)[number] {
-  return BRADESCO_TYPES.includes(normalized(line) as (typeof BRADESCO_TYPES)[number])
+function bradescoTransactionDescription(transaction: BradescoStatementTransaction): string {
+  if (transaction.contraparte) return `${transaction.tipo_raw} - ${transaction.contraparte}`
+  if (transaction.estabelecimento) return transaction.estabelecimento
+  if (transaction.tipo_categoria === "PAGAMENTO_GOVERNO") return "Pagamento Governo RJ"
+  if (transaction.tipo_categoria === "RENDIMENTO") return "Rendimentos"
+  return transaction.detalhe_raw ? `${transaction.tipo_raw} - ${transaction.detalhe_raw}` : transaction.tipo_raw
 }
 
-function isIgnoredBradescoLine(line: string) {
-  const value = normalized(line)
-  return (
-    !value ||
-    value === "BRADESCO CELULAR" ||
-    value.startsWith("NOME:") ||
-    value.startsWith("EXTRATO DE:") ||
-    value.startsWith("FOLHA:") ||
-    value.startsWith("DATA:") ||
-    value.startsWith("DATA HISTORICO DOCTO.") ||
-    value.startsWith("TOTAL ") ||
-    value.includes("COD. LANC.")
-  )
-}
-
-function cleanBradescoDetail(value: string) {
-  return value
-    .replace(/^(REM|DES):\s*/i, "")
-    .replace(/\s+\d{2}\/\d{2}\s*$/, "")
-    .trim()
-}
-
-function bradescoDescription(kind: string, detail: string) {
-  const cleaned = cleanBradescoDetail(detail)
-  if (kind === "COMPRA ELO DEBITO VISTA") return cleaned || "Compra no débito"
-  if (kind === "PAGAMENTO GOVERNO RJ") return "Pagamento Governo RJ"
-  if (kind === "RENDIMENTOS") return "Rendimentos"
-  const labels: Record<string, string> = {
-    "PIX RECEBIDO": "Pix recebido",
-    "PIX ENVIADO": "Pix enviado",
-    "PIX QR CODE DINAMICO": "Pix QR Code dinâmico",
-    "PIX QR CODE ESTATICO": "Pix QR Code estático",
+function bradescoTransactionToParsed(transaction: BradescoStatementTransaction): ParsedStatementTransaction {
+  const description = bradescoTransactionDescription(transaction)
+  const type: TransactionType =
+    transaction.valor < 0 && transaction.tipo_categoria === "PIX_ENVIADO"
+      ? "transfer"
+      : transaction.valor < 0
+        ? "expense"
+        : "income"
+  const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
+  return {
+    date: transaction.data_real ?? transaction.data_extrato,
+    description,
+    amount: Math.abs(transaction.valor),
+    type,
+    category: suggestion.category,
+    subcategoryId: suggestion.subcategoryId,
+    confidence: type === "transfer" ? 0.7 : suggestion.confidence,
   }
-  return cleaned ? `${labels[kind] ?? kind} - ${cleaned}` : labels[kind] ?? kind
 }
 
 export function parseBradescoStatement(text: string): ParsedStatementTransaction[] {
-  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim())
-  const transactions: ParsedStatementTransaction[] = []
-  const movementPattern = /^(?:(\d{2}\/\d{2}\/\d{4})\s+)?\d{6,7}\s+(-?[\d.]+,\d{2})\s+(-?[\d.]+,\d{2})$/
-  let currentDate = ""
+  return parseBradescoStatementStructured(text).transacoes.map(bradescoTransactionToParsed)
+}
 
-  for (let index = 0; index < lines.length; index += 1) {
-    const lineDate = lines[index].match(/^(\d{2}\/\d{2}\/\d{4})/)
-    if (lineDate) currentDate = brDateToIso(lineDate[1])
-
-    const kind = normalized(lines[index])
-    if (!isBradescoType(kind)) continue
-
-    let movementIndex = -1
-    let movementMatch: RegExpMatchArray | null = null
-    for (let cursor = index + 1; cursor < Math.min(lines.length, index + 12); cursor += 1) {
-      if (isBradescoType(lines[cursor])) break
-      const candidate = lines[cursor].match(movementPattern)
-      if (candidate) {
-        movementIndex = cursor
-        movementMatch = candidate
-        break
-      }
-    }
-    if (!movementMatch || movementIndex < 0) continue
-    if (movementMatch[1]) currentDate = brDateToIso(movementMatch[1])
-    if (!currentDate) continue
-
-    let detail = ""
-    let detailIndex = movementIndex
-    for (let cursor = movementIndex + 1; cursor < Math.min(lines.length, movementIndex + 8); cursor += 1) {
-      if (isBradescoType(lines[cursor]) || lines[cursor].match(movementPattern)) break
-      if (isIgnoredBradescoLine(lines[cursor])) continue
-      detail = lines[cursor]
-      detailIndex = cursor
-      break
-    }
-
-    const description = bradescoDescription(kind, detail)
-    const type = inferType(description, movementMatch[2])
-    const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
-    transactions.push({
-      date: currentDate,
-      description,
-      amount: parseMoney(movementMatch[2]),
-      type,
-      category: suggestion.category,
-      subcategoryId: suggestion.subcategoryId,
-      confidence: suggestion.confidence,
-    })
-    index = detailIndex
+export function parseBradescoStatementWithValidation(text: string) {
+  const result = parseBradescoStatementStructured(text)
+  return {
+    transactions: result.transacoes.map(bradescoTransactionToParsed),
+    validation: result.validacao,
+    conta: result.conta,
+    structured: result,
   }
-
-  return transactions
 }
 
 export function parseGenericBrazilianStatement(text: string): ParsedStatementTransaction[] {
@@ -329,17 +294,29 @@ export function parseStatement(text: string, requestedBank: StatementBank = "aut
   const bank = requestedBank === "auto" ? detectStatementBank(text) : requestedBank
   let transactions: ParsedStatementTransaction[] = []
   let interValidation: InterStatementValidation | undefined
+  let bradescoValidation: BradescoStatementValidation | undefined
+  let bradescoStructured: BradescoStatementResult | undefined
 
   if (bank === "inter") {
     const parsed = parseInterStatementWithValidation(text)
     transactions = parsed.transactions
     interValidation = parsed.validation
   } else if (bank === "bradesco") {
-    transactions = parseBradescoStatement(text)
+    const parsed = parseBradescoStatementWithValidation(text)
+    transactions = parsed.transactions
+    bradescoValidation = parsed.validation
+    bradescoStructured = parsed.structured
   } else {
     transactions = parseGenericBrazilianStatement(text)
   }
 
   if (transactions.length === 0) transactions = parseGenericBrazilianStatement(text)
-  return { bank, transactions, usedAi: false, interValidation }
+  return {
+    bank,
+    transactions,
+    usedAi: false,
+    interValidation,
+    bradescoValidation,
+    bradescoStructured,
+  }
 }
