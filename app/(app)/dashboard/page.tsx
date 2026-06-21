@@ -54,20 +54,26 @@ export default function DashboardPage() {
  const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
  const [detailsOpen, setDetailsOpen] = useState(false)
 
- const planning = useMemo(
-  () => buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits),
-  [financialProfile, transactions, goals, subscriptions, installments, limits],
- )
-
  const monthHistory = useMemo(
   () => monthCommitmentHistory(financialProfile, transactions, goals, subscriptions, installments, limits, 6),
   [financialProfile, transactions, goals, subscriptions, installments, limits],
  )
 
  const activeMonth = monthHistory.find((month) => month.key === selectedMonth) ?? monthHistory.at(-1)
- const currentMonth = monthHistory.at(-1)
- const isCurrentMonth = activeMonth?.key === currentMonth?.key
- const displayValue = isCurrentMonth ? planning.safeToSpend : activeMonth?.safeToSpend ?? 0
+
+ const activeMonthRef = useMemo(() => {
+  const key = activeMonth?.key
+  if (!key) return new Date()
+  const [year, month] = key.split("-").map(Number)
+  return new Date(year, month, 1)
+ }, [activeMonth?.key])
+
+ const activePlanning = useMemo(
+  () => buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits, activeMonthRef),
+  [financialProfile, transactions, goals, subscriptions, installments, limits, activeMonthRef],
+ )
+
+ const displayValue = activePlanning.safeToSpend
  const maxPercent = Math.max(...monthHistory.map((item) => item.percent), 1)
 
  const limitAlerts = limitUsage(limits, transactions).filter((item) => item.status !== "healthy")
@@ -135,15 +141,15 @@ export default function DashboardPage() {
  const heroMetrics = [
   {
    label: "Entradas",
-   value: formatCurrency(planning.receivedIncome),
-   detail: planning.extraIncomeDetected > 0
-    ? `Salário ${formatCurrency(planning.declaredSalary)} + extra ${formatCurrency(planning.extraIncomeDetected)}`
-    : `Salário ${formatCurrency(planning.declaredSalary)}`,
+   value: formatCurrency(activePlanning.receivedIncome),
+   detail: activePlanning.extraIncomeDetected > 0
+    ? `Salário ${formatCurrency(activePlanning.declaredSalary)} + extra ${formatCurrency(activePlanning.extraIncomeDetected)}`
+    : `Salário ${formatCurrency(activePlanning.declaredSalary)}`,
    tone: "text-emerald-300",
   },
-  { label: "Despesas", value: formatCurrency(planning.confirmedExpenses), detail: "confirmadas no mês", tone: "text-red-300" },
-  { label: "Comprometido", value: `${Math.round(planning.monthCommittedPercent)}%`, detail: `Orçamentos: ${Math.round(planning.salaryUsedPercent)}% usados` },
-  { label: "Economia prevista", value: formatCurrency(planning.projectedSavings), detail: `Reserva: ${formatCurrency(planning.monthlyReserve)}`, tone: planning.projectedSavings >= 0 ? "text-emerald-300" : "text-red-300" },
+  { label: "Despesas", value: formatCurrency(activePlanning.confirmedExpenses), detail: "confirmadas no mês", tone: "text-red-300" },
+  { label: "Comprometido", value: `${Math.round(activePlanning.monthCommittedPercent)}%`, detail: `Orçamentos: ${Math.round(activePlanning.salaryUsedPercent)}% usados` },
+  { label: "Economia prevista", value: formatCurrency(activePlanning.projectedSavings), detail: `Reserva: ${formatCurrency(activePlanning.monthlyReserve)}`, tone: activePlanning.projectedSavings >= 0 ? "text-emerald-300" : "text-red-300" },
  ]
 
  return (
@@ -181,7 +187,7 @@ export default function DashboardPage() {
         Disponível para gastar
        </p>
        <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
-        Renda: {formatCurrency(planning.declaredSalary)}
+        Renda: {formatCurrency(activePlanning.declaredSalary)}
        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -220,7 +226,7 @@ export default function DashboardPage() {
         </div>
        )}
        <p className="mt-2 text-sm font-medium text-white/55">
-        Ainda deve sobrar {formatCurrency(planning.projectedSavings)}.
+        Ainda deve sobrar {formatCurrency(activePlanning.projectedSavings)}.
        </p>
       </div>
      </div>
@@ -276,17 +282,15 @@ export default function DashboardPage() {
          )
         })}
        </div>
-       {isCurrentMonth ? (
-        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-white/15 pt-4 sm:grid-cols-4">
-         {heroMetrics.map((metric) => (
-          <div key={metric.label} className="min-w-0">
-           <dt className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-white/55 sm:text-[10px]">{metric.label}</dt>
-           <dd className={cn("mt-1 truncate text-base font-extrabold leading-none tabular-nums text-white sm:text-lg", metric.tone)}>{metric.value}</dd>
-           <p className="mt-1 truncate text-[10px] leading-4 text-white/55">{metric.detail}</p>
-          </div>
-         ))}
-        </dl>
-       ) : null}
+       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-white/15 pt-4 sm:grid-cols-4">
+        {heroMetrics.map((metric) => (
+         <div key={metric.label} className="min-w-0">
+          <dt className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-white/55 sm:text-[10px]">{metric.label}</dt>
+          <dd className={cn("mt-1 truncate text-base font-extrabold leading-none tabular-nums text-white sm:text-lg", metric.tone)}>{metric.value}</dd>
+          <p className="mt-1 truncate text-[10px] leading-4 text-white/55">{metric.detail}</p>
+         </div>
+        ))}
+       </dl>
       </CollapsibleContent>
      </Collapsible>
     </AnimatedSection>
