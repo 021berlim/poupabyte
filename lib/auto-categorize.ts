@@ -144,6 +144,17 @@ export function suggestCategory(
     return { category: "transferencias", confidence: 0.85, source: "default" }
   }
 
+  if (
+    containsAny(text, [
+      "PIX ENVIADO",
+      "TRANSFERENCIA ENVIADA",
+      "TED ENVIADA",
+      "DOC ENVIADO",
+    ])
+  ) {
+    return { category: "outros-gastos", confidence: 0.75, source: "keyword" }
+  }
+
   for (const rule of SYSTEM_KEYWORD_RULES) {
     if (!containsAny(text, rule.terms)) continue
     const subcategoryId = rule.subcategoryHints

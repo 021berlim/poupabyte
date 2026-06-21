@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/app/page-header"
 import { StatStrip } from "@/components/app/stat-strip"
 import { Button } from "@/components/ui/button"
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+
 import {
   ChartContainer,
   ChartTooltip,
@@ -41,17 +41,19 @@ import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import type { CategoryId } from "@/lib/types"
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, XAxis, YAxis, type TooltipProps } from "recharts"
-import { Activity, Landmark, PieChart as PieChartIcon, SlidersHorizontal, Target } from "lucide-react"
+import { Activity, CalendarRange, Landmark, PieChart as PieChartIcon, Target } from "lucide-react"
 
 type ReportPeriod = "month" | "3m" | "year" | "all"
 type InteractiveChartId = "monthly" | "limits" | "annual" | "investments" | "evolution"
 
-const PERIOD_LABEL: Record<ReportPeriod, string> = {
-  month: "Este mes",
-  "3m": "Ultimos 3 meses",
-  year: "Este ano",
-  all: "Todo periodo",
-}
+const REPORT_PERIODS: { value: ReportPeriod; label: string }[] = [
+  { value: "month", label: "Este mês" },
+  { value: "3m", label: "3 meses" },
+  { value: "year", label: "Este ano" },
+  { value: "all", label: "Tudo" },
+]
+
+const periodDateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", year: "numeric" })
 
 const monthlyConfig = {
   income: { label: "Receitas", color: "var(--chart-3)" },
@@ -72,6 +74,20 @@ const investmentConfig = {
   current: { label: "Atual", color: "var(--chart-3)" },
   returnAmount: { label: "Rendimento", color: "var(--chart-1)" },
 } satisfies ChartConfig
+
+function periodDescription(period: ReportPeriod) {
+  const now = new Date()
+  if (period === "all") return "Todo o histórico de lançamentos"
+  if (period === "year") return `${now.getFullYear()} · 1 jan – 31 dez`
+  if (period === "month") {
+    const from = new Date(now.getFullYear(), now.getMonth(), 1)
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    return `${periodDateFormatter.format(from)} – ${periodDateFormatter.format(to)}`
+  }
+  const from = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return `${periodDateFormatter.format(from)} – ${periodDateFormatter.format(to)}`
+}
 
 function periodRange(period: ReportPeriod) {
   const now = new Date()
@@ -195,6 +211,15 @@ export default function ReportsPage() {
   const [activeInvestmentCategory, setActiveInvestmentCategory] = useState<number | null>(null)
   const [activeSeries, setActiveSeries] = useState<{ chart: InteractiveChartId; key: string } | null>(null)
   const range = useMemo(() => periodRange(period), [period])
+  const periodContext = useMemo(() => periodDescription(period), [period])
+  const pageSubtitle = useMemo(() => {
+    if (period === "year") return `Resumo financeiro de ${new Date().getFullYear()}.`
+    if (period === "month") return "Resumo financeiro do mês atual."
+    if (period === "3m") return "Resumo financeiro dos últimos 3 meses."
+    return "Resumo financeiro de todo o histórico."
+  }, [period])
+  const selectedCategoryLabel =
+    category === "all" ? null : (CATEGORY_LIST.find((item) => item.id === category)?.label ?? getCategory(category).label)
   const filteredTransactions = useMemo(
     () =>
       filterTransactions(transactions, {
@@ -204,20 +229,44 @@ export default function ReportsPage() {
     [category, range, transactions],
   )
   const summary = useMemo(() => transactionSummary(filteredTransactions), [filteredTransactions])
+  const incomeCount = useMemo(
+    () => filteredTransactions.filter((tx) => tx.type === "income").length,
+    [filteredTransactions],
+  )
+  const expenseCount = useMemo(
+    () => filteredTransactions.filter((tx) => tx.type === "expense").length,
+    [filteredTransactions],
+  )
+  const insightRef = useMemo(() => {
+    if (range.to) return new Date(`${range.to}T12:00:00`)
+    return new Date()
+  }, [range.to])
   const insights = useMemo(
     () =>
       buildAnalysisInsights(
-        transactions,
+        filteredTransactions,
         financialProfile,
         goals,
         limits,
         subscriptions,
         installments,
-        new Date(),
+        insightRef,
         userCategories,
         hiddenSystemCategories,
+        period === "month" ? "calendar-month" : "filtered-period",
       ),
-    [transactions, financialProfile, goals, limits, subscriptions, installments, userCategories, hiddenSystemCategories],
+    [
+      filteredTransactions,
+      financialProfile,
+      goals,
+      limits,
+      subscriptions,
+      installments,
+      insightRef,
+      userCategories,
+      hiddenSystemCategories,
+      period,
+    ],
   )
   const categoryData = useMemo(() => expenseByCategory(filteredTransactions), [filteredTransactions])
   const categoryTotal = useMemo(() => categoryData.reduce((acc, item) => acc + item.total, 0), [categoryData])
@@ -314,11 +363,31 @@ export default function ReportsPage() {
 
   return (
     <div className="reports-layout min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
-      <PageHeader title="Análises" subtitle="Gráficos e leituras do seu período." />
+      <PageHeader title="Análises" subtitle={pageSubtitle} />
+
+      <div className="border-b">
+        <div className="grid min-w-0 grid-cols-4">
+          {REPORT_PERIODS.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setPeriod(item.value)}
+              className={cn(
+                "min-w-0 truncate border-b-2 px-1 py-3 text-[11px] font-semibold transition-colors sm:px-3 sm:text-sm",
+                period === item.value
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <StatStrip items={[
-        { label: "Receitas do período", value: formatCurrency(summary.income), tone: "text-success", detail: PERIOD_LABEL[period] },
-        { label: "Despesas do período", value: formatCurrency(summary.expense), tone: "text-destructive", detail: PERIOD_LABEL[period] },
+        { label: "Receitas do período", value: formatCurrency(summary.income), tone: "text-success", detail: `${incomeCount} lançamentos` },
+        { label: "Despesas do período", value: formatCurrency(summary.expense), tone: "text-destructive", detail: `${expenseCount} lançamentos` },
         { label: "Resultado", value: formatCurrency(summary.balance), tone: summary.balance >= 0 ? "text-success" : "text-destructive", detail: "receitas menos despesas" },
         { label: "Renda comprometida", value: `${Math.round(buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits).monthCommittedPercent)}%`, detail: `salário declarado: ${formatCurrency(financialProfile.monthlySalary)}` },
       ]} />
@@ -334,41 +403,27 @@ export default function ReportsPage() {
         </section>
       ) : null}
 
-      <div className="flex justify-end gap-2 border-y py-3">
-       <Sheet>
-        <SheetTrigger asChild><Button variant="outline"><SlidersHorizontal className="h-4 w-4" />Filtros do relatório</Button></SheetTrigger>
-        <SheetContent side="responsive" className="app-desktop-panel-wide overflow-hidden">
-         <SheetHeader><SheetTitle>Filtros do relatório</SheetTitle><SheetDescription>Selecione período e categoria para atualizar os gráficos.</SheetDescription></SheetHeader>
-        <div className="app-responsive-modal-body grid w-full grid-cols-1 gap-3 px-6 py-5 min-[390px]:grid-cols-2">
-          <Select value={period} onValueChange={(value) => setPeriod(value as ReportPeriod)}>
-            <SelectTrigger className="w-full focus-visible:border-primary lg:w-40" aria-label="Período do relatório">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(PERIOD_LABEL) as ReportPeriod[]).map((item) => (
-                <SelectItem key={item} value={item}>
-                  {PERIOD_LABEL[item]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={category} onValueChange={(value) => setCategory(value as CategoryId | "all")}>
-            <SelectTrigger className="w-full focus-visible:border-primary lg:w-52" aria-label="Categoria do relatório">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as categorias</SelectItem>
-              {CATEGORY_LIST.map((item) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+          <CalendarRange className="h-4 w-4 shrink-0" />
+          <span className="truncate">
+            {periodContext}
+            {selectedCategoryLabel ? ` · ${selectedCategoryLabel}` : ""}
+          </span>
         </div>
-        </SheetContent>
-       </Sheet>
+        <Select value={category} onValueChange={(value) => setCategory(value as CategoryId | "all")}>
+          <SelectTrigger className="w-full focus-visible:border-primary sm:w-52" aria-label="Filtrar por categoria">
+            <SelectValue placeholder="Todas as categorias" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as categorias</SelectItem>
+            {CATEGORY_LIST.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {!hasFinancialData ? (

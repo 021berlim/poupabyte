@@ -17,6 +17,8 @@ function percentOf(value: number, total: number): number {
   return total > 0 ? (value / total) * 100 : 0
 }
 
+export type AnalysisInsightScope = "calendar-month" | "filtered-period"
+
 export function buildAnalysisInsights(
   transactions: Transaction[],
   profile: FinancialProfile,
@@ -27,12 +29,17 @@ export function buildAnalysisInsights(
   ref = new Date(),
   userCategories: UserCategory[] = [],
   hiddenSystemCategories: CategoryId[] = [],
+  scope: AnalysisInsightScope = "calendar-month",
 ): AnalysisInsight[] {
   const insights: AnalysisInsight[] = []
   const planning = buildMonthlyPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
-  const monthTxs = transactions.filter((tx) => tx.date.slice(0, 7) === `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`)
-  const summary = transactionSummary(monthTxs)
-  const categories = expenseByCategory(monthTxs, ref)
+  const monthKey = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`
+  const periodTxs =
+    scope === "filtered-period"
+      ? transactions
+      : transactions.filter((tx) => tx.date.slice(0, 7) === monthKey)
+  const summary = transactionSummary(periodTxs)
+  const categories = expenseByCategory(periodTxs, scope === "calendar-month" ? ref : undefined)
   const declared = getDeclaredSalaryForMonth(profile, ref)
 
   if (categories[0]) {
@@ -40,21 +47,24 @@ export function buildAnalysisInsights(
     insights.push({
       id: "top-category",
       title: "Categoria que mais consumiu",
-      message: `${categories[0].label} representa ${share.toFixed(0)}% das despesas do mês atual.`,
+      message:
+        scope === "filtered-period"
+          ? `${categories[0].label} representa ${share.toFixed(0)}% das despesas do período filtrado.`
+          : `${categories[0].label} representa ${share.toFixed(0)}% das despesas do mês atual.`,
       tone: share >= 40 ? "warning" : "neutral",
     })
   }
 
-  if (declared > 0) {
+  if (scope === "calendar-month" && declared > 0) {
     insights.push({
       id: "salary-committed",
       title: "Renda comprometida",
-      message: `Com salário declarado de ${declared.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}, suas despesas confirmadas representam ${planning.monthCommittedPercent.toFixed(0)}% da renda.`,
+      message: `Com ${planning.receivedIncome.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} recebidos neste mês, ${planning.monthCommittedPercent.toFixed(0)}% já está comprometido.`,
       tone: planning.monthCommittedPercent >= 90 ? "critical" : planning.monthCommittedPercent >= 71 ? "warning" : "positive",
     })
   }
 
-  const series = monthlySeries(transactions, 6)
+  const series = monthlySeries(scope === "filtered-period" ? periodTxs : transactions, 6)
   const best = [...series].sort((a, b) => b.balance - a.balance)[0]
   const worst = [...series].sort((a, b) => a.balance - b.balance)[0]
   if (best && best.balance > 0) {
@@ -74,7 +84,9 @@ export function buildAnalysisInsights(
     })
   }
 
-  const fixed = monthTxs.filter((tx) => tx.isFixed || tx.isSubscription || tx.isRecurring).reduce((acc, tx) => acc + (tx.type === "expense" ? tx.amount : 0), 0)
+  const fixed = periodTxs
+    .filter((tx) => tx.isFixed || tx.isSubscription || tx.isRecurring)
+    .reduce((acc, tx) => acc + (tx.type === "expense" ? tx.amount : 0), 0)
   const variable = summary.expense - fixed
   if (summary.expense > 0) {
     insights.push({
@@ -95,14 +107,14 @@ export function buildAnalysisInsights(
     })
   }
 
-  if (planning.projectedSavings < 0) {
+  if (scope === "calendar-month" && planning.projectedSavings < 0) {
     insights.push({
       id: "negative-projection",
       title: "Projeção negativa",
       message: `Você deve terminar o mês com déficit de ${Math.abs(planning.projectedSavings).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} se mantiver o ritmo atual.`,
       tone: "critical",
     })
-  } else if (planning.daysLeft > 0) {
+  } else if (scope === "calendar-month" && planning.daysLeft > 0) {
     insights.push({
       id: "month-projection",
       title: "Projeção de fim do mês",
@@ -112,7 +124,7 @@ export function buildAnalysisInsights(
   }
 
   const extra = planning.receivedIncome - planning.declaredSalary
-  if (extra > 100) {
+  if (scope === "calendar-month" && extra > 100) {
     insights.push({
       id: "extra-income",
       title: "Renda extra detectada",
@@ -139,7 +151,7 @@ export function buildAnalysisInsights(
   }
 
   const ctx: CategoryContext = { userCategories, hiddenSystemCategories }
-  const subcategories = expenseBySubcategory(monthTxs, ctx, ref)
+  const subcategories = expenseBySubcategory(periodTxs, ctx, scope === "calendar-month" ? ref : undefined)
   if (subcategories[0]) {
     const parentShare = categories[0] ? percentOf(subcategories[0].total, categories[0].total) : 0
     insights.push({

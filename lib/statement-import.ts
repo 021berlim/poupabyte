@@ -72,7 +72,6 @@ const CATEGORY_RULES: Array<{ category: CategoryId; terms: string[] }> = [
 ]
 
 const INCOME_TERMS = ["SALARIO", "SALÁRIO", "PIX RECEBIDO", "TRANSFERENCIA RECEBIDA", "TRANSFERÊNCIA RECEBIDA", "REEMBOLSO", "RENDIMENTO", "DIVIDENDO", "PAGAMENTO GOVERNO", "RENDIMENTOS", "CASHBACK", "PROVENTO"]
-const TRANSFER_TERMS = ["PIX ENVIADO", "TRANSFERENCIA ENVIADA", "TRANSFERÊNCIA ENVIADA", "TED ENVIADA", "DOC ENVIADO"]
 
 function normalized(value: string) {
   return value
@@ -131,7 +130,6 @@ export function suggestStatementCategory(
 
 function inferType(description: string, signedValue: string, creditDebit?: string): TransactionType {
   const text = normalized(description)
-  if (containsAny(text, TRANSFER_TERMS)) return "transfer"
   if (creditDebit) {
     const marker = normalized(creditDebit)
     if (marker === "C" || marker === "CREDITO" || marker === "CRÉDITO") return "income"
@@ -171,19 +169,13 @@ function interTransactionDescription(tx: InterStatementTransaction): string {
 }
 
 function inferInterTransactionType(tx: InterStatementTransaction): TransactionType {
-  if (
-    tx.valor < 0 &&
-    (tx.tipo_categoria === "PIX_ENVIADO" || tx.tipo_categoria === "TED_ENVIADA")
-  ) {
-    return "transfer"
-  }
   return tx.valor < 0 ? "expense" : "income"
 }
 
 function interTransactionToParsed(tx: InterStatementTransaction): ParsedStatementTransaction {
   const description = interTransactionDescription(tx)
   const type = inferInterTransactionType(tx)
-  const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
+  const suggestion = suggestStatementCategory(description, type)
   return {
     date: tx.data,
     description,
@@ -191,7 +183,7 @@ function interTransactionToParsed(tx: InterStatementTransaction): ParsedStatemen
     type,
     category: suggestion.category,
     subcategoryId: suggestion.subcategoryId,
-    confidence: type === "transfer" ? 0.7 : suggestion.confidence,
+    confidence: suggestion.confidence,
   }
 }
 
@@ -218,13 +210,8 @@ function bradescoTransactionDescription(transaction: BradescoStatementTransactio
 
 function bradescoTransactionToParsed(transaction: BradescoStatementTransaction): ParsedStatementTransaction {
   const description = bradescoTransactionDescription(transaction)
-  const type: TransactionType =
-    transaction.valor < 0 && transaction.tipo_categoria === "PIX_ENVIADO"
-      ? "transfer"
-      : transaction.valor < 0
-        ? "expense"
-        : "income"
-  const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
+  const type: TransactionType = transaction.valor < 0 ? "expense" : "income"
+  const suggestion = suggestStatementCategory(description, type)
   return {
     date: transaction.data_real ?? transaction.data_extrato,
     description,
@@ -232,7 +219,7 @@ function bradescoTransactionToParsed(transaction: BradescoStatementTransaction):
     type,
     category: suggestion.category,
     subcategoryId: suggestion.subcategoryId,
-    confidence: type === "transfer" ? 0.7 : suggestion.confidence,
+    confidence: suggestion.confidence,
   }
 }
 
@@ -273,7 +260,7 @@ export function parseGenericBrazilianStatement(text: string): ParsedStatementTra
       const signedValue = match[3]
       const creditDebit = match[4]
       const type = inferType(description, signedValue, creditDebit)
-      const suggestion = suggestStatementCategory(description, type === "transfer" ? "expense" : type)
+      const suggestion = suggestStatementCategory(description, type)
       transactions.push({
         date,
         description,

@@ -57,6 +57,7 @@ export function TransactionRow({
  const cat = resolveTransactionCategory(tx, { userCategories, hiddenSystemCategories })
  const Icon = getCategoryIcon(tx.category)
  const income = tx.type === "income"
+ const neutralTransfer = tx.type === "transfer"
  const date = ledgerDateParts(tx.date)
  const categoryPath = cat.parentLabel ? `${cat.parentLabel} › ${cat.label}` : cat.label
  const typeLabel = income ? "Receita" : tx.type === "expense" ? "Despesa" : "Transferência"
@@ -121,8 +122,8 @@ export function TransactionRow({
       grouped ? "col-start-1 ml-[3.25rem]" : "col-start-2 ml-[3.25rem]",
      )}
     >
-     <p className={cn("text-sm font-extrabold", income ? "text-success" : "text-destructive")}>
-      {income ? "+" : "-"}{formatCurrency(tx.amount)}
+     <p className={cn("text-sm font-extrabold", income ? "text-success" : neutralTransfer ? "text-muted-foreground" : "text-destructive")}>
+      {income ? "+" : neutralTransfer ? "↔" : "-"}{formatCurrency(tx.amount)}
      </p>
      {balanceAfter !== undefined ? <p className="mt-1 text-xs font-medium text-muted-foreground">{formatCurrency(balanceAfter)}</p> : null}
     </div>
@@ -170,10 +171,10 @@ export function TransactionRow({
     className={cn(
      "col-start-2 w-fit max-w-full shrink-0 py-1.5 text-left text-[clamp(0.75rem,3.4vw,0.875rem)] font-extrabold tabular-nums min-[460px]:col-auto min-[460px]:ml-auto min-[460px]:min-w-[112px] min-[460px]:text-right",
      actionSlot ? "col-end-3" : "col-end-4",
-     income ? "text-success" : "text-destructive",
+     income ? "text-success" : neutralTransfer ? "text-muted-foreground" : "text-destructive",
     )}
    >
-    {income ? "+" : "-"}
+    {income ? "+" : neutralTransfer ? "↔" : "-"}
     {formatCurrency(tx.amount)}
    </div>
    {actionSlot ? (

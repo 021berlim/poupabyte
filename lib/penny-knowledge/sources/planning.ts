@@ -57,7 +57,8 @@ export const planningSource: PennyKnowledgeSource = {
       reason: "A pergunta envolve planejamento mensal, salário, orçamento ou compromissos futuros.",
       data: {
         incomeDecisionRules: {
-          shortTermUses: "renda total do mês (salário + renda extra + receitas confirmadas)",
+          shortTermUses: "entradas confirmadas no mês (safeToSpend usa apenas o que já entrou na conta)",
+          projectedUses: "renda prevista do mês (salário declarado + renda extra esperada) para projeções",
           longTermUses: "apenas salário fixo declarado",
           extraIncomeGuidance:
             "Renda extra pode ajudar no mês, mas não deve sustentar compromissos longos recorrentes.",

@@ -22,7 +22,7 @@ export function StatCards() {
   {
    label: "Saldo total",
    value: balance,
-   helper: "Disponível agora",
+   helper: "Receitas menos despesas",
    icon: Wallet,
    tone: "text-primary",
    iconTone: "bg-primary/10 text-primary",

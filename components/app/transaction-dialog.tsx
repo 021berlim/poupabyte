@@ -75,10 +75,16 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
   setRecurrenceForm(recurrenceFormStateFromTransaction(transaction))
  }, [dialogOpen, transaction, defaultType])
 
- const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+ const categories =
+  type === "income" ? INCOME_CATEGORIES : type === "transfer" ? [] : EXPENSE_CATEGORIES
 
  function handleTypeChange(next: TransactionType) {
   setType(next)
+  if (next === "transfer") {
+   setCategory("transferencias")
+   setRecurrenceForm(defaultRecurrenceFormState(date))
+   return
+  }
   const valid = (next === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).some((c) => c.id === category)
   if (!valid) setCategory(next === "income" ? "salario" : "alimentacao")
   if (next !== "expense") setRecurrenceForm(defaultRecurrenceFormState(date))
@@ -134,25 +140,36 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
 
     <form onSubmit={handleSubmit}>
      <div className="space-y-4 px-6 py-5">
-      <div className="grid grid-cols-2 gap-2 rounded-2xl border bg-muted p-1">
-      {(["expense", "income"] as TransactionType[]).map((t) => (
+      <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-muted p-1">
+      {([
+       { value: "expense" as const, label: "Despesa" },
+       { value: "income" as const, label: "Receita" },
+       { value: "transfer" as const, label: "Entre contas" },
+      ]).map((option) => (
        <button
-        key={t}
+        key={option.value}
         type="button"
-        onClick={() => handleTypeChange(t)}
+        onClick={() => handleTypeChange(option.value)}
         className={cn(
-         "rounded-2xl border border-transparent py-2 text-sm font-semibold transition-colors",
-         type === t
-          ? t === "income"
+         "rounded-2xl border border-transparent px-1 py-2 text-xs font-semibold transition-colors sm:text-sm",
+         type === option.value
+          ? option.value === "income"
            ? "border-success/40 bg-success text-success-foreground "
-           : "border-primary/40 bg-destructive text-destructive-foreground "
+           : option.value === "transfer"
+             ? "border-border bg-background text-foreground"
+             : "border-primary/40 bg-destructive text-destructive-foreground "
           : "text-muted-foreground hover:text-foreground",
         )}
        >
-        {t === "income" ? "Receita" : "Despesa"}
+        {option.label}
        </button>
       ))}
      </div>
+     {type === "transfer" ? (
+      <p className="text-xs text-muted-foreground">
+       Use quando o valor foi entre suas contas. Não entra como receita nem despesa do mês.
+      </p>
+     ) : null}
 
      <div className="space-y-1.5">
       <Label htmlFor="tx-desc">Descrição</Label>
@@ -179,6 +196,7 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
       </div>
      </div>
 
+     {type !== "transfer" ? (
      <div className="space-y-1.5">
       <Label>Categoria</Label>
       <Select
@@ -212,6 +230,7 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
        </SelectContent>
       </Select>
      </div>
+     ) : null}
 
      {type === "expense" ? (
       <TransactionRecurrenceFields value={recurrenceForm} onChange={setRecurrenceForm} />

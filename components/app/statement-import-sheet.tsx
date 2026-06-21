@@ -47,7 +47,7 @@ const BANK_LABELS: Record<StatementBank, string> = {
 const TYPE_LABELS: Record<TransactionType, string> = {
   income: "Receita",
   expense: "Despesa",
-  transfer: "Transferência",
+  transfer: "Entre minhas contas",
 }
 
 function comparableDescription(value: string) {
@@ -116,8 +116,18 @@ function ReviewImportItem({
               <p className="truncate text-sm font-semibold">{item.description}</p>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">{getCategory(item.category).label}</p>
             </div>
-            <p className={cn("shrink-0 text-sm font-bold tabular-nums", item.type === "income" ? "text-success" : "text-destructive")}>
-              {item.type === "income" ? "+" : "-"}{formatCurrency(item.amount)}
+            <p
+              className={cn(
+                "shrink-0 text-sm font-bold tabular-nums",
+                item.type === "income"
+                  ? "text-success"
+                  : item.type === "transfer"
+                    ? "text-muted-foreground"
+                    : "text-destructive",
+              )}
+            >
+              {item.type === "income" ? "+" : item.type === "transfer" ? "↔" : "-"}
+              {formatCurrency(item.amount)}
             </p>
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
           </CollapsibleTrigger>

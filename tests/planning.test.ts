@@ -34,7 +34,7 @@ describe("monthly planning income", () => {
 
     expect(planning.receivedIncome).toBe(1.8)
     expect(planning.extraIncomeDetected).toBe(1.8)
-    expect(planning.safeToSpend).toBe(501.8)
+    expect(planning.safeToSpend).toBe(1.8)
     expect(planning.projectedSavings).toBe(501.8)
   })
 

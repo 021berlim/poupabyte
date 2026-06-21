@@ -10,6 +10,7 @@ import type {
 } from "./types"
 import { isSameMonth } from "./format"
 import { getCategory } from "./categories"
+import { isCashRelevant, transactionCashDelta } from "./transaction-cash"
 
 export interface DateRange {
   from?: string
@@ -46,10 +47,7 @@ function withinRange(iso: string, range: DateRange): boolean {
 }
 
 export function totalBalance(txs: Transaction[]): number {
-  return txs.reduce((acc, t) => {
-    if (t.type === "transfer") return acc
-    return acc + (t.type === "income" ? t.amount : -t.amount)
-  }, 0)
+  return txs.reduce((acc, t) => acc + transactionCashDelta(t), 0)
 }
 
 export function openingBalanceBeforePeriod(txs: Transaction[], from?: string): number {
@@ -57,10 +55,7 @@ export function openingBalanceBeforePeriod(txs: Transaction[], from?: string): n
   return [...txs]
     .sort((a, b) => a.date.localeCompare(b.date))
     .filter((t) => t.date.slice(0, 10) < cutoff)
-    .reduce((acc, t) => {
-      if (t.type === "transfer") return acc
-      return acc + (t.type === "income" ? t.amount : -t.amount)
-    }, 0)
+    .reduce((acc, t) => acc + transactionCashDelta(t), 0)
 }
 
 export function monthIncome(txs: Transaction[], ref = new Date()): number {
@@ -104,15 +99,16 @@ export interface TransactionSummary {
 }
 
 export function transactionSummary(txs: Transaction[]): TransactionSummary {
-  const incomeItems = txs.filter((t) => t.type === "income")
-  const expenseItems = txs.filter((t) => t.type === "expense")
+  const cashTxs = txs.filter(isCashRelevant)
+  const incomeItems = cashTxs.filter((t) => t.type === "income")
+  const expenseItems = cashTxs.filter((t) => t.type === "expense")
   const income = incomeItems.reduce((acc, t) => acc + t.amount, 0)
   const expense = expenseItems.reduce((acc, t) => acc + t.amount, 0)
   return {
     income,
     expense,
     balance: income - expense,
-    count: txs.length,
+    count: cashTxs.length,
     averageExpense: expenseItems.length > 0 ? expense / expenseItems.length : 0,
     averageIncome: incomeItems.length > 0 ? income / incomeItems.length : 0,
   }
@@ -158,7 +154,7 @@ export function monthlySeries(txs: Transaction[], months = 6): MonthlySeries[] {
     const expense = monthExpense(txs, ref)
     const accumulatedBalance = txs
       .filter((t) => toDate(t.date).getTime() <= monthEnd(ref).getTime())
-      .reduce((acc, t) => acc + (t.type === "income" ? t.amount : -t.amount), 0)
+      .reduce((acc, t) => acc + transactionCashDelta(t), 0)
     series.push({
       key: `${ref.getFullYear()}-${ref.getMonth()}`,
       label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(ref).replace(".", ""),
@@ -191,7 +187,7 @@ export function yearlySeries(txs: Transaction[], years = 3): MonthlySeries[] {
       balance: income - expense,
       accumulatedBalance: txs
         .filter((t) => toDate(t.date).getFullYear() <= year)
-        .reduce((acc, t) => acc + (t.type === "income" ? t.amount : -t.amount), 0),
+        .reduce((acc, t) => acc + transactionCashDelta(t), 0),
     })
   }
   return rows

@@ -20,6 +20,18 @@ function daysLeftInMonth(ref = new Date()): number {
   return Math.max(0, end - ref.getDate())
 }
 
+function registeredCommittedFixedExpenses(transactions: Transaction[], ref = new Date()): number {
+  return transactions
+    .filter((t) => t.type === "expense" && isSameMonth(t.date, ref))
+    .filter(
+      (t) =>
+        Boolean(t.isFixed || t.isSubscription || t.isRecurring) ||
+        t.category === "assinaturas" ||
+        t.category === "parcelamentos",
+    )
+    .reduce((acc, t) => acc + t.amount, 0)
+}
+
 export interface MonthlyPlanning {
   declaredSalary: number
   fixedSalary: number
@@ -110,21 +122,28 @@ export function buildMonthlyPlanning(
   const monthlyReserve = profile.monthlyReserve ?? 0
   const reservedForGoals = goalReservation + monthlyReserve
 
-  const registeredFixed = transactions
-    .filter((t) => t.type === "expense" && t.isFixed && isSameMonth(t.date, ref))
-    .reduce((acc, t) => acc + t.amount, 0)
-
-  const pendingFixedExpenses = Math.max(0, subscriptionTotal + installmentTotal - registeredFixed)
-  const incomeBase = monthlyIncome
+  const registeredCommittedFixed = registeredCommittedFixedExpenses(transactions, ref)
+  const pendingFixedExpenses = Math.max(0, subscriptionTotal + installmentTotal - registeredCommittedFixed)
+  const confirmedIncomeBase = receivedIncome
   const committedMoney = confirmedExpenses + pendingFixedExpenses + reservedForGoals
-  const availableMoney = Math.max(0, incomeBase - committedMoney)
-  const projectedSavings = incomeBase - confirmedExpenses - subscriptionTotal - installmentTotal - reservedForGoals
+  const availableMoney = Math.max(0, confirmedIncomeBase - committedMoney)
+  const projectedSavings = monthlyIncome - confirmedExpenses - subscriptionTotal - installmentTotal - reservedForGoals
   const safeToSpend = Math.max(0, availableMoney)
-  const salaryUsedPercent = incomeBase > 0 ? Math.min(100, (committedMoney / incomeBase) * 100) : 0
+  const salaryUsedPercent =
+    confirmedIncomeBase > 0
+      ? Math.min(100, (committedMoney / confirmedIncomeBase) * 100)
+      : committedMoney > 0
+        ? 100
+        : 0
   const daysLeft = daysLeftInMonth(ref)
   const dailyBurn = daysLeft > 0 ? confirmedExpenses / Math.max(1, ref.getDate()) : confirmedExpenses
   const projectedRemainingSpend = dailyBurn * daysLeft
-  const endOfMonthProjection = incomeBase - confirmedExpenses - projectedRemainingSpend - reservedForGoals
+  const endOfMonthProjection =
+    confirmedIncomeBase -
+    confirmedExpenses -
+    projectedRemainingSpend -
+    pendingFixedExpenses -
+    reservedForGoals
 
   return {
     declaredSalary,

@@ -46,6 +46,7 @@ import {
   validateTransaction,
 } from "./finance"
 import { goalProgress, investmentPerformance, investmentSummary } from "./selectors"
+import { migrateLegacyTransactions } from "./transaction-cash"
 import { toast } from "sonner"
 
 const DATA_KEY = "poupabyte:data"
@@ -682,9 +683,10 @@ function inferOnboardingCompleted(data: Partial<DataState>): boolean {
 
 function normalizeTransactions(value: unknown): Transaction[] {
   if (!Array.isArray(value)) return []
-  return value
+  const items = value
     .filter((item): item is Transaction => typeof item === "object" && item !== null && typeof item.id === "string")
     .map((transaction) => normalizeTransactionRecurrence(transaction))
+  return migrateLegacyTransactions(items)
 }
 
 function deactivateLinkedSubscription(

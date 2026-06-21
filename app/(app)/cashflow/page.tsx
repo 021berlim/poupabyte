@@ -104,7 +104,7 @@ export default function CashflowPage() {
       <div className="py-5"><ArrowDownRight className="h-4 w-4 text-destructive" /><p className="mt-3 text-xs text-muted-foreground">Maior despesa</p><p className="mt-1 font-extrabold tabular-nums text-destructive">{biggestExpense ? formatCurrency(biggestExpense.amount) : "—"}</p><p className="mt-1 truncate text-xs text-muted-foreground">{biggestExpense?.description ?? "Sem despesas"}</p></div>
       <div className="py-5"><p className="text-xs text-muted-foreground">Renda comprometida</p><p className="mt-1 font-extrabold tabular-nums">{Math.round(currentPlanning.monthCommittedPercent)}%</p><p className="mt-1 text-xs text-muted-foreground">salário declarado: {formatCurrency(currentPlanning.declaredSalary)}</p></div>
       <div className="py-5"><p className="text-xs text-muted-foreground">Despesas fixas pendentes</p><p className="mt-1 font-extrabold tabular-nums">{formatCurrency(currentPlanning.pendingFixedExpenses)}</p><p className="mt-1 text-xs text-muted-foreground">assinaturas e parcelas</p></div>
-      <div className="py-5"><p className="text-xs text-muted-foreground">Disponível para gastar</p><p className="mt-1 font-extrabold tabular-nums text-success">{formatCurrency(currentPlanning.safeToSpend)}</p><p className="mt-1 text-xs text-muted-foreground">no mês atual</p></div>
+      <div className="py-5"><p className="text-xs text-muted-foreground">Disponível para gastar</p><p className="mt-1 font-extrabold tabular-nums text-success">{formatCurrency(currentPlanning.safeToSpend)}</p><p className="mt-1 text-xs text-muted-foreground">com base em {formatCurrency(currentPlanning.receivedIncome)} recebidos no mês</p></div>
      </div>
     </div>
    </section>

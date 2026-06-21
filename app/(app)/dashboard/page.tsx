@@ -148,7 +148,11 @@ export default function DashboardPage() {
    tone: "text-emerald-300",
   },
   { label: "Despesas", value: formatCurrency(activePlanning.confirmedExpenses), detail: "confirmadas no mês", tone: "text-red-300" },
-  { label: "Comprometido", value: `${Math.round(activePlanning.monthCommittedPercent)}%`, detail: `Orçamentos: ${Math.round(activePlanning.salaryUsedPercent)}% usados` },
+  {
+   label: "Comprometido",
+   value: `${Math.round(activePlanning.monthCommittedPercent)}%`,
+   detail: `${formatCurrency(activePlanning.receivedIncome)} entraram · ${formatCurrency(activePlanning.committedMoney)} comprometidos`,
+  },
   { label: "Economia prevista", value: formatCurrency(activePlanning.projectedSavings), detail: `Reserva: ${formatCurrency(activePlanning.monthlyReserve)}`, tone: activePlanning.projectedSavings >= 0 ? "text-emerald-300" : "text-red-300" },
  ]
 
@@ -187,7 +191,10 @@ export default function DashboardPage() {
         Disponível para gastar
        </p>
        <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
-        Renda: {formatCurrency(activePlanning.declaredSalary)}
+        Entrou no mês: {formatCurrency(activePlanning.receivedIncome)}
+        {activePlanning.monthlyIncome > activePlanning.receivedIncome
+          ? ` · previsto ${formatCurrency(activePlanning.monthlyIncome)}`
+          : ""}
        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">

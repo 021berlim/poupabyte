@@ -162,7 +162,7 @@ describe("parseInterStatementWithValidation", () => {
     expect(transactions[0].description).toBe("JACK STUDIO RIO DE JANEIR")
     expect(transactions[0].type).toBe("expense")
     expect(transactions[1].description).toContain("Joao David Ferreira da Motta")
-    expect(transactions[1].type).toBe("transfer")
+    expect(transactions[1].type).toBe("expense")
     expect(transactions[2].type).toBe("income")
     expect(validation.saldo_final_confere).toBe(true)
     expect(validation.inconsistencias).toEqual([])

@@ -1,4 +1,5 @@
-import { transactionSummary } from "../../selectors"
+import { openingBalanceBeforePeriod, transactionSummary } from "../../selectors"
+import { isCashRelevant } from "../../transaction-cash"
 import { filterTransactionsForAnalysis, lastMonthsRange, presentTransaction, transactionDate } from "../query-utils"
 import type { PennyKnowledgeSource } from "../types"
 
@@ -14,12 +15,10 @@ export const cashflowSource: PennyKnowledgeSource = {
   query: (snapshot, analysis) => {
     const selected = filterTransactionsForAnalysis(snapshot.transactions, analysis, lastMonthsRange(analysis.now, 3))
     const from = selected.dateRange?.from ?? "0000-01-01"
-    const orderedAll = [...snapshot.transactions].sort((a, b) => a.date.localeCompare(b.date))
-    const openingBalance = orderedAll
-      .filter((transaction) => transactionDate(transaction.date) < from)
-      .reduce((total, transaction) => total + (transaction.type === "income" ? transaction.amount : -transaction.amount), 0)
+    const openingBalance = openingBalanceBeforePeriod(snapshot.transactions, from)
     const byDay = new Map<string, { income: number; expense: number }>()
     for (const transaction of selected.transactions) {
+      if (!isCashRelevant(transaction)) continue
       const key = transactionDate(transaction.date)
       const row = byDay.get(key) ?? { income: 0, expense: 0 }
       if (transaction.type === "income") row.income += transaction.amount

@@ -7,7 +7,7 @@ const APP_AREAS = [
     route: ROUTES.dashboard,
     name: "Visão Geral",
     capabilities: [
-      "disponível para gastar (renda do mês menos despesas confirmadas e comprometidas)",
+      "disponível para gastar (entradas confirmadas no mês menos despesas e compromissos; salário previsto só entra após cair na conta)",
       "renda cadastrada, entradas, despesas e % de renda comprometida",
       "economia prevista e gráfico dos últimos meses",
       "painel o que precisa de atenção (ex.: lançamentos sem confirmação)",
