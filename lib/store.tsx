@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useReducer, useCallback, useMemo, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useReducer, useCallback, useMemo, useRef, type ReactNode } from "react"
 import type {
   AppState,
   Transaction,
@@ -1368,18 +1368,61 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     for (const tx of pending) {
       const suggestion = suggestCategory(tx.description, tx.type, ctx, state.categoryRules)
       if (suggestion.category === "nao-categorizado" || suggestion.confidence < 0.75) continue
-      updated.push({
+      const next: Transaction = {
         ...tx,
         category: suggestion.category,
         subcategoryId: suggestion.subcategoryId,
         needsReview: suggestion.confidence < 0.85,
-      })
+      }
+      if (
+        next.category === tx.category &&
+        next.subcategoryId === tx.subcategoryId &&
+        Boolean(next.needsReview) === Boolean(tx.needsReview)
+      ) {
+        continue
+      }
+      updated.push(next)
     }
 
     if (!updated.length) return 0
     dispatch({ type: "UPDATE_TXS", payload: updated })
     return updated.length
   }, [state.categoryRules, state.hiddenSystemCategories, state.transactions, state.userCategories])
+
+  const didAutoCategorizeOnHydrate = useRef(false)
+  useEffect(() => {
+    if (!state.hydrated || didAutoCategorizeOnHydrate.current) return
+    didAutoCategorizeOnHydrate.current = true
+
+    const ctx: CategoryContext = {
+      userCategories: state.userCategories,
+      hiddenSystemCategories: state.hiddenSystemCategories,
+    }
+    const pending = state.transactions.filter(isPendingReview)
+    if (!pending.length) return
+
+    const updated: Transaction[] = []
+    for (const tx of pending) {
+      const suggestion = suggestCategory(tx.description, tx.type, ctx, state.categoryRules)
+      if (suggestion.category === "nao-categorizado" || suggestion.confidence < 0.75) continue
+      const next: Transaction = {
+        ...tx,
+        category: suggestion.category,
+        subcategoryId: suggestion.subcategoryId,
+        needsReview: suggestion.confidence < 0.85,
+      }
+      if (
+        next.category === tx.category &&
+        next.subcategoryId === tx.subcategoryId &&
+        Boolean(next.needsReview) === Boolean(tx.needsReview)
+      ) {
+        continue
+      }
+      updated.push(next)
+    }
+
+    if (updated.length) dispatch({ type: "UPDATE_TXS", payload: updated })
+  }, [state.hydrated])
 
   const deleteTransaction = useCallback(
     (id: string) => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { PageHeader } from "@/components/app/page-header"
 import { TransactionDialog } from "@/components/app/transaction-dialog"
 import { StatementImportSheet } from "@/components/app/statement-import-sheet"
@@ -41,21 +41,13 @@ function periodLabel(from: string, to: string) {
 
 export default function TransactionsPage() {
  const router = useRouter()
- const { transactions, lastImport, hydrated, autoCategorizePendingTransactions } = useStore()
+ const { transactions, lastImport } = useStore()
  const [search, setSearch] = useState("")
  const [type, setType] = useState<TransactionType | "all">("all")
  const [category, setCategory] = useState<CategoryId | "all">("all")
  const [from, setFrom] = useState("")
  const [to, setTo] = useState("")
  const [filtersOpen, setFiltersOpen] = useState(false)
- const [autoCategorized, setAutoCategorized] = useState(0)
-
- useEffect(() => {
-  if (!hydrated) return
-  const count = autoCategorizePendingTransactions()
-  if (count > 0) setAutoCategorized(count)
- }, [hydrated, autoCategorizePendingTransactions])
-
  const filtered = useMemo(
   () => filterTransactions(transactions, { type, category, search, from, to }),
   [transactions, type, category, search, from, to],
@@ -147,16 +139,11 @@ export default function TransactionsPage() {
     </Sheet>
    </div>
 
-   {(pendingReview > 0 || lastImport || autoCategorized > 0) ? (
+   {(pendingReview > 0 || lastImport) ? (
     <div className="app-open-section text-sm text-muted-foreground">
      {pendingReview > 0 ? (
       <p>
        <span className="font-bold text-foreground">{pendingReview}</span> para revisar
-      </p>
-     ) : null}
-     {autoCategorized > 0 ? (
-      <p className="mt-1">
-       <span className="font-bold text-foreground">{autoCategorized}</span> categorizadas automaticamente
       </p>
      ) : null}
      {lastImport ? (
