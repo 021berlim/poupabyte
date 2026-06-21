@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, type FormEvent, type ReactNode } from "react"
+import { EmptyModuleCard } from "@/components/app/empty-module-card"
 import { PageHeader } from "@/components/app/page-header"
 import { StatStrip } from "@/components/app/stat-strip"
 import { StatusBadge } from "@/components/app/status-badge"
@@ -99,6 +100,38 @@ function GoalRow({ goal }: { goal: Goal }) {
 }
 
 export default function GoalsPage() {
- const { goals, financialProfile } = useStore(); const totals = goalSummary(goals)
- return <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]"><PageHeader title="Objetivos" subtitle="Metas conectadas à sua renda mensal." action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Novo objetivo</Button>} />} /><StatStrip items={[{ label: "Total guardado", value: formatCurrency(totals.current), detail: `de ${formatCurrency(totals.target)}` }, { label: "Progresso geral", value: `${totals.percent}%`, detail: `${totals.completed} de ${goals.length} concluídas`, tone: totals.percent >= 50 ? "text-success" : "text-primary" }, { label: "Em risco", value: totals.atRisk, detail: `${totals.nearDeadline} próximas do prazo`, tone: totals.atRisk ? "text-destructive" : "text-success" }]} />{goals.length ? <div className="app-list-section divide-y divide-border border-t">{goals.map((goal) => <GoalRow key={goal.id} goal={goal} />)}</div> : <div className="app-open-section py-14 text-center"><Target className="mx-auto h-8 w-8 text-muted-foreground/50" /><p className="mt-3 font-semibold">Nenhuma meta cadastrada</p><p className="mt-1 text-sm text-muted-foreground">Crie sua primeira meta.</p></div>}</div>
+ const { goals } = useStore()
+ const totals = goalSummary(goals)
+
+ return (
+  <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
+   <PageHeader
+    title="Objetivos"
+    subtitle="Defina metas e acompanhe o progresso."
+    action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Novo objetivo</Button>} />}
+   />
+
+   {goals.length === 0 ? (
+    <EmptyModuleCard
+     icon={<Target className="h-6 w-6" />}
+     title="Crie seu primeiro objetivo"
+     description="Defina uma meta com valor e prazo para acompanhar seu progresso."
+     action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Criar objetivo</Button>} />}
+    />
+   ) : (
+    <>
+     <StatStrip
+      items={[
+       { label: "Total guardado", value: formatCurrency(totals.current), detail: `de ${formatCurrency(totals.target)}` },
+       { label: "Progresso geral", value: `${totals.percent}%`, detail: `${totals.completed} de ${goals.length} concluídas`, tone: totals.percent >= 50 ? "text-success" : "text-primary" },
+       { label: "Em risco", value: totals.atRisk, detail: `${totals.nearDeadline} próximas do prazo`, tone: totals.atRisk ? "text-destructive" : "text-success" },
+      ]}
+     />
+     <div className="app-list-section divide-y divide-border border-t">
+      {goals.map((goal) => <GoalRow key={goal.id} goal={goal} />)}
+     </div>
+    </>
+   )}
+  </div>
+ )
 }

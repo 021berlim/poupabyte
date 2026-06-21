@@ -4,18 +4,21 @@ import type { MouseEvent } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import * as m from "motion/react-m"
+import { useMemo, useState } from "react"
 import { BrandMark } from "@/components/brand-logo"
 import { SidebarToggle } from "@/components/app/sidebar-toggle"
 import { useSidebarState } from "@/components/app/sidebar-context"
 import { AnimatedSidebar } from "@/components/motion/animated-sidebar"
 import { Button } from "@/components/ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { NAV_GROUP_ORDER, NAV_ITEMS, type NavItem } from "@/lib/nav"
+import { type NavItem } from "@/lib/nav"
+import { resolveVisibleNav } from "@/lib/nav-visibility"
 import { matchesRoute, ROUTES } from "@/lib/routes"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { sidebarItemTransition } from "@/src/lib/animations"
-import { LogOut } from "lucide-react"
+import { ChevronDown, LogOut } from "lucide-react"
 
 function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>) {
  return (
@@ -30,12 +33,16 @@ function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>) {
 export function AppSidebar() {
  const pathname = usePathname()
  const router = useRouter()
- const { logout } = useStore()
+ const { logout, transactions, goals, investments, subscriptions, installments } = useStore()
  const { isCollapsed } = useSidebarState()
+ const nav = useMemo(
+  () => resolveVisibleNav({ transactions, goals, investments, subscriptions, installments }),
+  [transactions, goals, investments, subscriptions, installments],
+ )
 
  function handleLogout() {
   logout()
-  void import("sonner").then(({ toast }) => toast.success("Sessao encerrada."))
+  void import("sonner").then(({ toast }) => toast.success("Sessão encerrada."))
   router.replace("/login")
  }
 
@@ -55,7 +62,7 @@ export function AppSidebar() {
      className="absolute -right-3 top-7 z-[60] translate-x-1/2"
     />
     <SidebarHeader />
-    <SidebarNav pathname={pathname} />
+    <SidebarNav pathname={pathname} nav={nav} isCollapsed={isCollapsed} />
     <SidebarAccount handleLogout={handleLogout} />
    </AnimatedSidebar>
   </>
@@ -100,32 +107,73 @@ function SidebarHeader() {
  )
 }
 
-function SidebarNav({ pathname }: { pathname: string }) {
- const { isCollapsed } = useSidebarState()
+function SidebarNav({
+ pathname,
+ nav,
+ isCollapsed,
+}: {
+ pathname: string
+ nav: ReturnType<typeof resolveVisibleNav>
+ isCollapsed: boolean
+}) {
+ const [moreOpen, setMoreOpen] = useState(false)
+ const moreActive = nav.more.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
 
  return (
   <nav
    className={cn(
-    "app-sidebar-nav min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-1 py-4",
+    "app-sidebar-nav min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-1 py-4",
     isCollapsed && "px-0",
    )}
   >
-   {NAV_GROUP_ORDER.map((group) => {
-    const items = NAV_ITEMS.filter((item) => item.group === group)
-    if (!items.length) return null
+   {nav.allVisible.map((item) => (
+    <SidebarNavItem key={item.href} item={item} pathname={pathname} isCollapsed={isCollapsed} />
+   ))}
 
-    return (
-     <section key={group} aria-label={group} className="space-y-1">
-      {!isCollapsed ? <p className="app-sidebar-text px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sidebar-foreground/45">{group}</p> : null}
-      {items.map((item) => <SidebarNavItem key={item.href} item={item} pathname={pathname} isCollapsed={isCollapsed} />)}
-     </section>
-    )
-   })}
+   {nav.more.length > 0 ? (
+    <Collapsible open={moreOpen || moreActive} onOpenChange={setMoreOpen} className="pt-2">
+     <CollapsibleTrigger asChild>
+      <button
+       type="button"
+       className={cn(
+        "app-sidebar-nav-link group relative flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/35",
+        isCollapsed && "mx-auto w-11 justify-center gap-0 px-0",
+        moreActive
+         ? "bg-sidebar-accent/80 text-sidebar-foreground"
+         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground",
+       )}
+       aria-expanded={moreOpen || moreActive}
+      >
+       <span className="app-sidebar-nav-icon flex h-8 w-8 shrink-0 items-center justify-center text-sidebar-foreground/70 group-hover:text-primary">
+        <ChevronDown className={cn("h-[18px] w-[18px] transition-transform", (moreOpen || moreActive) && "rotate-180")} />
+       </span>
+       {!isCollapsed ? <span className="app-sidebar-text min-w-0 flex-1 truncate text-left">Mais</span> : null}
+      </button>
+     </CollapsibleTrigger>
+     {!isCollapsed ? (
+      <CollapsibleContent className="mt-1 space-y-1 pl-2">
+       {nav.more.map((item) => (
+        <SidebarNavItem key={item.href} item={item} pathname={pathname} isCollapsed={isCollapsed} nested />
+       ))}
+      </CollapsibleContent>
+     ) : null}
+    </Collapsible>
+   ) : null}
   </nav>
  )
 }
 
-function SidebarNavItem({ item, pathname, isCollapsed }: { item: NavItem; pathname: string; isCollapsed: boolean }) {
+function SidebarNavItem({
+ item,
+ pathname,
+ isCollapsed,
+ nested = false,
+}: {
+ item: NavItem
+ pathname: string
+ isCollapsed: boolean
+ nested?: boolean
+}) {
  const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
  const Icon = item.icon
  const link = (
@@ -138,6 +186,7 @@ function SidebarNavItem({ item, pathname, isCollapsed }: { item: NavItem; pathna
     className={cn(
      "app-sidebar-nav-link group relative flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/35",
      isCollapsed && "mx-auto w-11 justify-center gap-0 px-0",
+     nested && !isCollapsed && "h-10 pl-4",
      active ? "bg-primary text-primary-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground",
     )}
    >

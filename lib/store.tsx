@@ -23,7 +23,9 @@ import type {
   Installment,
   CreditCard,
 } from "./types"
-import { learnCategoryRule } from "./auto-categorize"
+import { learnCategoryRule, suggestCategory } from "./auto-categorize"
+import type { CategoryContext } from "./category-system"
+import { findSimilarPending, isPendingReview } from "./transaction-utils"
 import { applyIncomeUpdate, normalizeSalaryHistory, SALARY_SCOPE_LABELS } from "./income"
 import { buildEmptyState, buildSeedState, EMPTY_FINANCIAL_PROFILE, DEMO_USER, generateId } from "./seed"
 import { buildLongTermPlanning } from "./long-term-planning"
@@ -66,6 +68,7 @@ type Action =
   | { type: "ADD_TX"; payload: Transaction }
   | { type: "ADD_TXS"; payload: Transaction[] }
   | { type: "UPDATE_TX"; payload: Transaction }
+  | { type: "UPDATE_TXS"; payload: Transaction[] }
   | { type: "DELETE_TX"; payload: string }
   | { type: "ADD_GOAL"; payload: Goal }
   | { type: "UPDATE_GOAL"; payload: Goal }
@@ -142,6 +145,13 @@ function reducer(state: FullState, action: Action): FullState {
         ...state,
         transactions: state.transactions.map((t) => (t.id === action.payload.id ? action.payload : t)),
       }
+    case "UPDATE_TXS": {
+      const byId = new Map(action.payload.map((tx) => [tx.id, tx]))
+      return {
+        ...state,
+        transactions: state.transactions.map((t) => byId.get(t.id) ?? t),
+      }
+    }
     case "DELETE_TX":
       return { ...state, transactions: state.transactions.filter((t) => t.id !== action.payload) }
     case "ADD_GOAL":
@@ -300,6 +310,8 @@ interface StoreContextValue extends FullState {
   addTransaction: (tx: Omit<Transaction, "id">) => void
   addTransactions: (transactions: Array<Omit<Transaction, "id">>) => number
   updateTransaction: (tx: Transaction) => void
+  confirmSimilarTransactions: (sourceId: string) => number
+  autoCategorizePendingTransactions: () => number
   deleteTransaction: (id: string) => void
   // goals
   addGoal: (goal: Omit<Goal, "id">) => void
@@ -1309,6 +1321,66 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [notify, state.limits, state.transactions, state.categoryRules],
   )
 
+  const confirmSimilarTransactions = useCallback(
+    (sourceId: string) => {
+      const source = state.transactions.find((tx) => tx.id === sourceId)
+      if (!source || isPendingReview(source) === false) return 0
+      if (source.category === "nao-categorizado") return 0
+
+      const similar = findSimilarPending(state.transactions, source)
+      if (!similar.length) return 0
+
+      const updated = similar.map((tx) => ({
+        ...tx,
+        category: source.category,
+        subcategoryId: source.subcategoryId,
+        needsReview: false,
+      }))
+
+      dispatch({ type: "UPDATE_TXS", payload: updated })
+
+      let rules = state.categoryRules
+      for (const tx of updated) {
+        rules = learnCategoryRule(tx.description, tx.category, tx.subcategoryId, tx.type, rules)
+      }
+      if (rules !== state.categoryRules) dispatch({ type: "SET_CATEGORY_RULES", payload: rules })
+
+      notify({
+        kind: "transaction",
+        type: "success",
+        title: "Lançamentos confirmados",
+        message: `${updated.length} movimentação(ões) de ${source.description} foram confirmadas.`,
+      })
+      return updated.length
+    },
+    [notify, state.categoryRules, state.transactions],
+  )
+
+  const autoCategorizePendingTransactions = useCallback(() => {
+    const ctx: CategoryContext = {
+      userCategories: state.userCategories,
+      hiddenSystemCategories: state.hiddenSystemCategories,
+    }
+    const pending = state.transactions.filter(isPendingReview)
+    if (!pending.length) return 0
+
+    const updated: Transaction[] = []
+    for (const tx of pending) {
+      const suggestion = suggestCategory(tx.description, tx.type, ctx, state.categoryRules)
+      if (suggestion.category === "nao-categorizado" || suggestion.confidence < 0.75) continue
+      updated.push({
+        ...tx,
+        category: suggestion.category,
+        subcategoryId: suggestion.subcategoryId,
+        needsReview: suggestion.confidence < 0.85,
+      })
+    }
+
+    if (!updated.length) return 0
+    dispatch({ type: "UPDATE_TXS", payload: updated })
+    return updated.length
+  }, [state.categoryRules, state.hiddenSystemCategories, state.transactions, state.userCategories])
+
   const deleteTransaction = useCallback(
     (id: string) => {
       const removed = state.transactions.find((tx) => tx.id === id)
@@ -1849,6 +1921,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTransaction,
       addTransactions,
       updateTransaction,
+      confirmSimilarTransactions,
+      autoCategorizePendingTransactions,
       deleteTransaction,
       addGoal,
       updateGoal,
@@ -1899,6 +1973,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTransaction,
       addTransactions,
       updateTransaction,
+      confirmSimilarTransactions,
+      autoCategorizePendingTransactions,
       deleteTransaction,
       addGoal,
       updateGoal,

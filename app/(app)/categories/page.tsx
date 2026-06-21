@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app/page-header"
 import { StatusBadge } from "@/components/app/status-badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -23,7 +24,7 @@ import { getCategoryIcon } from "@/lib/category-icons"
 import { formatCurrency } from "@/lib/format"
 import { useStore } from "@/lib/store"
 import type { CategoryGroup, CategoryId, CategoryKind, CategoryRef, UserCategory } from "@/lib/types"
-import { Copy, EyeOff, FolderTree, Lock, Pencil, Plus, Trash2 } from "lucide-react"
+import { Copy, EyeOff, FolderTree, Lock, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
 
 const KIND_LABELS: Record<CategoryKind, string> = {
   income: "Receita",
@@ -127,7 +128,7 @@ function CategoryDialog({
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="UBER, NETFLIX, GUANABARA"
               />
-              <p className="text-xs text-muted-foreground">Usadas na categorização automática de PDF.</p>
+              <p className="text-xs text-muted-foreground">Usadas na categorização automática.</p>
             </div>
           </div>
           <DialogFooter>
@@ -141,6 +142,40 @@ function CategoryDialog({
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function CategoryActionsMenu({
+  items,
+}: {
+  items: Array<{ label: string; icon: ReactNode; onSelect?: () => void; destructive?: boolean; trigger?: ReactNode }>
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Ações">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {items.map((item) =>
+          item.trigger ? (
+            <DropdownMenuItem key={item.label} asChild onSelect={(event) => event.preventDefault()}>
+              {item.trigger}
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              key={item.label}
+              variant={item.destructive ? "destructive" : "default"}
+              onSelect={() => item.onSelect?.()}
+            >
+              {item.icon}
+              {item.label}
+            </DropdownMenuItem>
+          ),
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -172,40 +207,40 @@ function SystemCategoryRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-sm font-bold">{category.label}</h2>
-                <StatusBadge icon={<Lock className="size-3.5" />}>Padrão do sistema</StatusBadge>
-              </div>
+              <h2 className="text-sm font-bold">{category.label}</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 {transactionCount} transações · {formatCurrency(monthlySpent)} neste mês
               </p>
             </div>
-            <div className="flex shrink-0 gap-1">
-              <CategoryDialog
-                parentId={id}
-                trigger={
-                  <Button variant="ghost" size="icon" aria-label="Adicionar subcategoria">
-                    <FolderTree className="h-4 w-4" />
-                  </Button>
-                }
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Ocultar categoria"
-                onClick={() => hideSystemCategory(id)}
-              >
-                <EyeOff className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Duplicar ${category.label}`}
-                onClick={() => addUserCategory(duplicateSystemCategory(id, ctx))}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
+            <CategoryActionsMenu
+              items={[
+                {
+                  label: "Adicionar subcategoria",
+                  icon: <FolderTree className="h-4 w-4" />,
+                  trigger: (
+                    <CategoryDialog
+                      parentId={id}
+                      trigger={
+                        <button type="button" className="flex w-full items-center gap-2">
+                          <FolderTree className="h-4 w-4" />
+                          Adicionar subcategoria
+                        </button>
+                      }
+                    />
+                  ),
+                },
+                {
+                  label: "Ocultar categoria",
+                  icon: <EyeOff className="h-4 w-4" />,
+                  onSelect: () => hideSystemCategory(id),
+                },
+                {
+                  label: "Duplicar",
+                  icon: <Copy className="h-4 w-4" />,
+                  onSelect: () => addUserCategory(duplicateSystemCategory(id, ctx)),
+                },
+              ]}
+            />
           </div>
           {subs.length > 0 && (
             <div className="relative mt-3 ml-[1.375rem] space-y-0 pl-4">
@@ -231,6 +266,51 @@ function CustomCategoryRow({ category, ctx }: { category: UserCategory; ctx: Cat
   const resolved = resolveCategory(category.id, undefined, ctx)
   const subs = category.isSubcategory ? [] : getSubcategories(ctx, category.id)
 
+  const menuItems = canEditCategory(category.id)
+    ? [
+        ...(!category.isSubcategory
+          ? [
+              {
+                label: "Adicionar subcategoria",
+                icon: <FolderTree className="h-4 w-4" />,
+                trigger: (
+                  <CategoryDialog
+                    parentId={category.id}
+                    trigger={
+                      <button type="button" className="flex w-full items-center gap-2">
+                        <FolderTree className="h-4 w-4" />
+                        Adicionar subcategoria
+                      </button>
+                    }
+                  />
+                ),
+              },
+            ]
+          : []),
+        {
+          label: "Editar",
+          icon: <Pencil className="h-4 w-4" />,
+          trigger: (
+            <CategoryDialog
+              editing={category}
+              trigger={
+                <button type="button" className="flex w-full items-center gap-2">
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </button>
+              }
+            />
+          ),
+        },
+        {
+          label: "Excluir",
+          icon: <Trash2 className="h-4 w-4" />,
+          destructive: true,
+          onSelect: () => deleteUserCategory(category.id),
+        },
+      ]
+    : []
+
   return (
     <div className="px-1 py-4">
       <div className="flex items-start justify-between gap-3">
@@ -242,7 +322,6 @@ function CustomCategoryRow({ category, ctx }: { category: UserCategory; ctx: Cat
           <p className="mt-1 text-xs text-muted-foreground">
             {KIND_LABELS[category.kind]}
             {category.parentId && ` · dentro de ${resolveCategory(category.parentId, undefined, ctx).label}`}
-            {category.keywords?.length ? ` · ${category.keywords.join(", ")}` : ""}
           </p>
           {subs.length > 0 && (
             <div className="relative mt-3 ml-3 space-y-0 pl-4">
@@ -258,39 +337,7 @@ function CustomCategoryRow({ category, ctx }: { category: UserCategory; ctx: Cat
             </div>
           )}
         </div>
-        <div className="flex gap-1">
-          {canEditCategory(category.id) && (
-            <>
-              {!category.isSubcategory && (
-                <CategoryDialog
-                  parentId={category.id}
-                  trigger={
-                    <Button variant="ghost" size="icon" aria-label="Subcategoria">
-                      <FolderTree className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-              )}
-              <CategoryDialog
-                editing={category}
-                trigger={
-                  <Button variant="ghost" size="icon" aria-label="Editar">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                }
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive"
-                aria-label="Excluir"
-                onClick={() => deleteUserCategory(category.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
+        {menuItems.length > 0 ? <CategoryActionsMenu items={menuItems} /> : null}
       </div>
     </div>
   )
@@ -298,6 +345,7 @@ function CustomCategoryRow({ category, ctx }: { category: UserCategory; ctx: Cat
 
 export default function CategoriesPage() {
   const { transactions, userCategories, hiddenSystemCategories } = useStore()
+  const [showAll, setShowAll] = useState(false)
   const ctx: CategoryContext = useMemo(
     () => ({ userCategories, hiddenSystemCategories }),
     [userCategories, hiddenSystemCategories],
@@ -316,12 +364,18 @@ export default function CategoriesPage() {
   }, [tree])
 
   const customTopLevel = userCategories.filter((c) => c.active && !c.isSubcategory && !c.basedOnSystemId)
+  const hiddenCount = tree.filter((node) => isSystemCategoryId(node.category.id) && (node.transactionCount ?? 0) === 0).length
+
+  function filterNodes(nodes: typeof tree) {
+    if (showAll) return nodes
+    return nodes.filter((node) => (node.transactionCount ?? 0) > 0 || (node.monthlySpent ?? 0) > 0)
+  }
 
   return (
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
         title="Categorias"
-        subtitle="Organize receitas e despesas."
+        subtitle="Organize como você classifica gastos."
         action={
           <CategoryDialog
             trigger={
@@ -334,8 +388,20 @@ export default function CategoriesPage() {
         }
       />
 
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Lock className="h-4 w-4 shrink-0" />
+          <span>Categorias padrão do sistema não podem ser editadas.</span>
+        </div>
+        {hiddenCount > 0 ? (
+          <Button variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => setShowAll((value) => !value)}>
+            {showAll ? "Mostrar só usadas" : "Mostrar todas"}
+          </Button>
+        ) : null}
+      </div>
+
       {(Object.keys(CATEGORY_GROUP_LABELS) as CategoryGroup[]).map((group) => {
-        const nodes = groups.get(group) ?? []
+        const nodes = filterNodes(groups.get(group) ?? [])
         if (!nodes.length) return null
         return (
           <section key={group}>

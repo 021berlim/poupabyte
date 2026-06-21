@@ -1,8 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { PageHeader } from "@/components/app/page-header"
-import { StatStrip } from "@/components/app/stat-strip"
 import { TransactionDialog } from "@/components/app/transaction-dialog"
 import { StatementImportSheet } from "@/components/app/statement-import-sheet"
 import { TransactionItem } from "@/components/app/transaction-item"
@@ -16,6 +15,7 @@ import { formatCurrency } from "@/lib/format"
 import { filterTransactions, openingBalanceBeforePeriod, transactionSummary } from "@/lib/selectors"
 import { useStore } from "@/lib/store"
 import type { CategoryId, TransactionType } from "@/lib/types"
+import { formatImportDate } from "@/lib/transaction-utils"
 import { ListFilter, Plus, Receipt, Search, X } from "lucide-react"
 import { PullToRefresh } from "@/components/app/pull-to-refresh"
 import { useRouter } from "next/navigation"
@@ -41,13 +41,20 @@ function periodLabel(from: string, to: string) {
 
 export default function TransactionsPage() {
  const router = useRouter()
- const { transactions, lastImport } = useStore()
+ const { transactions, lastImport, hydrated, autoCategorizePendingTransactions } = useStore()
  const [search, setSearch] = useState("")
  const [type, setType] = useState<TransactionType | "all">("all")
  const [category, setCategory] = useState<CategoryId | "all">("all")
  const [from, setFrom] = useState("")
  const [to, setTo] = useState("")
  const [filtersOpen, setFiltersOpen] = useState(false)
+ const [autoCategorized, setAutoCategorized] = useState(0)
+
+ useEffect(() => {
+  if (!hydrated) return
+  const count = autoCategorizePendingTransactions()
+  if (count > 0) setAutoCategorized(count)
+ }, [hydrated, autoCategorizePendingTransactions])
 
  const filtered = useMemo(
   () => filterTransactions(transactions, { type, category, search, from, to }),
@@ -59,8 +66,6 @@ export default function TransactionsPage() {
 
  const filterCount = [type !== "all", category !== "all", Boolean(from), Boolean(to)].filter(Boolean).length
  const pendingReview = transactions.filter((tx) => tx.needsReview || tx.category === "nao-categorizado").length
- const confirmed = transactions.filter((tx) => !tx.needsReview && tx.category !== "nao-categorizado").length
- const possibleDuplicates = transactions.filter((tx) => tx.source === "pdf-import" && tx.needsReview).length
 
  function clearFilters() {
   setType("all")
@@ -115,7 +120,7 @@ export default function TransactionsPage() {
   <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
    <PageHeader
     title="Movimentações"
-    subtitle="Busque, filtre e revise lançamentos."
+    subtitle="Revise e organize seus lançamentos."
     action={(
      <div className="flex w-full items-center gap-2 sm:w-auto">
       <StatementImportSheet />
@@ -142,18 +147,25 @@ export default function TransactionsPage() {
     </Sheet>
    </div>
 
-   {(pendingReview > 0 || lastImport) ? (
+   {(pendingReview > 0 || lastImport || autoCategorized > 0) ? (
     <div className="app-open-section text-sm text-muted-foreground">
-     {pendingReview > 0 ? <p><span className="font-bold text-foreground">{pendingReview}</span> para revisar · <span className="font-bold text-foreground">{confirmed}</span> confirmadas</p> : null}
-     {lastImport ? <p className="mt-1 text-xs">Última importação: {lastImport.fileName}</p> : null}
+     {pendingReview > 0 ? (
+      <p>
+       <span className="font-bold text-foreground">{pendingReview}</span> para revisar
+      </p>
+     ) : null}
+     {autoCategorized > 0 ? (
+      <p className="mt-1">
+       <span className="font-bold text-foreground">{autoCategorized}</span> categorizadas automaticamente
+      </p>
+     ) : null}
+     {lastImport ? (
+      <p className="mt-1 text-xs">
+       Última importação: {formatImportDate(lastImport.importedAt)} · {lastImport.importedCount} lançamentos
+      </p>
+     ) : null}
     </div>
    ) : null}
-
-   <StatStrip items={[
-    { label: "Lançamentos", value: summary.count, detail: periodLabel(from, to) },
-    { label: "Receitas", value: formatCurrency(summary.income), detail: "no período filtrado", tone: "text-success" },
-    { label: "Despesas", value: formatCurrency(summary.expense), detail: "no período filtrado", tone: "text-destructive" },
-   ]} />
 
    <PullToRefresh onRefresh={() => router.refresh()}>
    {filtered.length === 0 ? (
@@ -161,7 +173,7 @@ export default function TransactionsPage() {
    ) : (
     <div className="app-list-section">
      <p className="border-b px-[clamp(0.75rem,3vw,1rem)] py-3 text-sm text-muted-foreground">
-      Saldo no início do período: <span className="font-semibold tabular-nums text-foreground">{formatCurrency(openingBalance)}</span>
+      {summary.count} lançamentos · {periodLabel(from, to)} · Saldo inicial: <span className="font-semibold tabular-nums text-foreground">{formatCurrency(openingBalance)}</span>
      </p>
      {grouped.map(([day, items]) => (
       <section key={day}>

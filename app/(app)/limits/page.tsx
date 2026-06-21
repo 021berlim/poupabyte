@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createElement, useMemo, useState, type FormEvent, type ReactNode } from "react"
+import { EmptyModuleCard } from "@/components/app/empty-module-card"
 import { PageHeader } from "@/components/app/page-header"
 import { StatStrip } from "@/components/app/stat-strip"
 import { StatusBadge } from "@/components/app/status-badge"
@@ -24,7 +25,7 @@ import { limitMonthlyHistory, limitUsage, type LimitHistoryItem } from "@/lib/se
 import { useStore } from "@/lib/store"
 import type { CategoryRef, SpendingLimit } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { CalendarRange, ChevronDown, FolderTree, Gauge, Pencil, Plus, Trash2 } from "lucide-react"
+import { CalendarRange, ChevronDown, Gauge, Pencil, Plus, Trash2 } from "lucide-react"
 import { ActionSheet } from "@/components/app/action-sheet"
 import { useLongPress } from "@/hooks/use-long-press"
 import { useRipple } from "@/hooks/use-ripple"
@@ -302,52 +303,45 @@ export default function LimitsPage() {
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
         title="Orçamentos"
-        subtitle="Orçamento mensal por categoria."
-        action={
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href={ROUTES.categories}>
-                <FolderTree className="h-4 w-4" />
-                Gerenciar categorias
-              </Link>
-            </Button>
-            <LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Novo orçamento</Button>} />
-          </div>
-        }
+        subtitle="Controle quanto gastar por categoria."
+        action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Novo orçamento</Button>} />}
       />
-      <StatStrip
-        items={[
-          {
-            label: "Gasto do mês",
-            value: formatCurrency(totals.spent),
-            detail: `de ${formatCurrency(totals.limit)} planejados · no mês atual`,
-          },
-          {
-            label: "Uso geral",
-            value: `${totalPercent}%`,
-            detail: `${usages.length} orçamentos`,
-            tone: totalPercent > 100 ? "text-destructive" : totalPercent >= 71 ? "text-primary" : "text-success",
-          },
-          {
-            label: "Estourado",
-            value: formatCurrency(totals.exceeded),
-            detail: totals.exceeded ? "acima do orçamento" : "nenhuma categoria estourada",
-            tone: totals.exceeded ? "text-destructive" : "text-success",
-          },
-        ]}
-      />
-      {usages.length ? (
-        <div className="app-list-section divide-y border-t">
-          {usages.map((usage) => (
-            <LimitRow key={usage.limit.id} usage={usage} history={histories.get(usage.limit.id) ?? []} ctx={ctx} />
-          ))}
-        </div>
+      {usages.length === 0 ? (
+        <EmptyModuleCard
+          icon={<Gauge className="h-6 w-6" />}
+          title="Crie seu primeiro orçamento"
+          description="Defina um limite mensal por categoria para acompanhar seus gastos."
+          action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Criar orçamento</Button>} />}
+        />
       ) : (
-        <div className="app-open-section py-14 text-center">
-          <Gauge className="mx-auto h-8 w-8 text-muted-foreground/50" />
-          <p className="mt-3 font-semibold">Nenhum orçamento definido</p>
-          <p className="mt-1 text-sm text-muted-foreground">Crie seu primeiro orçamento.</p>
-        </div>
+        <>
+          <StatStrip
+            items={[
+              {
+                label: "Gasto do mês",
+                value: formatCurrency(totals.spent),
+                detail: `de ${formatCurrency(totals.limit)} planejados`,
+              },
+              {
+                label: "Uso geral",
+                value: `${totalPercent}%`,
+                detail: `${usages.length} orçamentos`,
+                tone: totalPercent > 100 ? "text-destructive" : totalPercent >= 71 ? "text-primary" : "text-success",
+              },
+              {
+                label: "Estourado",
+                value: formatCurrency(totals.exceeded),
+                detail: totals.exceeded ? "acima do orçamento" : "tudo dentro do limite",
+                tone: totals.exceeded ? "text-destructive" : "text-success",
+              },
+            ]}
+          />
+          <div className="app-list-section divide-y border-t">
+            {usages.map((usage) => (
+              <LimitRow key={usage.limit.id} usage={usage} history={histories.get(usage.limit.id) ?? []} ctx={ctx} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

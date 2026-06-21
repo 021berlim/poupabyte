@@ -40,7 +40,7 @@ export default function CashflowPage() {
 
  return (
   <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
-   <PageHeader title="Planejamento" subtitle="Realizado, previsto e projeção do mês." />
+   <PageHeader title="Planejamento" subtitle="Veja como o mês está indo." />
 
    <div className="border-b">
     <div className="grid min-w-0 grid-cols-3">

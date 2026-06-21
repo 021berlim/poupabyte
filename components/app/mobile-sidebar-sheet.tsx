@@ -4,10 +4,12 @@ import type { MouseEvent } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as m from "motion/react-m"
+import { useMemo } from "react"
 import { BrandMark } from "@/components/brand-logo"
 import { useSidebarState } from "@/components/app/sidebar-context"
 import { AnimatedSidebar } from "@/components/motion/animated-sidebar"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import {
  Sheet,
  SheetContent,
@@ -15,8 +17,10 @@ import {
  SheetHeader,
  SheetTitle,
 } from "@/components/ui/sheet"
-import { NAV_ITEMS } from "@/lib/nav"
+import { type NavItem } from "@/lib/nav"
+import { resolveVisibleNav } from "@/lib/nav-visibility"
 import { matchesRoute, ROUTES } from "@/lib/routes"
+import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { sidebarItemTransition } from "@/src/lib/animations"
 import { LogOut } from "lucide-react"
@@ -34,6 +38,11 @@ function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>) {
 export function MobileSidebarSheet({ handleLogout }: { handleLogout: () => void }) {
  const pathname = usePathname()
  const { mobileOpen, setMobileOpen } = useSidebarState()
+ const { transactions, goals, investments, subscriptions, installments } = useStore()
+ const nav = useMemo(
+  () => resolveVisibleNav({ transactions, goals, investments, subscriptions, installments }),
+  [transactions, goals, investments, subscriptions, installments],
+ )
 
  return (
   <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -43,11 +52,18 @@ export function MobileSidebarSheet({ handleLogout }: { handleLogout: () => void 
    >
     <SheetHeader className="sr-only">
      <SheetTitle>Menu PoupaByte</SheetTitle>
-     <SheetDescription>Navegacao principal do PoupaByte.</SheetDescription>
+     <SheetDescription>Navegação principal do PoupaByte.</SheetDescription>
     </SheetHeader>
     <AnimatedSidebar as="div" data-app-sidebar="mobile" className="flex h-dvh min-h-0 w-full flex-col p-[clamp(0.75rem,3vw,1rem)] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-     <MobileSidebarHeader />
-     <MobileSidebarNav pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+     <MobileSidebarHeader onNavigate={() => setMobileOpen(false)} />
+     <MobileSidebarNav pathname={pathname} items={nav.allVisible} onNavigate={() => setMobileOpen(false)} />
+     {nav.more.length > 0 ? (
+      <>
+       <Separator className="my-2" />
+       <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sidebar-foreground/45">Mais</p>
+       <MobileSidebarNav pathname={pathname} items={nav.more} onNavigate={() => setMobileOpen(false)} />
+      </>
+     ) : null}
      <MobileSidebarAccount handleLogout={handleLogout} />
     </AnimatedSidebar>
    </SheetContent>
@@ -55,8 +71,7 @@ export function MobileSidebarSheet({ handleLogout }: { handleLogout: () => void 
  )
 }
 
-function MobileSidebarHeader() {
- const { setMobileOpen } = useSidebarState()
+function MobileSidebarHeader({ onNavigate }: { onNavigate: () => void }) {
  const pathname = usePathname()
  const active = matchesRoute(pathname, ROUTES.dashboard)
 
@@ -68,8 +83,7 @@ function MobileSidebarHeader() {
     aria-current={active ? "page" : undefined}
     onClick={(event) => {
      if (!isPlainLeftClick(event)) return
-
-     setMobileOpen(false)
+     onNavigate()
     }}
     className="app-sidebar-brand flex min-w-0 flex-1 items-center gap-2.5 rounded-2xl outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/35"
    >
@@ -84,14 +98,16 @@ function MobileSidebarHeader() {
 
 function MobileSidebarNav({
  pathname,
+ items,
  onNavigate,
 }: {
  pathname: string
+ items: NavItem[]
  onNavigate: () => void
 }) {
  return (
-  <nav className="app-sidebar-nav min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain px-1 py-4">
-   {NAV_ITEMS.map((item) => {
+  <nav className="app-sidebar-nav min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain px-1 py-2">
+   {items.map((item) => {
     const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
     const Icon = item.icon
 
@@ -109,7 +125,6 @@ function MobileSidebarNav({
        aria-current={active ? "page" : undefined}
        onClick={(event) => {
         if (!isPlainLeftClick(event)) return
-
         onNavigate()
        }}
        className={cn(

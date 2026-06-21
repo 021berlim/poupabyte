@@ -23,7 +23,7 @@ import type { PennyChatMessage } from "@/lib/penny";
 import { financialHealthScore } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-url";
-import { PENNY_STARTER_SUGGESTIONS } from "@/lib/ui-suggestions";
+import { buildPennyStarterSuggestions, PENNY_STARTER_SUGGESTIONS } from "@/lib/ui-suggestions";
 import { SendHorizontal, Sparkles, Square } from "lucide-react";
 import { useRipple } from "@/hooks/use-ripple";
 
@@ -31,8 +31,6 @@ type ChatMessage = PennyChatMessage & { id: string };
 
 const MENTIONED_ALERTS_KEY = "poupabyte:penny:mentioned-alerts";
 const HEALTH_SCORE_KEY = "poupabyte:penny:last-health-score";
-
-const suggestions = [...PENNY_STARTER_SUGGESTIONS];
 
 function readMentionedAlerts(): Set<string> {
   if (typeof window === "undefined") return new Set();
@@ -59,13 +57,20 @@ function readPreviousScore(): number | undefined {
 }
 
 function SuggestionChips({
+  suggestions,
+  moreSuggestions,
   onSelect,
   disabled,
 }: {
+  suggestions: string[];
+  moreSuggestions: string[];
   onSelect: (suggestion: string) => void;
   disabled: boolean;
 }) {
+  const [showMore, setShowMore] = useState(false);
   const createRipple = useRipple<HTMLButtonElement>();
+  const visible = showMore ? [...suggestions, ...moreSuggestions] : suggestions;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 py-7 text-center sm:py-9">
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -74,11 +79,11 @@ function SuggestionChips({
       <div className="space-y-1">
         <p className="font-semibold text-foreground">Como posso ajudar?</p>
         <p className="text-sm text-muted-foreground">
-          Toque em uma sugestão ou escreva sua pergunta.
+          Escolha uma sugestão ou escreva sua pergunta.
         </p>
       </div>
       <div className="flex flex-wrap justify-center gap-2">
-        {suggestions.map((suggestion) => (
+        {visible.map((suggestion) => (
           <Badge key={suggestion} variant="outline" asChild>
             <button
               type="button"
@@ -92,6 +97,15 @@ function SuggestionChips({
           </Badge>
         ))}
       </div>
+      {moreSuggestions.length > 0 ? (
+        <button
+          type="button"
+          className="text-xs font-semibold text-primary hover:underline"
+          onClick={() => setShowMore((open) => !open)}
+        >
+          {showMore ? "Ver menos sugestões" : "Ver mais sugestões"}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -296,6 +310,22 @@ export default function AssistantPage() {
   const currentHealthScore = useMemo(
     () => financialHealthScore(transactions, goals, limits, investments).score,
     [goals, investments, limits, transactions],
+  );
+  const pennySuggestions = useMemo(
+    () =>
+      buildPennyStarterSuggestions(
+        transactions,
+        financialProfile,
+        goals,
+        limits,
+        subscriptions,
+        installments,
+      ),
+    [transactions, financialProfile, goals, limits, subscriptions, installments],
+  );
+  const pennyMoreSuggestions = useMemo(
+    () => PENNY_STARTER_SUGGESTIONS.filter((item) => !pennySuggestions.includes(item)),
+    [pennySuggestions],
   );
 
   useEffect(() => {
@@ -511,7 +541,7 @@ export default function AssistantPage() {
     >
       <PageHeader
         title="P.E.N.N.Y"
-        subtitle="Pergunte sobre planejamento, metas e orçamentos."
+        subtitle="Tire dúvidas sobre suas finanças."
       />
 
       <div className="flex min-h-0 flex-1 flex-col pt-4 md:pt-0">
@@ -537,6 +567,8 @@ export default function AssistantPage() {
             ))}
             {hydrated && messages.length <= 1 ? (
               <SuggestionChips
+                suggestions={pennySuggestions}
+                moreSuggestions={pennyMoreSuggestions}
                 onSelect={(value) => void sendMessage(value)}
                 disabled={isStreaming}
               />

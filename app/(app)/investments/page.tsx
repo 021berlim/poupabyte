@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { useStore } from "@/lib/store"
+import { EmptyModuleCard } from "@/components/app/empty-module-card"
 import { PageHeader } from "@/components/app/page-header"
 import { StatStrip } from "@/components/app/stat-strip"
 import { LedgerGroupHeader } from "@/components/app/transaction-row"
@@ -518,7 +519,7 @@ export default function InvestmentsPage() {
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
         title="Patrimônio"
-        subtitle="Reservas, investimentos e evolução."
+        subtitle="Acompanhe o que você já guardou."
         action={
           <InvestmentDialog
             trigger={
@@ -531,17 +532,35 @@ export default function InvestmentsPage() {
         }
       />
 
+      {investments.length === 0 ? (
+        <EmptyModuleCard
+          icon={<Landmark className="h-6 w-6" />}
+          title="Cadastre seu primeiro investimento"
+          description="Registre reservas e aplicações para acompanhar seu patrimônio."
+          action={
+            <InvestmentDialog
+              trigger={
+                <Button className="gap-1.5">
+                  <Plus className="h-4 w-4" />
+                  Criar investimento
+                </Button>
+              }
+            />
+          }
+        />
+      ) : (
+        <>
       <StatStrip items={[
         { label: "Total guardado", value: formatCurrency(summary.currentValue), detail: `${summary.assetCount} posições` },
         { label: "Total investido", value: formatCurrency(summary.totalInvested), detail: "aplicado acumulado" },
-        { label: "Rendimento acumulado", value: `${summary.accumulatedReturn >= 0 ? "+" : "−"}${formatCurrency(Math.abs(summary.accumulatedReturn))}`, detail: `${summary.accumulatedReturnPercent.toFixed(2)}% · reserva mensal: ${formatCurrency(financialProfile.monthlyReserve)}`, tone: summary.accumulatedReturn >= 0 ? "text-success" : "text-destructive" },
+        { label: "Rendimento acumulado", value: `${summary.accumulatedReturn >= 0 ? "+" : "−"}${formatCurrency(Math.abs(summary.accumulatedReturn))}`, detail: `${summary.accumulatedReturnPercent.toFixed(2)}%`, tone: summary.accumulatedReturn >= 0 ? "text-success" : "text-destructive" },
       ]} />
 
       <div className="app-open-section">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar por ativo, instituicao ou observacao..." className="pl-9 focus-visible:border-primary" />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar ativo ou instituição..." className="pl-9 focus-visible:border-primary" />
           </div>
           <Select value={type} onValueChange={(value) => setType(value as InvestmentType | "all")}>
             <SelectTrigger className="w-full lg:w-52" aria-label="Filtrar por tipo de ativo">
@@ -558,10 +577,6 @@ export default function InvestmentsPage() {
           </Select>
         </div>
       </div>
-
-      {investments.length === 0 ? (
-        <EmptyState icon={<Landmark className="h-8 w-8 text-muted-foreground/50" />} title="Nenhum investimento cadastrado" description="Cadastre seu primeiro ativo." />
-      ) : (
         <Tabs defaultValue="portfolio" className="space-y-4">
           <TabsList className="h-auto w-full justify-start gap-6 overflow-x-auto rounded-none border-b bg-transparent p-0">
             <TabsTrigger className="flex-none rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent dark:data-[state=active]:bg-transparent" value="portfolio">Carteira</TabsTrigger>
@@ -769,6 +784,7 @@ export default function InvestmentsPage() {
             )}
           </TabsContent>
         </Tabs>
+        </>
       )}
     </div>
   )

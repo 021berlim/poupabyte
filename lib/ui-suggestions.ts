@@ -15,15 +15,15 @@ import type {
 export const SHORT_HINT_MAX = 48
 
 export const PAGE_SUBTITLES = {
-  transactions: "Busque, filtre e revise lançamentos.",
-  cashflow: "Realizado, previsto e projeção do mês.",
-  goals: "Metas conectadas à sua renda mensal.",
-  limits: "Orçamento mensal por categoria.",
-  investments: "Reservas, investimentos e evolução.",
-  reports: "Gráficos e leituras do seu período.",
-  categories: "Organize receitas e despesas.",
-  assistant: "Pergunte sobre planejamento, metas e orçamentos.",
-  profile: "Conta, preferências e privacidade.",
+  transactions: "Revise e organize seus lançamentos.",
+  cashflow: "Veja como o mês está indo.",
+  goals: "Defina metas e acompanhe o progresso.",
+  limits: "Controle quanto gastar por categoria.",
+  investments: "Acompanhe o que você já guardou.",
+  reports: "Entenda para onde vai seu dinheiro.",
+  categories: "Organize como você classifica gastos.",
+  assistant: "Tire dúvidas sobre suas finanças.",
+  profile: "Conta e preferências.",
 } as const
 
 /** Perguntas iniciais na P.E.N.N.Y. — textos longos e orientações detalhadas */
@@ -88,7 +88,7 @@ export function buildDashboardSuggestions(
   userCategories: UserCategory[] = [],
   hiddenSystemCategories: CategoryId[] = [],
   ref = new Date(),
-  max = 6,
+  max = 1,
 ): DashboardSuggestion[] {
   const planning = buildMonthlyPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
   const suggestions: DashboardSuggestion[] = []
@@ -151,6 +151,59 @@ export function buildDashboardSuggestions(
   }
 
   return suggestions.slice(0, max)
+}
+
+export function buildPennyStarterSuggestions(
+  transactions: Transaction[],
+  profile: FinancialProfile,
+  goals: Goal[],
+  limits: SpendingLimit[],
+  subscriptions: Subscription[],
+  installments: Installment[],
+  ref = new Date(),
+): string[] {
+  const planning = buildMonthlyPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
+  const pendingReview = transactions.filter((tx) => tx.needsReview || tx.category === "nao-categorizado").length
+  const limitAlerts = limitUsage(limits, transactions).filter((item) => item.status !== "healthy")
+
+  const monthExpenses = transactions.filter(
+    (tx) =>
+      tx.type === "expense" &&
+      new Date(tx.date).getMonth() === ref.getMonth() &&
+      new Date(tx.date).getFullYear() === ref.getFullYear(),
+  )
+  const spentByCategory = new Map<string, number>()
+  for (const tx of monthExpenses) {
+    spentByCategory.set(tx.category, (spentByCategory.get(tx.category) ?? 0) + tx.amount)
+  }
+  const topCategory = [...spentByCategory.entries()].sort((a, b) => b[1] - a[1])[0]
+
+  const candidates: string[] = []
+
+  if (pendingReview > 0) {
+    candidates.push("Quais lançamentos ainda preciso revisar?")
+  }
+  if (planning.safeToSpend > 0) {
+    candidates.push("Quanto ainda posso gastar este mês?")
+  }
+  if (topCategory) {
+    candidates.push("Onde estou gastando mais este mês?")
+  }
+  if (limitAlerts.length > 0) {
+    candidates.push("Quais orçamentos estão perto do limite?")
+  }
+  if (subscriptions.length > 0) {
+    candidates.push("Quais assinaturas estão pesando no orçamento?")
+  }
+  if (goals.length > 0) {
+    candidates.push("Minha meta financeira é viável com minha renda atual?")
+  }
+
+  for (const fallback of PENNY_STARTER_SUGGESTIONS) {
+    if (!candidates.includes(fallback)) candidates.push(fallback)
+  }
+
+  return candidates.slice(0, 3)
 }
 
 export function shortGoalViabilityMessage(fullMessage: string): string {
