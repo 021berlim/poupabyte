@@ -9,36 +9,68 @@ const MAX_DISTANCE = 104
 
 export function PullToRefresh({ children, onRefresh }: { children: ReactNode; onRefresh: () => Promise<void> | void }) {
  const startY = useRef<number | null>(null)
+ const pulling = useRef(false)
+ const distanceRef = useRef(0)
  const [distance, setDistance] = useState(0)
  const [refreshing, setRefreshing] = useState(false)
 
- function canStart() {
-  return window.matchMedia("(max-width: 767px)").matches && window.scrollY <= 0 && !refreshing
+ function isMobile() {
+  return window.matchMedia("(max-width: 767px)").matches
+ }
+
+ function isAtScrollTop() {
+  return window.scrollY <= 0
+ }
+
+ function canStartPull() {
+  return isMobile() && isAtScrollTop() && !refreshing
+ }
+
+ function resetPull() {
+  startY.current = null
+  pulling.current = false
+  distanceRef.current = 0
+  setDistance(0)
  }
 
  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
-  if (canStart()) startY.current = event.touches[0]?.clientY ?? null
+  if (!canStartPull()) return
+  startY.current = event.touches[0]?.clientY ?? null
+  pulling.current = false
  }
 
  function handleTouchMove(event: TouchEvent<HTMLDivElement>) {
-  if (startY.current === null) return
-  const delta = (event.touches[0]?.clientY ?? startY.current) - startY.current
+  if (startY.current === null || refreshing) return
+
+  if (!isAtScrollTop()) {
+   resetPull()
+   return
+  }
+
+  const currentY = event.touches[0]?.clientY ?? startY.current
+  const delta = currentY - startY.current
+
   if (delta <= 0) {
+   pulling.current = false
    setDistance(0)
    return
   }
+
   const resisted = Math.min(MAX_DISTANCE, delta * 0.48)
+  pulling.current = resisted > 8
+  distanceRef.current = resisted
   setDistance(resisted)
-  if (resisted > 8) event.preventDefault()
+
+  if (pulling.current) event.preventDefault()
  }
 
  async function finishPull() {
   if (startY.current === null) return
-  startY.current = null
-  if (distance < TRIGGER_DISTANCE) {
-   setDistance(0)
-   return
-  }
+
+  const shouldRefresh = pulling.current && distanceRef.current >= TRIGGER_DISTANCE
+  resetPull()
+
+  if (!shouldRefresh) return
 
   setRefreshing(true)
   setDistance(54)
@@ -57,7 +89,7 @@ export function PullToRefresh({ children, onRefresh }: { children: ReactNode; on
 
  return (
   <div
-   className="scroll-container relative touch-pan-x"
+   className="scroll-container relative"
    onTouchStart={handleTouchStart}
    onTouchMove={handleTouchMove}
    onTouchEnd={() => void finishPull()}
