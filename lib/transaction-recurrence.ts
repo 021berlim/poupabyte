@@ -188,10 +188,12 @@ export function recurrenceEndDate(transaction: Pick<Transaction, "date" | "recur
   return null
 }
 
-export function isRecurrenceActive(
-  transaction: Pick<Transaction, "date" | "recurrence">,
-  ref = new Date(),
-): boolean {
+type RecurrenceSource = Pick<
+  Transaction,
+  "date" | "recurrence" | "isFixed" | "isRecurring" | "isSubscription"
+>
+
+export function isRecurrenceActive(transaction: RecurrenceSource, ref = new Date()): boolean {
   const recurrence = transaction.recurrence ?? inferRecurrenceFromLegacy(transaction)
   if (!recurrence) return false
 
@@ -200,7 +202,7 @@ export function isRecurrenceActive(
   return end.getTime() >= new Date(ref.getFullYear(), ref.getMonth(), ref.getDate(), 12).getTime()
 }
 
-export function formatRecurrenceSummary(transaction: Pick<Transaction, "recurrence" | "isFixed" | "isRecurring" | "isSubscription">): string | null {
+export function formatRecurrenceSummary(transaction: RecurrenceSource): string | null {
   const recurrence = transaction.recurrence ?? inferRecurrenceFromLegacy(transaction)
   if (!recurrence) return null
 
