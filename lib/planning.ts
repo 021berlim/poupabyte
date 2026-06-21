@@ -1,5 +1,5 @@
 import { isSameMonth } from "./format"
-import { extraIncomeBreakdown, getDeclaredSalaryForMonth, getExpectedIncomeForMonth } from "./income"
+import { getDeclaredSalaryForMonth, getExpectedIncomeForMonth } from "./income"
 import { buildMonthlyIncomeBreakdown } from "./long-term-planning"
 import { goalProgress } from "./selectors"
 import type {
@@ -102,7 +102,6 @@ export function buildMonthlyPlanning(
   const expectedExtraIncome = getExpectedIncomeForMonth(profile, ref) - declaredSalary
   const expectedIncome = getExpectedIncomeForMonth(profile, ref)
   const receivedIncome = monthIncomeFromTransactions(transactions, ref)
-  const incomeBreakdown = extraIncomeBreakdown(receivedIncome, declaredSalary, expectedExtraIncome)
   const monthlyIncome = incomeBreakdownMonth.monthlyIncome
   const confirmedExpenses = monthExpenses(transactions, ref)
   const subscriptionTotal = activeSubscriptionsMonthlyTotal(subscriptions)
@@ -134,8 +133,8 @@ export function buildMonthlyPlanning(
     expectedExtraIncome,
     expectedIncome,
     receivedIncome,
-    extraIncomeDetected: incomeBreakdown.extraDetected,
-    salaryPortionReceived: incomeBreakdown.salaryPortion,
+    extraIncomeDetected: incomeBreakdownMonth.extraIncomeDetected,
+    salaryPortionReceived: Math.min(incomeBreakdownMonth.salaryIncomeReceived, declaredSalary),
     confirmedExpenses,
     pendingFixedExpenses,
     committedMoney,

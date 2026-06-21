@@ -1,5 +1,5 @@
 import { ESSENTIAL_CATEGORY_IDS } from "./categories"
-import { getDeclaredSalaryForMonth } from "./income"
+import { getDeclaredSalaryForMonth, salaryIncomeFromTransactions } from "./income"
 import {
   activeInstallmentsMonthlyTotal,
   activeSubscriptionsMonthlyTotal,
@@ -30,6 +30,8 @@ export interface MonthlyIncomeBreakdown {
   receivedIncome: number
   extraIncomeDetected: number
   importedIncome: number
+  salaryIncomeReceived: number
+  otherIncomeReceived: number
 }
 
 export function buildMonthlyIncomeBreakdown(
@@ -46,9 +48,11 @@ export function buildMonthlyIncomeBreakdown(
   const importedIncome = transactions
     .filter((t) => t.type === "income" && t.source === "pdf-import" && t.date.slice(0, 7) === monthKey)
     .reduce((a, t) => a + t.amount, 0)
-  const expectedTotal = declaredSalary + expectedExtra
-  const monthlyIncome = Math.max(expectedTotal, receivedIncome)
-  const extraIncomeDetected = Math.max(0, receivedIncome - declaredSalary)
+  const salaryIncomeReceived = salaryIncomeFromTransactions(transactions, ref)
+  const otherIncomeReceived = Math.max(0, receivedIncome - salaryIncomeReceived)
+  const monthlyIncome =
+    Math.max(declaredSalary, salaryIncomeReceived) + Math.max(expectedExtra, otherIncomeReceived)
+  const extraIncomeDetected = otherIncomeReceived
 
   return {
     monthlyIncome,
@@ -58,6 +62,8 @@ export function buildMonthlyIncomeBreakdown(
     receivedIncome,
     extraIncomeDetected,
     importedIncome,
+    salaryIncomeReceived,
+    otherIncomeReceived,
   }
 }
 

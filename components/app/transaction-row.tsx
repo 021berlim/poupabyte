@@ -6,13 +6,13 @@ import { Badge } from "@/components/ui/badge"
 import type { Transaction } from "@/lib/types"
 import { resolveTransactionCategory } from "@/lib/category-system"
 import { getCategoryIcon } from "@/lib/category-icons"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency, formatDate, parseCalendarDate } from "@/lib/format"
 import { formatRecurrenceSummary } from "@/lib/transaction-recurrence"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
 export function ledgerDateParts(iso: string) {
- const date = new Date(iso)
+ const date = parseCalendarDate(iso)
  const day = new Intl.DateTimeFormat("pt-BR", { day: "numeric" }).format(date)
  const month = new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(date).replace(".", "").toUpperCase()
  const year = new Intl.DateTimeFormat("pt-BR", { year: "numeric" }).format(date)
@@ -27,7 +27,7 @@ function ledgerGroupDate(iso: string) {
   month: "2-digit",
   year: "numeric",
  })
-  .format(new Date(iso))
+  .format(parseCalendarDate(iso))
   .replace(".", "")
 
  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
