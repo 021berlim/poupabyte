@@ -18,7 +18,7 @@ import { matchesRoute, ROUTES } from "@/lib/routes"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { sidebarItemTransition } from "@/src/lib/animations"
-import { ChevronDown, LogOut } from "lucide-react"
+import { ChevronDown, LogOut, MoreHorizontal } from "lucide-react"
 
 function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>) {
  return (
@@ -131,40 +131,79 @@ function SidebarNav({
    ))}
 
    {nav.more.length > 0 ? (
-    isCollapsed ? (
-     <div className="space-y-1 pt-2">
+    <Collapsible open={moreOpen || moreActive} onOpenChange={setMoreOpen} className="pt-2">
+     <SidebarMoreTrigger
+      isCollapsed={isCollapsed}
+      isOpen={moreOpen || moreActive}
+      isActive={moreActive}
+     />
+     <CollapsibleContent className={cn("mt-1 space-y-1", !isCollapsed && "pl-2")}>
       {nav.more.map((item) => (
-       <SidebarNavItem key={item.href} item={item} pathname={pathname} isCollapsed={isCollapsed} />
+       <SidebarNavItem
+        key={item.href}
+        item={item}
+        pathname={pathname}
+        isCollapsed={isCollapsed}
+        nested={!isCollapsed}
+       />
       ))}
-     </div>
-    ) : (
-     <Collapsible open={moreOpen || moreActive} onOpenChange={setMoreOpen} className="pt-2">
-      <CollapsibleTrigger asChild>
-       <button
-        type="button"
-        className={cn(
-         "app-sidebar-nav-link group relative flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/35",
-         moreActive
-          ? "bg-sidebar-accent/80 text-sidebar-foreground"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground",
-        )}
-        aria-expanded={moreOpen || moreActive}
-       >
-        <span className="app-sidebar-nav-icon flex h-8 w-8 shrink-0 items-center justify-center text-sidebar-foreground/70 group-hover:text-primary">
-         <ChevronDown className={cn("h-[18px] w-[18px] transition-transform", (moreOpen || moreActive) && "rotate-180")} />
-        </span>
-        <span className="app-sidebar-text min-w-0 flex-1 truncate text-left">Mais</span>
-       </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-1 space-y-1 pl-2">
-       {nav.more.map((item) => (
-        <SidebarNavItem key={item.href} item={item} pathname={pathname} isCollapsed={isCollapsed} nested />
-       ))}
-      </CollapsibleContent>
-     </Collapsible>
-    )
+     </CollapsibleContent>
+    </Collapsible>
    ) : null}
   </nav>
+ )
+}
+
+function SidebarMoreTrigger({
+ isCollapsed,
+ isOpen,
+ isActive,
+}: {
+ isCollapsed: boolean
+ isOpen: boolean
+ isActive: boolean
+}) {
+ const trigger = (
+  <CollapsibleTrigger asChild>
+   <button
+    type="button"
+    className={cn(
+     "app-sidebar-nav-link group relative flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/35",
+     isCollapsed && "mx-auto w-11 justify-center gap-0 px-0",
+     isActive || isOpen
+      ? "bg-sidebar-accent/80 text-sidebar-foreground"
+      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground",
+    )}
+    aria-expanded={isOpen}
+    aria-label="Mais"
+   >
+    <span className="app-sidebar-nav-icon flex h-8 w-8 shrink-0 items-center justify-center text-sidebar-foreground/70 group-hover:text-primary">
+     {isCollapsed ? (
+      <MoreHorizontal className="h-[18px] w-[18px]" />
+     ) : (
+      <ChevronDown className={cn("h-[18px] w-[18px] transition-transform", isOpen && "rotate-180")} />
+     )}
+    </span>
+    <span className="app-sidebar-text min-w-0 flex-1 truncate text-left">Mais</span>
+   </button>
+  </CollapsibleTrigger>
+ )
+
+ if (!isCollapsed) return trigger
+
+ return (
+  <Tooltip delayDuration={300}>
+   <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+   <TooltipContent
+    side="right"
+    align="center"
+    sideOffset={12}
+    showArrow={false}
+    className="rounded-full border border-border/70 bg-background px-3.5 py-1.5 text-sm font-semibold tracking-normal text-foreground shadow-md dark:border-white/12 dark:bg-card"
+   >
+    Mais
+   </TooltipContent>
+  </Tooltip>
  )
 }
 
