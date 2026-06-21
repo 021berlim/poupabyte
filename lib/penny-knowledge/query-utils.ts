@@ -23,10 +23,14 @@ const TOPIC_PATTERNS: Record<PennyKnowledgeTopic, RegExp> = {
   planning: /\b(salario|salário|orcamento|orçamento|sobra|disponivel|disponível|comprometido|assinatura|parcela|parcelamento|cartao|cartão|planejamento|importacao|importação|pdf|quanto posso gastar|quanto ainda posso)\b/,
   transactions: /\b(transacao|transacoes|lancamento|lancamentos|compra|compras|receita|receitas|despesa|despesas|gastei|gasto|gastos|ganhei|renda|pagamento|pix|salario|economizar|reduzir|cortar|consumo)\b/,
   cashflow: /\b(fluxo de caixa|entrada|entradas|saida|saidas|realizado|previsto|projecao|projeção|dinheiro disponivel|sobra do mes)\b/,
-  goals: /\b(meta|metas|objetivo|objetivos|reserva|progresso|prazo|aporte diario|falta para)\b/,
+  goals: /\b(meta|metas|objetivo|objetivos|progresso|prazo|aporte diario|falta para)\b/,
   limits: /\b(limite|limites|orcamento|teto|planejado|excedido|ultrapassado)\b/,
   investments: /\b(investimento|investimentos|carteira|ativo|ativos|aporte|aportes|resgate|resgates|dividendo|dividendos|renda passiva|rentabilidade|rendimento|retorno|diversificacao|instituicao|vencimento|cdb|tesouro|acao|acoes|fii|fiis|fundo|fundos|etf|etfs|cripto|poupanca|previdencia)\b/,
   notifications: /\b(notificacao|notificacoes|alerta|alertas|aviso|avisos|nao lida|nao lidas|pendencia|pendencias)\b/,
+  guidance:
+    /\b(reserva de emergencia|reserva de emergência|meses de despesas|50\/30\/20|50 30 20|metodo 50|método 50|lente de orcamento|lente de orçamento|gastos essenciais|sazonalidade|sazonal|mes caro|mês caro|13º|decimo terceiro|décimo terceiro|dinheiro parado|saldo parado|sem destino|oportunidade do dinheiro|avalanche|bola de neve|quitar divida|quitar dívida|estrategia de quitacao|estratégia de quitação)\b/,
+  factual:
+    /\b(selic|cdi|fgc|fundo garantidor|tribut|fiscal|imposto de renda|ir\b|lci|lca|fii|cdb|tesouro direto|tabela regressiva|consultoria tributaria|consultoria tributária|declaracao|declaração|aposentadoria|previdencia|previdência|seguro|score de credito|score de crédito)\b/,
 }
 
 const BROAD_PATTERN = /\b(resumo geral|visao geral|panorama|situacao financeira|minhas financas|tudo)\b/

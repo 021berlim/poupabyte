@@ -41,6 +41,10 @@ export const PENNY_STARTER_SUGGESTIONS = [
   "Qual a margem segura para decisões de longo prazo?",
   "Como reservas e investimentos se encaixam no planejamento?",
   "Como importar e revisar um extrato em PDF?",
+  "Minha reserva de emergência cobre quantos meses?",
+  "Meus gastos se comparam ao método 50/30/20?",
+  "Esse período costuma ser mais caro pra mim?",
+  "Tenho dinheiro parado sem destino?",
 ] as const
 
 const SHORT_INSIGHT_HINTS: Record<string, string> = {

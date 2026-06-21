@@ -74,6 +74,8 @@ describe("P.E.N.N.Y knowledge catalog", () => {
       "app-capabilities",
       "financial-overview",
       "monthly-planning",
+      "financial-guidance",
+      "factual-knowledge",
       "transactions",
       "cashflow",
       "goals",
@@ -109,6 +111,16 @@ describe("P.E.N.N.Y knowledge catalog", () => {
 
   it("routes navigation questions to app capabilities without financial records", () => {
     expect(sourceIds("Onde vejo minhas metas?")).toEqual(["app-capabilities"])
+  })
+
+  it("routes emergency reserve questions to financial guidance", () => {
+    const sources = sourceIds("Minha reserva de emergência cobre quantos meses?")
+    expect(sources).toContain("financial-guidance")
+    expect(sources).not.toContain("goals")
+  })
+
+  it("routes factual questions to factual knowledge", () => {
+    expect(sourceIds("O que é Selic?")).toEqual(["factual-knowledge"])
   })
 
   it("routes short greetings to financial overview for attention panel data", () => {

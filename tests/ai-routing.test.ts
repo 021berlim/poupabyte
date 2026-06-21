@@ -52,6 +52,8 @@ describe("P.E.N.N.Y master prompt", () => {
     expect(messages.some((message) => message.content.includes("Modo de foco"))).toBe(true)
     expect(messages.some((message) => message.content.includes("Escrita assistida"))).toBe(true)
     expect(messages.some((message) => message.content.includes("Plano de investimento por objetivo"))).toBe(true)
+    expect(messages.some((message) => message.content.includes("Capacidades em três grupos"))).toBe(true)
+    expect(messages.some((message) => message.content.includes("Reserva de emergência"))).toBe(true)
     expect(messages.some((message) => message.content.includes("Não revele qual provedor de IA"))).toBe(true)
   })
 
