@@ -76,6 +76,7 @@ describe("P.E.N.N.Y knowledge catalog", () => {
       "monthly-planning",
       "financial-guidance",
       "factual-knowledge",
+      "assisted-write",
       "transactions",
       "cashflow",
       "goals",
@@ -121,6 +122,30 @@ describe("P.E.N.N.Y knowledge catalog", () => {
 
   it("routes factual questions to factual knowledge", () => {
     expect(sourceIds("O que é Selic?")).toEqual(["factual-knowledge"])
+  })
+
+  it("routes assisted write requests to assisted-write", () => {
+    const data = snapshot()
+    data.transactions = [
+      ...data.transactions,
+      {
+        id: "tx-uber",
+        type: "expense",
+        description: "UBER TRIP",
+        amount: 20,
+        category: "nao-categorizado",
+        date: "2026-06-18T12:00:00.000Z",
+        needsReview: true,
+      },
+    ]
+    const context = queryPennyKnowledge(data, {
+      question: "Categoriza os lançamentos da Uber como Transporte",
+      now: NOW,
+    })
+    expect(context.routing.selectedSources.map((source) => source.id)).toContain("assisted-write")
+    expect(
+      (context.data["assisted-write"] as { plan?: { transactionIds: string[] } }).plan?.transactionIds,
+    ).toContain("tx-uber")
   })
 
   it("routes short greetings to financial overview for attention panel data", () => {

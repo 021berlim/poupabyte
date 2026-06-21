@@ -25,6 +25,7 @@ import type {
 } from "./types"
 import { learnCategoryRule, suggestCategory } from "./auto-categorize"
 import type { CategoryContext } from "./category-system"
+import { buildUpdatedTransactions, type AssistedWritePlan } from "./penny-assisted-write"
 import { findSimilarPending, isPendingReview } from "./transaction-utils"
 import { applyIncomeUpdate, normalizeSalaryHistory, SALARY_SCOPE_LABELS } from "./income"
 import { buildEmptyState, buildSeedState, EMPTY_FINANCIAL_PROFILE, DEMO_USER, generateId } from "./seed"
@@ -311,6 +312,7 @@ interface StoreContextValue extends FullState {
   addTransactions: (transactions: Array<Omit<Transaction, "id">>) => number
   updateTransaction: (tx: Transaction) => void
   confirmSimilarTransactions: (sourceId: string) => number
+  applyAssistedWritePlan: (plan: AssistedWritePlan) => number
   autoCategorizePendingTransactions: () => number
   deleteTransaction: (id: string) => void
   // goals
@@ -1356,6 +1358,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [notify, state.categoryRules, state.transactions],
   )
 
+  const applyAssistedWritePlan = useCallback(
+    (plan: AssistedWritePlan) => {
+      const updated = buildUpdatedTransactions(state.transactions, plan)
+      if (!updated.length) return 0
+
+      for (const tx of updated) {
+        const errors = validateTransaction(tx)
+        if (errors.length > 0) return 0
+      }
+
+      dispatch({ type: "UPDATE_TXS", payload: updated })
+
+      let rules = state.categoryRules
+      for (const tx of updated) {
+        if (tx.category !== "nao-categorizado") {
+          rules = learnCategoryRule(tx.description, tx.category, tx.subcategoryId, tx.type, rules)
+        }
+      }
+      if (rules !== state.categoryRules) dispatch({ type: "SET_CATEGORY_RULES", payload: rules })
+
+      notify({
+        kind: "transaction",
+        type: "success",
+        title: "Lançamentos organizados",
+        message:
+          plan.categoryLabel
+            ? `${updated.length} movimentação(ões) atualizadas como ${getCategory(plan.categoryId ?? updated[0].category).label}.`
+            : `${updated.length} movimentação(ões) confirmadas.`,
+      })
+
+      return updated.length
+    },
+    [notify, state.categoryRules, state.transactions],
+  )
+
   const autoCategorizePendingTransactions = useCallback(() => {
     const ctx: CategoryContext = {
       userCategories: state.userCategories,
@@ -1965,6 +2002,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTransactions,
       updateTransaction,
       confirmSimilarTransactions,
+      applyAssistedWritePlan,
       autoCategorizePendingTransactions,
       deleteTransaction,
       addGoal,
@@ -2017,6 +2055,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTransactions,
       updateTransaction,
       confirmSimilarTransactions,
+      applyAssistedWritePlan,
       autoCategorizePendingTransactions,
       deleteTransaction,
       addGoal,

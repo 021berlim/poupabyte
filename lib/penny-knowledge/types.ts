@@ -26,6 +26,7 @@ export type PennyKnowledgeTopic =
   | "notifications"
   | "guidance"
   | "factual"
+  | "assisted-write"
 
 export type PennyDateRange = {
   from: string

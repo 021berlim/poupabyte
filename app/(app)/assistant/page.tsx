@@ -20,6 +20,14 @@ import {
   type PennyDataSnapshot,
 } from "@/lib/penny-knowledge";
 import type { PennyChatMessage } from "@/lib/penny";
+import {
+  buildAssistedWritePlan,
+  formatAssistedWriteSuccess,
+  isExplicitConfirmation,
+  readPendingAssistedWritePlan,
+  writePendingAssistedWritePlan,
+  type AssistedWritePlan,
+} from "@/lib/penny-assisted-write";
 import { financialHealthScore } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-url";
@@ -259,6 +267,7 @@ export default function AssistantPage() {
     userCategories,
     hiddenSystemCategories,
     categoryRules,
+    applyAssistedWritePlan,
     hydrated,
   } = useStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -267,6 +276,8 @@ export default function AssistantPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [mentionedAlertKeys, setMentionedAlertKeys] =
     useState<Set<string>>(readMentionedAlerts);
+  const [pendingWritePlan, setPendingWritePlan] =
+    useState<AssistedWritePlan | null>(readPendingAssistedWritePlan);
   const [previousScore] = useState<number | undefined>(readPreviousScore);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -345,6 +356,57 @@ export default function AssistantPage() {
       const content = text.trim();
       if (!content || isStreaming) return;
 
+      const activePendingPlan = pendingWritePlan ?? readPendingAssistedWritePlan();
+
+      if (isExplicitConfirmation(content) && activePendingPlan) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: "user",
+          content,
+        };
+        const updatedCount = applyAssistedWritePlan(activePendingPlan);
+        writePendingAssistedWritePlan(null);
+        setPendingWritePlan(null);
+        setMessages((current) => [
+          ...current,
+          userMessage,
+          {
+            id: `assistant-${Date.now() + 1}`,
+            role: "assistant",
+            content: formatAssistedWriteSuccess(activePendingPlan, updatedCount),
+          },
+        ]);
+        setInput("");
+        setError("");
+        return;
+      }
+
+      const immediatePlan = buildAssistedWritePlan(
+        transactions,
+        content,
+        userCategories,
+      );
+      if (immediatePlan && isExplicitConfirmation(content)) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: "user",
+          content,
+        };
+        const updatedCount = applyAssistedWritePlan(immediatePlan);
+        setMessages((current) => [
+          ...current,
+          userMessage,
+          {
+            id: `assistant-${Date.now() + 1}`,
+            role: "assistant",
+            content: formatAssistedWriteSuccess(immediatePlan, updatedCount),
+          },
+        ]);
+        setInput("");
+        setError("");
+        return;
+      }
+
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
         role: "user",
@@ -359,6 +421,13 @@ export default function AssistantPage() {
           .map((message) => message.content),
       });
       const pendingAlertKeys = knowledgeContext.routing.alertKeys;
+      const assistedPlan = (
+        knowledgeContext.data["assisted-write"] as { plan?: AssistedWritePlan | null } | undefined
+      )?.plan;
+      if (assistedPlan?.transactionIds?.length) {
+        writePendingAssistedWritePlan(assistedPlan);
+        setPendingWritePlan(assistedPlan);
+      }
       setMessages([
         ...conversation,
         { id: assistantId, role: "assistant", content: "" },
@@ -522,7 +591,17 @@ export default function AssistantPage() {
         setIsStreaming(false);
       }
     },
-    [currentHealthScore, financialSnapshot, isStreaming, messages, user?.name],
+    [
+      applyAssistedWritePlan,
+      currentHealthScore,
+      financialSnapshot,
+      isStreaming,
+      messages,
+      pendingWritePlan,
+      transactions,
+      user?.name,
+      userCategories,
+    ],
   );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -622,8 +701,8 @@ export default function AssistantPage() {
               )}
             </form>
             <p className="pt-2 text-center text-[11px] leading-4 text-muted-foreground">
-              A P.E.N.N.Y usa dados agregados, pode cometer erros e não executa
-              operações financeiras.
+              A P.E.N.N.Y usa seus dados reais e pode organizar lançamentos
+              existentes com sua confirmação explícita.
             </p>
           </div>
         </footer>

@@ -31,6 +31,8 @@ const TOPIC_PATTERNS: Record<PennyKnowledgeTopic, RegExp> = {
     /\b(reserva de emergencia|reserva de emergência|meses de despesas|50\/30\/20|50 30 20|metodo 50|método 50|lente de orcamento|lente de orçamento|gastos essenciais|sazonalidade|sazonal|mes caro|mês caro|13º|decimo terceiro|décimo terceiro|dinheiro parado|saldo parado|sem destino|oportunidade do dinheiro|avalanche|bola de neve|quitar divida|quitar dívida|estrategia de quitacao|estratégia de quitação)\b/,
   factual:
     /\b(selic|cdi|fgc|fundo garantidor|tribut|fiscal|imposto de renda|ir\b|lci|lca|fii|cdb|tesouro direto|tabela regressiva|consultoria tributaria|consultoria tributária|declaracao|declaração|aposentadoria|previdencia|previdência|seguro|score de credito|score de crédito)\b/,
+  "assisted-write":
+    /\b(categoriz|recategoriz|marca|marcar|classific|confirmar|confirma|aprovar|validar)\b.*\b(lancamento|lançamento|movimentac|movimentaç|transac|pendente)\b|\b(categoriz|recategoriz|marca|marcar|classific).*\bcomo\b/,
 }
 
 const BROAD_PATTERN = /\b(resumo geral|visao geral|panorama|situacao financeira|minhas financas|tudo)\b/
@@ -215,10 +217,13 @@ export function filterTransactionsForAnalysis(
 
 export function presentTransaction(transaction: Transaction) {
   return {
+    id: transaction.id,
     type: transaction.type,
     description: transaction.description,
     amount: transaction.amount,
     category: getCategory(transaction.category).label,
+    categoryId: transaction.category,
+    needsReview: Boolean(transaction.needsReview || transaction.category === "nao-categorizado"),
     date: transactionDate(transaction.date),
   }
 }

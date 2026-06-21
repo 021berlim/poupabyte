@@ -1,3 +1,4 @@
+import { assistedWriteSource } from "./sources/assisted-write"
 import { appCapabilitiesSource } from "./sources/app-capabilities"
 import { cashflowSource } from "./sources/cashflow"
 import { factualKnowledgeSource } from "./sources/factual-knowledge"
@@ -15,6 +16,7 @@ export const PENNY_KNOWLEDGE_SOURCES: readonly PennyKnowledgeSource[] = [
   appCapabilitiesSource,
   overviewSource,
   planningSource,
+  assistedWriteSource,
   financialGuidanceSource,
   factualKnowledgeSource,
   transactionsSource,
