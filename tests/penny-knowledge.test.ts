@@ -124,6 +124,23 @@ describe("P.E.N.N.Y knowledge catalog", () => {
     expect(sourceIds("O que é Selic?")).toEqual(["factual-knowledge"])
   })
 
+  it("routes create requests to assisted-write with preference flag", () => {
+    const data = snapshot()
+    data.pennyCreateTransactionsEnabled = true
+    const context = queryPennyKnowledge(data, {
+      question: "Registra uma despesa de R$ 50 no mercado",
+      now: NOW,
+    })
+    expect(context.routing.selectedSources.map((source) => source.id)).toContain("assisted-write")
+    const assisted = context.data["assisted-write"] as {
+      createTransactionsEnabled?: boolean
+      plan?: { action?: string; proposedTransaction?: { amount: number } }
+    }
+    expect(assisted.createTransactionsEnabled).toBe(true)
+    expect(assisted.plan?.action).toBe("create")
+    expect(assisted.plan?.proposedTransaction?.amount).toBe(50)
+  })
+
   it("routes assisted write requests to assisted-write", () => {
     const data = snapshot()
     data.transactions = [

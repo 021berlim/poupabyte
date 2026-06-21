@@ -28,6 +28,7 @@ import {
   writePendingAssistedWritePlan,
   type AssistedWritePlan,
 } from "@/lib/penny-assisted-write";
+import { readPennyCreateTransactionsEnabled } from "@/lib/penny-preferences";
 import { financialHealthScore } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-url";
@@ -268,6 +269,7 @@ export default function AssistantPage() {
     hiddenSystemCategories,
     categoryRules,
     applyAssistedWritePlan,
+    applyAssistedCreatePlan,
     hydrated,
   } = useStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -279,6 +281,9 @@ export default function AssistantPage() {
   const [pendingWritePlan, setPendingWritePlan] =
     useState<AssistedWritePlan | null>(readPendingAssistedWritePlan);
   const [previousScore] = useState<number | undefined>(readPreviousScore);
+  const [pennyCreateEnabled, setPennyCreateEnabled] = useState(
+    readPennyCreateTransactionsEnabled,
+  );
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -299,6 +304,7 @@ export default function AssistantPage() {
       categoryRules,
       previousHealthScore: previousScore,
       mentionedAlertKeys,
+      pennyCreateTransactionsEnabled: pennyCreateEnabled,
     }),
     [
       financialProfile,
@@ -316,8 +322,19 @@ export default function AssistantPage() {
       userCategories,
       hiddenSystemCategories,
       categoryRules,
+      pennyCreateEnabled,
     ],
   );
+
+  useEffect(() => {
+    const syncPreference = () => setPennyCreateEnabled(readPennyCreateTransactionsEnabled());
+    window.addEventListener("storage", syncPreference);
+    window.addEventListener("focus", syncPreference);
+    return () => {
+      window.removeEventListener("storage", syncPreference);
+      window.removeEventListener("focus", syncPreference);
+    };
+  }, []);
   const currentHealthScore = useMemo(
     () => financialHealthScore(transactions, goals, limits, investments).score,
     [goals, investments, limits, transactions],
@@ -364,7 +381,10 @@ export default function AssistantPage() {
           role: "user",
           content,
         };
-        const updatedCount = applyAssistedWritePlan(activePendingPlan);
+        const updatedCount =
+          activePendingPlan.action === "create"
+            ? applyAssistedCreatePlan(activePendingPlan)
+            : applyAssistedWritePlan(activePendingPlan);
         writePendingAssistedWritePlan(null);
         setPendingWritePlan(null);
         setMessages((current) => [
@@ -385,6 +405,7 @@ export default function AssistantPage() {
         transactions,
         content,
         userCategories,
+        { createEnabled: pennyCreateEnabled },
       );
       if (immediatePlan && isExplicitConfirmation(content)) {
         const userMessage: ChatMessage = {
@@ -392,7 +413,10 @@ export default function AssistantPage() {
           role: "user",
           content,
         };
-        const updatedCount = applyAssistedWritePlan(immediatePlan);
+        const updatedCount =
+          immediatePlan.action === "create"
+            ? applyAssistedCreatePlan(immediatePlan)
+            : applyAssistedWritePlan(immediatePlan);
         setMessages((current) => [
           ...current,
           userMessage,
@@ -424,7 +448,10 @@ export default function AssistantPage() {
       const assistedPlan = (
         knowledgeContext.data["assisted-write"] as { plan?: AssistedWritePlan | null } | undefined
       )?.plan;
-      if (assistedPlan?.transactionIds?.length) {
+      if (
+        assistedPlan?.transactionIds?.length ||
+        (assistedPlan?.action === "create" && assistedPlan?.proposedTransaction)
+      ) {
         writePendingAssistedWritePlan(assistedPlan);
         setPendingWritePlan(assistedPlan);
       }
@@ -593,11 +620,13 @@ export default function AssistantPage() {
     },
     [
       applyAssistedWritePlan,
+      applyAssistedCreatePlan,
       currentHealthScore,
       financialSnapshot,
       isStreaming,
       messages,
       pendingWritePlan,
+      pennyCreateEnabled,
       transactions,
       user?.name,
       userCategories,
@@ -702,7 +731,8 @@ export default function AssistantPage() {
             </form>
             <p className="pt-2 text-center text-[11px] leading-4 text-muted-foreground">
               A P.E.N.N.Y usa seus dados reais e pode organizar lançamentos
-              existentes com sua confirmação explícita.
+              existentes — ou criar novos, se você autorizar em Minha conta —
+              sempre com confirmação explícita.
             </p>
           </div>
         </footer>

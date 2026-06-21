@@ -1,9 +1,12 @@
 import { CATEGORIES, getCategory, isSystemCategoryId } from "./categories"
+import { formatCurrency, formatDate } from "./format"
 import { normalizePennyText } from "./penny-knowledge/query-utils"
 import { establishmentKey, isPendingReview } from "./transaction-utils"
-import type { CategoryRef, Transaction, UserCategory } from "./types"
+import type { CategoryRef, Transaction, TransactionType, UserCategory } from "./types"
 
-export type AssistedWriteAction = "categorize" | "confirm" | "categorize_and_confirm"
+export type AssistedWriteAction = "categorize" | "confirm" | "categorize_and_confirm" | "create"
+
+export type ProposedTransaction = Omit<Transaction, "id">
 
 export type AssistedWritePlan = {
   id: string
@@ -15,6 +18,11 @@ export type AssistedWritePlan = {
   summary: string
   confirmationPrompt: string
   sampleDescriptions: string[]
+  proposedTransaction?: ProposedTransaction
+}
+
+export type AssistedWritePlanOptions = {
+  createEnabled?: boolean
 }
 
 const CONFIRMATION_PATTERNS = [
@@ -22,8 +30,11 @@ const CONFIRMATION_PATTERNS = [
   /^(sim|confirma|confirmo|pode fazer|pode|ok)\s*[,.]?\s*(pode|por favor|pfv)?[!.?]*$/i,
 ]
 
-const WRITE_INTENT_PATTERN =
+const ORGANIZE_INTENT_PATTERN =
   /\b(categoriz|recategoriz|marca|marcar|classific|confirmar|confirma|aprovar|validar|organiz[ae]r)\b.*\b(lancamento|lançamento|movimentac|movimentaç|transac|pendente|importad|uber|ifood|pix)\b|\b(categoriz|recategoriz|marca|marcar|classific).*\bcomo\b|\bconfirmar\b.*\b(pendente|similar|lancamento|lançamento)\b/i
+
+const CREATE_INTENT_PATTERN =
+  /\b(registra|registrar|adiciona|adicionar|inclui|incluir|anota|anotar|cadastra|cadastrar|cria|criar|lanca|lancar|insere|inserir)\b.*\b(lancamento|despesa|receita|gasto|movimentac|transac)\b|\b(despesa|receita|gasto)\s+(de\s+)?(?:r\s*)?\d|\b(?:r\s*)?\d+\s*(?:reais?|real)\b|\bpaguei\s+(?:r\s*)?\d/i
 
 const CATEGORY_HINT_PATTERN = /\bcomo\s+([a-zà-ú0-9\s-]{3,40})/i
 const MERCHANT_PATTERNS = [
@@ -31,15 +42,37 @@ const MERCHANT_PATTERNS = [
   /\b(uber|ifood|netflix|spotify|amazon|mercado|farmacia|farmácia|padaria)\b/i,
 ]
 
+const AMOUNT_PATTERNS = [
+  /(?:r\s*\$?\s*)(\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:,\d{1,2})?)/i,
+  /(\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\s*reais?\b/i,
+]
+
+const QUOTED_DESCRIPTION_PATTERN = /["'“”‘’]([^"'“”‘’]{2,80})["'“”‘’]/
+const DATE_PATTERN = /\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/
+
 export function isExplicitConfirmation(message: string): boolean {
   const normalized = message.trim().replace(/\s+/g, " ")
   return CONFIRMATION_PATTERNS.some((pattern) => pattern.test(normalized))
 }
 
-export function hasAssistedWriteIntent(message: string): boolean {
+export function hasCreateIntent(message: string): boolean {
   const normalized = normalizePennyText(message)
   if (isExplicitConfirmation(message) && normalized.split(" ").length <= 4) return false
-  return WRITE_INTENT_PATTERN.test(normalized) || /\bcomo\s+(transporte|alimentacao|moradia|lazer|saude|educacao)\b/.test(normalized)
+  if (ORGANIZE_INTENT_PATTERN.test(normalized) && !CREATE_INTENT_PATTERN.test(normalized)) return false
+  return CREATE_INTENT_PATTERN.test(normalized)
+}
+
+export function hasOrganizeWriteIntent(message: string): boolean {
+  const normalized = normalizePennyText(message)
+  if (isExplicitConfirmation(message) && normalized.split(" ").length <= 4) return false
+  return (
+    ORGANIZE_INTENT_PATTERN.test(normalized) ||
+    /\bcomo\s+(transporte|alimentacao|moradia|lazer|saude|educacao)\b/.test(normalized)
+  )
+}
+
+export function hasAssistedWriteIntent(message: string): boolean {
+  return hasOrganizeWriteIntent(message) || hasCreateIntent(message)
 }
 
 export function resolveCategoryFromText(
@@ -71,6 +104,119 @@ export function resolveCategoryFromText(
   return null
 }
 
+function parseBrazilianAmount(raw: string): number | null {
+  const normalized = raw.trim().replace(/\s/g, "")
+  if (!normalized) return null
+
+  const hasComma = normalized.includes(",")
+  const numeric = hasComma
+    ? normalized.replace(/\./g, "").replace(",", ".")
+    : normalized.replace(/\./g, "")
+
+  const value = Number(numeric)
+  return Number.isFinite(value) && value > 0 ? value : null
+}
+
+export function parseAmountFromText(text: string): number | null {
+  for (const source of [text, normalizePennyText(text)]) {
+    for (const pattern of AMOUNT_PATTERNS) {
+      const match = source.match(pattern)
+      if (!match?.[1]) continue
+      const parsed = parseBrazilianAmount(match[1])
+      if (parsed) return parsed
+    }
+  }
+  return null
+}
+
+function parseTransactionType(text: string): TransactionType {
+  const normalized = normalizePennyText(text)
+  if (/\b(receita|salario|salário|ganhei|entrada|renda)\b/.test(normalized)) return "income"
+  return "expense"
+}
+
+function defaultCategoryForType(type: TransactionType): CategoryRef {
+  return type === "income" ? "outras-receitas" : "nao-categorizado"
+}
+
+function toIsoDate(year: number, month: number, day: number): string {
+  return new Date(year, month - 1, day, 12, 0, 0, 0).toISOString()
+}
+
+function parseDateFromText(text: string, now = new Date()): string {
+  const normalized = normalizePennyText(text)
+
+  if (/\bhoje\b/.test(normalized)) {
+    return toIsoDate(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  }
+
+  if (/\bontem\b/.test(normalized)) {
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    return toIsoDate(yesterday.getFullYear(), yesterday.getMonth() + 1, yesterday.getDate())
+  }
+
+  const match = text.match(DATE_PATTERN)
+  if (match) {
+    const day = Number(match[1])
+    const month = Number(match[2])
+    let year = match[3] ? Number(match[3]) : now.getFullYear()
+    if (year < 100) year += 2000
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+      return toIsoDate(year, month, day)
+    }
+  }
+
+  return toIsoDate(now.getFullYear(), now.getMonth() + 1, now.getDate())
+}
+
+function titleCase(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
+function extractDescription(question: string, merchantTerms: string[]): string | null {
+  const quoted = question.match(QUOTED_DESCRIPTION_PATTERN)?.[1]?.trim()
+  if (quoted) return titleCase(quoted)
+
+  if (merchantTerms.length) return titleCase(merchantTerms[0])
+
+  const normalized = normalizePennyText(question)
+  const beforeAmount = normalized.split(/\br\s*\d|\breais?\b/)[0] ?? normalized
+  const cleaned = beforeAmount
+    .replace(
+      /\b(registra|registrar|adiciona|adicionar|cria|criar|lanca|lança|lançar|inclui|incluir|anota|anotar|cadastra|cadastrar|despesa|receita|gasto|de|da|do|um|uma|novo|nova)\b/g,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim()
+
+  const words = cleaned
+    .split(" ")
+    .filter((word) => word.length >= 3)
+    .filter(
+      (word) =>
+        ![
+          "como",
+          "para",
+          "hoje",
+          "ontem",
+          "transporte",
+          "alimentacao",
+          "moradia",
+          "lazer",
+          "saude",
+          "educacao",
+        ].includes(word),
+    )
+
+  if (!words.length) return null
+  return titleCase(words.slice(0, 4).join(" "))
+}
+
 function extractMerchantTerms(question: string): string[] {
   const normalized = normalizePennyText(question)
   const terms = new Set<string>()
@@ -85,11 +231,101 @@ function extractMerchantTerms(question: string): string[] {
   const words = normalized
     .split(" ")
     .filter((word) => word.length >= 4)
-    .filter((word) => !["categoriza", "categorizar", "confirma", "confirmar", "lancamentos", "lancamento", "movimentacoes", "como", "esses", "essas", "pendentes"].includes(word))
+    .filter(
+      (word) =>
+        ![
+          "registra",
+          "registrar",
+          "adiciona",
+          "adicionar",
+          "cria",
+          "criar",
+          "lancamento",
+          "lancamentos",
+          "despesa",
+          "receita",
+          "gasto",
+          "reais",
+          "real",
+          "como",
+          "hoje",
+          "ontem",
+        ].includes(word),
+    )
 
   for (const word of words.slice(0, 3)) terms.add(word)
 
   return [...terms]
+}
+
+export function buildProposedTransaction(
+  question: string,
+  userCategories: UserCategory[] = [],
+  now = new Date(),
+): ProposedTransaction | null {
+  const amount = parseAmountFromText(question)
+  if (!amount) return null
+
+  const merchantTerms = extractMerchantTerms(question)
+  const description = extractDescription(question, merchantTerms)
+  if (!description) return null
+
+  const type = parseTransactionType(question)
+  const categoryHint = question.match(CATEGORY_HINT_PATTERN)?.[1] ?? question
+  const resolvedCategory = resolveCategoryFromText(categoryHint, userCategories)
+  const category = resolvedCategory?.category ?? defaultCategoryForType(type)
+  const needsReview = type === "expense" && category === "nao-categorizado"
+
+  return {
+    type,
+    description,
+    amount,
+    category,
+    date: parseDateFromText(question, now),
+    source: "manual",
+    needsReview: needsReview || undefined,
+  }
+}
+
+function buildCreatePlan(
+  question: string,
+  userCategories: UserCategory[] = [],
+  createEnabled = false,
+): AssistedWritePlan | null {
+  if (!hasCreateIntent(question)) return null
+
+  const proposedTransaction = buildProposedTransaction(question, userCategories)
+  if (!proposedTransaction) return null
+
+  const categoryLabel =
+    resolveCategoryFromText(question, userCategories)?.label ??
+    (proposedTransaction.category !== "nao-categorizado"
+      ? getCategory(proposedTransaction.category).label
+      : undefined)
+  const typeLabel = proposedTransaction.type === "income" ? "receita" : "despesa"
+  const amountLabel = formatCurrency(proposedTransaction.amount)
+  const dateLabel = formatDate(proposedTransaction.date)
+
+  const summary = createEnabled
+    ? `Posso registrar uma ${typeLabel} de ${amountLabel} (${proposedTransaction.description}) em ${dateLabel}${categoryLabel ? `, categoria ${categoryLabel}` : ""}.`
+    : "A criação assistida de lançamentos está desativada na sua conta."
+
+  const confirmationPrompt = createEnabled
+    ? `Quer que eu registre essa ${typeLabel} de ${amountLabel} como "${proposedTransaction.description}"${categoryLabel ? ` em ${categoryLabel}` : ""}?`
+    : "Ative em Minha conta → Preferências a opção de permitir que a P.E.N.N.Y. crie lançamentos, se quiser que eu registre isso por aqui."
+
+  return {
+    id: `plan-${Date.now()}`,
+    action: "create",
+    transactionIds: [],
+    categoryId: proposedTransaction.category,
+    categoryLabel,
+    merchantTerms: extractMerchantTerms(question),
+    summary,
+    confirmationPrompt,
+    sampleDescriptions: [proposedTransaction.description],
+    proposedTransaction: createEnabled ? proposedTransaction : undefined,
+  }
 }
 
 function detectAction(question: string, hasCategory: boolean): AssistedWriteAction {
@@ -134,8 +370,16 @@ export function buildAssistedWritePlan(
   transactions: Transaction[],
   question: string,
   userCategories: UserCategory[] = [],
+  options: AssistedWritePlanOptions = {},
 ): AssistedWritePlan | null {
-  if (!hasAssistedWriteIntent(question) && !isExplicitConfirmation(question)) return null
+  const createEnabled = options.createEnabled ?? false
+
+  if (hasCreateIntent(question)) {
+    const createPlan = buildCreatePlan(question, userCategories, createEnabled)
+    if (createPlan) return createPlan
+  }
+
+  if (!hasOrganizeWriteIntent(question) && !isExplicitConfirmation(question)) return null
 
   const categoryHint = question.match(CATEGORY_HINT_PATTERN)?.[1] ?? question
   const resolvedCategory = resolveCategoryFromText(categoryHint, userCategories)
@@ -220,6 +464,16 @@ export function buildUpdatedTransactions(
 }
 
 export function formatAssistedWriteSuccess(plan: AssistedWritePlan, updatedCount: number): string {
+  if (plan.action === "create") {
+    if (!updatedCount || !plan.proposedTransaction) {
+      return "Não consegui registrar esse lançamento — confere os dados ou adiciona em Movimentações."
+    }
+
+    const { proposedTransaction } = plan
+    const typeLabel = proposedTransaction.type === "income" ? "receita" : "despesa"
+    return `Pronto, registrei a ${typeLabel} "${proposedTransaction.description}" de ${formatCurrency(proposedTransaction.amount)}. Dá pra revisar em Movimentações.`
+  }
+
   if (!updatedCount) {
     return "Não consegui aplicar essa organização — os lançamentos podem ter mudado. Confere em Movimentações?"
   }

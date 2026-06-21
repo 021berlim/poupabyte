@@ -313,6 +313,7 @@ interface StoreContextValue extends FullState {
   updateTransaction: (tx: Transaction) => void
   confirmSimilarTransactions: (sourceId: string) => number
   applyAssistedWritePlan: (plan: AssistedWritePlan) => number
+  applyAssistedCreatePlan: (plan: AssistedWritePlan) => number
   autoCategorizePendingTransactions: () => number
   deleteTransaction: (id: string) => void
   // goals
@@ -1393,6 +1394,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [notify, state.categoryRules, state.transactions],
   )
 
+  const applyAssistedCreatePlan = useCallback(
+    (plan: AssistedWritePlan) => {
+      if (plan.action !== "create" || !plan.proposedTransaction) return 0
+      const errors = validateTransaction(plan.proposedTransaction)
+      if (errors.length > 0) return 0
+      addTransaction(plan.proposedTransaction)
+      return 1
+    },
+    [addTransaction],
+  )
+
   const autoCategorizePendingTransactions = useCallback(() => {
     const ctx: CategoryContext = {
       userCategories: state.userCategories,
@@ -2003,6 +2015,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateTransaction,
       confirmSimilarTransactions,
       applyAssistedWritePlan,
+      applyAssistedCreatePlan,
       autoCategorizePendingTransactions,
       deleteTransaction,
       addGoal,
@@ -2056,6 +2069,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateTransaction,
       confirmSimilarTransactions,
       applyAssistedWritePlan,
+      applyAssistedCreatePlan,
       autoCategorizePendingTransactions,
       deleteTransaction,
       addGoal,

@@ -90,6 +90,7 @@ const APP_AREAS = [
       "interpretar dados financeiros do usuário",
       "orientar sobre funcionalidades do PoupaByte",
       "organizar lançamentos existentes com confirmação explícita",
+      "criar lançamentos com autorização em Minha conta e confirmação por lançamento",
     ],
   },
 ]

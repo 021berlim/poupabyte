@@ -14,6 +14,7 @@ import {
  Moon,
  ShieldCheck,
  Smartphone,
+ Sparkles,
 } from "lucide-react"
 import { PageHeader } from "@/components/app/page-header"
 import { useTheme } from "@/components/theme-provider"
@@ -34,6 +35,10 @@ import { Switch } from "@/components/ui/switch"
 import { formatCurrency } from "@/lib/format"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import {
+ readPennyCreateTransactionsEnabled,
+ writePennyCreateTransactionsEnabled,
+} from "@/lib/penny-preferences"
 import { toast } from "sonner"
 
 const NOTIFICATIONS_KEY = "poupabyte:notifications-enabled"
@@ -199,6 +204,7 @@ export function SecuritySettings() {
 export function PreferencesSettings() {
  const { resolvedTheme, setTheme } = useTheme()
  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+ const [pennyCreateEnabled, setPennyCreateEnabled] = useState(false)
 
  useEffect(() => {
   const frame = window.requestAnimationFrame(() => {
@@ -206,6 +212,7 @@ export function PreferencesSettings() {
     const stored = window.localStorage.getItem(NOTIFICATIONS_KEY)
     if (stored !== null) setNotificationsEnabled(stored === "true")
    } catch {}
+   setPennyCreateEnabled(readPennyCreateTransactionsEnabled())
   })
   return () => window.cancelAnimationFrame(frame)
  }, [])
@@ -215,6 +222,11 @@ export function PreferencesSettings() {
   try {
    window.localStorage.setItem(NOTIFICATIONS_KEY, String(checked))
   } catch {}
+ }
+
+ function handlePennyCreateChange(checked: boolean) {
+  setPennyCreateEnabled(checked)
+  writePennyCreateTransactionsEnabled(checked)
  }
 
  return (
@@ -233,6 +245,22 @@ export function PreferencesSettings() {
      <SettingCopy title="Alertas de orçamento e metas" description="Avise quando seus orçamentos e objetivos precisarem de atenção" />
     </div>
     <Switch aria-label="Alertas de orçamento e metas" className="shrink-0" checked={notificationsEnabled} onCheckedChange={handleNotificationsChange} />
+   </div>
+   <Separator />
+   <div className="flex items-start justify-between gap-4 py-3">
+    <div className="flex min-w-0 items-start gap-3">
+     <Sparkles aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+     <SettingCopy
+      title="P.E.N.N.Y. pode criar lançamentos"
+      description="Permite que a assistente registre um lançamento por vez, sempre com sua confirmação explícita"
+     />
+    </div>
+    <Switch
+     aria-label="P.E.N.N.Y. pode criar lançamentos"
+     className="shrink-0"
+     checked={pennyCreateEnabled}
+     onCheckedChange={handlePennyCreateChange}
+    />
    </div>
   </div>
  )

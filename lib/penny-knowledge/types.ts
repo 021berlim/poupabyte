@@ -51,6 +51,7 @@ export type PennyDataSnapshot = {
   categoryRules?: CategoryRule[]
   previousHealthScore?: number
   mentionedAlertKeys?: ReadonlySet<string>
+  pennyCreateTransactionsEnabled?: boolean
 }
 
 export type PennyQuestionAnalysis = {
