@@ -21,8 +21,8 @@ export function ConfirmSimilarButton({ tx }: { tx: Transaction }) {
    className="h-8 gap-1.5 rounded-xl text-xs"
    onClick={() => confirmSimilarTransactions(tx.id)}
   >
-   <CheckCheck className="h-3.5 w-3.5" />
-   Confirmar {similarCount} similares
+   <CheckCheck className="h-3.5 w-3.5 shrink-0" />
+   <span className="whitespace-nowrap">{`Confirmar ${similarCount} similares`}</span>
   </Button>
  )
 }
