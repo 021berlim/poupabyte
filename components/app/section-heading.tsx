@@ -11,7 +11,7 @@ export function SectionHeading({
 }: {
  eyebrow?: string
  title: string
- subtitle: string
+ subtitle?: string
  action?: ReactNode
  className?: string
 }) {
@@ -24,7 +24,7 @@ export function SectionHeading({
     <h2 className={cn("text-xl font-extrabold text-foreground", !eyebrow && "text-sm font-medium")}>
      {title}
     </h2>
-    <p className="text-xs text-muted-foreground">{subtitle}</p>
+    {subtitle ? <p className="text-xs text-muted-foreground">{subtitle}</p> : null}
    </div>
    {action ? <div className="shrink-0">{action}</div> : null}
   </div>
