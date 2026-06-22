@@ -22,7 +22,7 @@ import { scaleIn } from "@/src/lib/animations"
 import { PersonalizedWelcome } from "@/components/dashboard/personalized-welcome"
 import { getDashboardFocus } from "@/lib/onboarding-personalization"
 import { buildDashboardSuggestions } from "@/lib/ui-suggestions"
-import { AlertTriangle, ArrowRight, ChevronDown, Eye, EyeOff, Pencil, Sparkles, Target } from "lucide-react"
+import { AlertTriangle, ArrowRight, ChevronDown, Eye, EyeOff, Pencil, ShieldAlert, Sparkles, Target } from "lucide-react"
 
 function monthCommitmentHistory(
   profile: ReturnType<typeof useStore>["financialProfile"],
@@ -356,6 +356,11 @@ export default function DashboardPage() {
          <InsightListRow
           href={ROUTES.limits}
           accent="primary"
+          icon={
+           <span className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <ShieldAlert className="h-5 w-5" />
+           </span>
+          }
           title={getCategory(item.limit.category).label}
           subtitle={`${Math.round(item.percent)}% do limite utilizado`}
          />
