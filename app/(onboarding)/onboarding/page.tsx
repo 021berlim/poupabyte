@@ -45,7 +45,7 @@ function OnboardingWizard() {
       goal,
     })
 
-    toast.success("Tudo pronto.")
+    toast.success("Seu controle está pronto.")
     router.replace(APP_HOME)
   }
 

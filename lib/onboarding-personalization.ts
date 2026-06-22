@@ -40,12 +40,12 @@ export const INCOME_TYPE_OPTIONS: Array<{
   value: IncomeType
   label: string
 }> = [
-  { value: "salario-fixo", label: "Salário fixo" },
-  { value: "autonomo", label: "Autônomo" },
-  { value: "negocio-proprio", label: "Negócio próprio" },
-  { value: "renda-variavel", label: "Renda variável" },
-  { value: "ocasional", label: "Às vezes" },
-  { value: "sem-renda", label: "Sem renda" },
+  { value: "salario-fixo", label: "Tenho salário fixo" },
+  { value: "autonomo", label: "Trabalho por conta própria" },
+  { value: "negocio-proprio", label: "Tenho meu próprio negócio" },
+  { value: "renda-variavel", label: "Minha renda varia" },
+  { value: "ocasional", label: "Recebo dinheiro às vezes" },
+  { value: "sem-renda", label: "Ainda não tenho renda" },
 ]
 
 export const INCOME_VARIABILITY_OPTIONS: Array<{
@@ -66,17 +66,32 @@ export const BUSINESS_SEPARATION_OPTIONS: Array<{
   { value: "as-vezes", label: "Às vezes" },
 ]
 
+export const INCOME_FIELD_HELP: Record<IncomeType, string> = {
+  "salario-fixo": "Vamos usar esse valor para calcular limites, metas e previsões.",
+  autonomo: "Use uma média aproximada. Você poderá ajustar depois.",
+  "negocio-proprio":
+    "Informe o valor que costuma tirar para você, não o faturamento do negócio.",
+  "renda-variavel": "Se não souber agora, você pode pular e registrar entradas depois.",
+  ocasional: "Esse campo é opcional. Você pode começar sem informar renda fixa.",
+  "sem-renda":
+    "Sem problema. Você pode usar o PoupaByte para acompanhar gastos e registrar entradas quando receber algum valor.",
+}
+
 export const PENNY_INCOME_MESSAGES: Record<IncomeType, string> = {
-  "salario-fixo": "Monto seu mês pelo valor e dia que você recebe.",
+  "salario-fixo": "Vou adaptar seus limites ao seu tipo de renda.",
   autonomo: "Uso uma média segura e ajusto conforme o dinheiro entrar.",
-  "negocio-proprio": "Só conto o que você retira pra você — não o faturamento.",
-  "renda-variavel": "Seus limites se ajustam conforme as entradas.",
-  ocasional: "Vamos ver o que entra e o que sai. Sem renda fixa.",
+  "negocio-proprio": "Só conto o que você retira para você — não o faturamento.",
+  "renda-variavel": "Seus limites se ajustam conforme você registra entradas.",
+  ocasional: "Vamos acompanhar o que entra e o que sai, sem renda fixa.",
   "sem-renda": "Comece pelos gastos. Cadastre entradas quando receber.",
 }
 
 export function pennyIncomeMessage(incomeType: IncomeType): string {
   return PENNY_INCOME_MESSAGES[incomeType]
+}
+
+export function incomeFieldHelp(incomeType: IncomeType): string {
+  return INCOME_FIELD_HELP[incomeType]
 }
 
 export function incomeTypeRequiresAmount(incomeType: IncomeType): boolean {
@@ -95,33 +110,33 @@ export const FINANCIAL_MOMENT_OPTIONS: Array<{
 }> = [
   {
     value: "entender-gastos",
-    label: "Ver pra onde vai o dinheiro",
-    shortLabel: "Entender gastos",
-    description: "Por categoria",
+    label: "Ver para onde o dinheiro vai",
+    shortLabel: "Ver para onde o dinheiro vai",
+    description: "Resumo por categoria e gráficos simples.",
   },
   {
     value: "controlar-gastos",
-    label: "Parar de gastar sem perceber",
-    shortLabel: "Controlar gastos",
-    description: "Limites no mês",
+    label: "Controlar gastos do mês",
+    shortLabel: "Controlar gastos do mês",
+    description: "Limites e alertas para não passar do planejado.",
   },
   {
     value: "sair-dividas",
-    label: "Sair das dívidas",
-    shortLabel: "Sair das dívidas",
-    description: "Parcelas e cartão",
+    label: "Organizar dívidas",
+    shortLabel: "Organizar dívidas",
+    description: "Veja parcelas, atrasos e impacto na renda.",
   },
   {
     value: "reserva-emergencia",
-    label: "Guardar dinheiro",
-    shortLabel: "Guardar dinheiro",
-    description: "Reserva mensal",
+    label: "Começar a guardar dinheiro",
+    shortLabel: "Começar a guardar dinheiro",
+    description: "Crie uma reserva aos poucos.",
   },
   {
     value: "planejar-metas",
-    label: "Alcançar uma meta",
-    shortLabel: "Alcançar meta",
-    description: "Metas e prazos",
+    label: "Guardar para uma meta",
+    shortLabel: "Guardar para uma meta",
+    description: "Defina valor, prazo e acompanhe o progresso.",
   },
 ]
 
@@ -139,11 +154,14 @@ export const BUDGET_WEIGHT_OPTIONS: Array<{
   { value: "alimentacao", label: "Alimentação" },
   { value: "transporte", label: "Transporte" },
   { value: "moradia", label: "Moradia" },
-  { value: "cartao-credito", label: "Cartão" },
+  { value: "cartao-credito", label: "Cartão de crédito" },
   { value: "dividas", label: "Dívidas" },
   { value: "lazer", label: "Lazer" },
-  { value: "nao-sei", label: "Não sei ainda" },
+  { value: "nao-sei", label: "Ainda não sei" },
 ]
+
+export const BUDGET_WEIGHT_UNSURE_HELP =
+  "Tudo bem. A Penny identifica isso conforme você registra seus gastos."
 
 export const BUDGET_WEIGHT_GROUPS: Array<{
   label: string
@@ -158,6 +176,10 @@ export function financialMomentLabel(value: FinancialObjective, compact = true):
   const option = FINANCIAL_MOMENT_OPTIONS.find((item) => item.value === value)
   if (!option) return value
   return compact ? option.shortLabel : option.label
+}
+
+export function financialMomentDescription(value: FinancialObjective): string | undefined {
+  return FINANCIAL_MOMENT_OPTIONS.find((item) => item.value === value)?.description
 }
 
 export function budgetWeightLabel(value: BudgetWeight): string {
@@ -327,11 +349,11 @@ export type DashboardFocus = {
 function incomeTrackingHint(incomeType?: IncomeType): string | null {
   switch (incomeType) {
     case "autonomo":
-      return "Cadastre cada entrada — o mês se ajusta."
+      return "Cadastre cada entrada e o mês se ajusta."
     case "renda-variavel":
-      return "Cadastre entradas para ajustar seus limites."
+      return "Quanto mais você registra, melhor ficam suas análises."
     case "ocasional":
-      return "Cadastre o que entrar. Sem renda fixa."
+      return "Cadastre o que entrar, sem renda fixa."
     case "sem-renda":
       return "Cadastre entradas quando receber."
     default:
@@ -363,10 +385,10 @@ export function getDashboardFocus(
   switch (objective) {
     case "entender-gastos":
       return base({
-        welcomeTitle: flexibleIncome ? "Acompanhe entradas e gastos" : "Organize seus gastos",
+        welcomeTitle: flexibleIncome ? "Acompanhe entradas e gastos" : "Veja para onde o dinheiro vai",
         welcomeHint: weightLabel
-          ? `Registre ${weightLabel.toLowerCase()} e veja pra onde vai.`
-          : "Registre e veja por categoria.",
+          ? `Registre ${weightLabel.toLowerCase()} e acompanhe por categoria.`
+          : "Registre gastos e acompanhe por categoria.",
         primaryCta: { label: "Novo gasto", href: "/transactions" },
         secondaryCta: { label: "Relatórios", href: "/reports" },
         showGoalsFirst: false,
@@ -379,10 +401,10 @@ export function getDashboardFocus(
       })
     case "controlar-gastos":
       return base({
-        welcomeTitle: "Controle do mês",
+        welcomeTitle: "Controlar gastos do mês",
         welcomeHint: weightLabel
           ? `Veja quanto ainda pode gastar em ${weightLabel.toLowerCase()}.`
-          : "Veja quanto ainda pode gastar.",
+          : "Acompanhe limites e alertas do mês.",
         primaryCta: { label: "Ver limites", href: "/limits" },
         secondaryCta: { label: "Relatórios", href: "/reports" },
         showGoalsFirst: false,
@@ -395,10 +417,10 @@ export function getDashboardFocus(
       })
     case "sair-dividas":
       return base({
-        welcomeTitle: "Sair das dívidas",
+        welcomeTitle: "Organizar dívidas",
         welcomeHint: flexibleIncome
-          ? "Acompanhe parcelas e cartão conforme o dinheiro entrar."
-          : "Veja o que já tem destino este mês.",
+          ? "Acompanhe parcelas, atrasos e impacto conforme o dinheiro entrar."
+          : "Veja parcelas, atrasos e o que já tem destino este mês.",
         primaryCta: { label: "Cadastrar dívida", href: "/profile" },
         secondaryCta: { label: "Ver mês", href: "/cashflow" },
         showGoalsFirst: false,
@@ -411,11 +433,11 @@ export function getDashboardFocus(
       })
     case "reserva-emergencia":
       return base({
-        welcomeTitle: "Guardar dinheiro",
+        welcomeTitle: "Começar a guardar dinheiro",
         welcomeHint:
           incomeType === "sem-renda" || incomeType === "ocasional"
             ? "Guarde o que der — mesmo pouco conta."
-            : "Separe o que sobra todo mês.",
+            : "Separe uma reserva aos poucos, todo mês.",
         primaryCta: { label: "Ver reserva", href: "/investments" },
         secondaryCta: { label: "Ajustar", href: "/profile" },
         showGoalsFirst: false,
@@ -428,11 +450,11 @@ export function getDashboardFocus(
       })
     case "planejar-metas":
       return base({
-        welcomeTitle: "Suas metas",
+        welcomeTitle: "Guardar para uma meta",
         welcomeHint:
           incomeType === "ocasional" || incomeType === "sem-renda"
-            ? "Comece com metas pequenas."
-            : "Veja quanto guardar por mês.",
+            ? "Comece com metas pequenas e ajuste depois."
+            : "Acompanhe o progresso e quanto guardar por mês.",
         primaryCta: { label: "Ver metas", href: "/goals" },
         secondaryCta: { label: "Nova meta", href: "/goals" },
         showGoalsFirst: true,

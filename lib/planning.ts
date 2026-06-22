@@ -66,6 +66,9 @@ export interface MonthlyPlanning {
   statementAvailableBalance: number | null
   importBasedIncome: number
   importBasedExpenses: number
+  statementNet: number
+  statementCommittedPercent: number
+  pendingObligations: number
   endOfMonthProjection: number
 }
 
@@ -152,6 +155,14 @@ export function buildMonthlyPlanning(
       : null
 
   const safeToSpend = availableFromStatement ?? availableFromImport
+  const statementNet = importBasedIncome - importBasedExpenses
+  const pendingObligations = futureCommitments
+  const statementCommittedPercent =
+    importBasedIncome > 0
+      ? Math.min(100, ((importBasedExpenses + pendingObligations) / importBasedIncome) * 100)
+      : pendingObligations > 0
+        ? 100
+        : 0
   const confirmedIncomeBase = salaryConfirmed ? monthlyIncome : importBasedIncome
   const committedMoney = confirmedExpenses + futureCommitments
   const availableMoney = safeToSpend
@@ -198,6 +209,9 @@ export function buildMonthlyPlanning(
     statementAvailableBalance,
     importBasedIncome,
     importBasedExpenses,
+    statementNet,
+    statementCommittedPercent,
+    pendingObligations,
     endOfMonthProjection,
   }
 }

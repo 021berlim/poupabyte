@@ -90,11 +90,11 @@ export const FINANCIAL_OBJECTIVE_LABELS: Record<
   import("./types").FinancialObjective,
   string
 > = {
-  "entender-gastos": "Ver para onde vai",
-  "controlar-gastos": "Gastar com controle",
-  "sair-dividas": "Sair das dívidas",
-  "reserva-emergencia": "Guardar dinheiro",
-  "planejar-metas": "Juntar pra uma meta",
+  "entender-gastos": "Ver para onde o dinheiro vai",
+  "controlar-gastos": "Controlar gastos do mês",
+  "sair-dividas": "Organizar dívidas",
+  "reserva-emergencia": "Começar a guardar dinheiro",
+  "planejar-metas": "Guardar para uma meta",
   "organizar-salario": "Organizar o salário",
   "controlar-cartao": "Controlar o cartão",
 }

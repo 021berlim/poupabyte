@@ -43,7 +43,7 @@ function monthCommitmentHistory(
    key: `${ref.getFullYear()}-${ref.getMonth()}`,
    label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(ref).replace(".", ""),
    fullLabel: new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric" }).format(ref).replace(".", ""),
-   percent: planning.monthCommittedPercent,
+   percent: planning.statementCommittedPercent,
    safeToSpend: planning.safeToSpend,
   })
  }
@@ -149,59 +149,57 @@ export default function DashboardPage() {
   return null
  }, [pendingReview, limitAlerts, goalAlerts, upcoming])
 
+ const hasUnpaidBills = activePlanning.pendingFixedExpenses > 0
+
  const incomeContext = useMemo(() => {
   if (activePlanning.statementAvailableBalance !== null) {
    return {
-    subtitle: `Saldo do extrato: ${formatCurrency(activePlanning.statementAvailableBalance)}`,
-    entriesDetail: "Entradas confirmadas no extrato",
+    subtitle: `Saldo no extrato: ${formatCurrency(activePlanning.statementAvailableBalance)}`,
    }
   }
-  if (activePlanning.importBasedIncome === 0) {
+  if (activePlanning.importBasedIncome === 0 && activePlanning.importBasedExpenses === 0) {
    return {
-    subtitle: "Baseado no extrato importado",
-    entriesDetail: "Importe e confirme lançamentos",
-   }
-  }
-  if (activePlanning.salaryConfirmed) {
-   return {
-    subtitle: `Entrou no extrato: ${formatCurrency(activePlanning.importBasedIncome)} · planejamento com salário`,
-    entriesDetail:
-     activePlanning.extraIncomeDetected > 0
-      ? `Salário confirmado + ${formatCurrency(activePlanning.extraIncomeDetected)} extras`
-      : "Salário confirmado nos lançamentos",
+    subtitle: "Importe o extrato para ver entradas e saídas",
    }
   }
   return {
-   subtitle: `Entrou no extrato: ${formatCurrency(activePlanning.importBasedIncome)}`,
-   entriesDetail: "Só lançamentos confirmados",
+   subtitle: `Entrou ${formatCurrency(activePlanning.importBasedIncome)} · saiu ${formatCurrency(activePlanning.importBasedExpenses)}`,
   }
  }, [activePlanning])
 
  const heroMetrics = [
   {
-   label: "Entradas",
-   value: formatCurrency(activePlanning.receivedIncome),
-   detail: incomeContext.entriesDetail,
+   label: "Entrou",
+   value: formatCurrency(activePlanning.importBasedIncome),
+   detail: "confirmado no extrato",
    tone: "text-emerald-300",
   },
   {
-   label: "Despesas",
-   value: formatCurrency(activePlanning.confirmedExpenses),
-   detail: "confirmadas no extrato",
+   label: "Saiu",
+   value: formatCurrency(activePlanning.importBasedExpenses),
+   detail: "confirmado no extrato",
    tone: "text-red-300",
   },
   {
-   label: "Já reservado",
-   value: `${Math.round(activePlanning.monthCommittedPercent)}%`,
-   detail: `${formatCurrency(activePlanning.receivedIncome)} no extrato · ${formatCurrency(activePlanning.committedMoney)} reservados`,
+   label: "Comprometido",
+   value: `${Math.round(activePlanning.statementCommittedPercent)}%`,
+   detail:
+    activePlanning.pendingObligations > 0
+     ? `${formatCurrency(activePlanning.pendingObligations)} em contas e reservas`
+     : "contas do mês cobertas",
   },
   {
-   label: "Deve sobrar",
-   value: formatCurrency(activePlanning.projectedSavings),
-   detail: activePlanning.salaryConfirmed
-    ? `Com salário confirmado até dia ${financialProfile.salaryDay}`
-    : "Confirme o salário para ver o mês",
-   tone: activePlanning.projectedSavings >= 0 ? "text-emerald-300" : "text-red-300",
+   label: "Sobrou",
+   value: formatCurrency(activePlanning.safeToSpend),
+   detail:
+    hasUnpaidBills && activePlanning.safeToSpend === 0
+     ? "contas pendentes consomem o extrato"
+     : hasUnpaidBills
+       ? `após ${formatCurrency(activePlanning.pendingFixedExpenses)} em contas pendentes`
+       : activePlanning.statementAvailableBalance !== null
+         ? "saldo do extrato após reservas"
+         : "entrada menos saída e reservas",
+   tone: activePlanning.safeToSpend > 0 ? "text-emerald-300" : "text-red-300",
   },
  ]
 
@@ -243,9 +241,6 @@ export default function DashboardPage() {
        </p>
        <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
         {incomeContext.subtitle}
-        {activePlanning.salaryConfirmed && activePlanning.monthlyIncome > activePlanning.importBasedIncome
-          ? ` · previsto ${formatCurrency(activePlanning.monthlyIncome)}`
-          : ""}
        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -285,8 +280,12 @@ export default function DashboardPage() {
        )}
        <p className="mt-2 text-sm font-medium text-white/55">
         {dashboardFocus.showReserveSplit && financialProfile.monthlyReserve > 0
-          ? `Reserva: ${formatCurrency(financialProfile.monthlyReserve)} · pode gastar ${formatCurrency(displayValue)}`
-          : `Deve sobrar ${formatCurrency(activePlanning.projectedSavings)}.`}
+          ? `Reserva: ${formatCurrency(financialProfile.monthlyReserve)} · livre ${formatCurrency(displayValue)}`
+          : hasUnpaidBills && displayValue === 0
+            ? "Contas pendentes — nada livre no extrato"
+            : activePlanning.pendingObligations > 0
+              ? `Sobrou ${formatCurrency(displayValue)} após saídas e compromissos`
+              : `Sobrou ${formatCurrency(displayValue)} no extrato`}
        </p>
       </div>
      </div>

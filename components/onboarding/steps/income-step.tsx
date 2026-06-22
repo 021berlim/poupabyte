@@ -9,6 +9,7 @@ import {
   BUSINESS_SEPARATION_OPTIONS,
   INCOME_TYPE_OPTIONS,
   INCOME_VARIABILITY_OPTIONS,
+  incomeFieldHelp,
   incomeTypeAllowsOptionalAmount,
   incomeTypeRequiresAmount,
   pennyIncomeMessage,
@@ -18,6 +19,12 @@ import type { BusinessSeparation, IncomeType, IncomeVariability } from "@/lib/ty
 import { OnboardingActions } from "../onboarding-actions"
 import { OnboardingStepHeader } from "../onboarding-shell"
 import { OptionButton } from "../option-button"
+
+function FieldHelp({ children }: { children: string }) {
+  return (
+    <p className="text-xs leading-relaxed text-muted-foreground">{children}</p>
+  )
+}
 
 export function IncomeStep({
   onContinue,
@@ -39,6 +46,13 @@ export function IncomeStep({
   const canContinue =
     incomeType !== null &&
     (incomeType === "sem-renda" || (requiresAmount && parsedIncome > 0) || optionalAmount)
+
+  const continueDisabledLabel =
+    incomeType === null
+      ? "Escolha uma opção para continuar"
+      : requiresAmount && parsedIncome <= 0
+        ? "Informe o valor para continuar"
+        : "Escolha uma opção para continuar"
 
   function handleContinue() {
     if (!incomeType || !canContinue) return
@@ -75,7 +89,10 @@ export function IncomeStep({
 
   return (
     <div>
-      <OnboardingStepHeader title="Como você recebe?" />
+      <OnboardingStepHeader
+        title="Como seu dinheiro entra?"
+        description="Isso ajuda a Penny a montar um controle adequado ao seu tipo de renda."
+      />
 
       <div className="mt-5 grid grid-cols-2 gap-1.5">
         {INCOME_TYPE_OPTIONS.map((option) => (
@@ -92,16 +109,16 @@ export function IncomeStep({
       {incomeType === "salario-fixo" ? (
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income">Renda mensal</Label>
+            <Label htmlFor="onboarding-income">Valor mensal</Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
-              placeholder="Ex: 3.500"
+              placeholder="0,00"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-day">Dia que recebe</Label>
+            <Label htmlFor="onboarding-day">Dia em que você recebe</Label>
             <Input
               id="onboarding-day"
               type="number"
@@ -111,19 +128,21 @@ export function IncomeStep({
               onChange={(e) => setSalaryDay(e.target.value)}
             />
           </div>
+          <FieldHelp>{incomeFieldHelp("salario-fixo")}</FieldHelp>
         </div>
       ) : null}
 
       {incomeType === "autonomo" ? (
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income">Média por mês</Label>
+            <Label htmlFor="onboarding-income">Média mensal</Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
-              placeholder="Ex: 4.000"
+              placeholder="0,00"
             />
+            <FieldHelp>{incomeFieldHelp("autonomo")}</FieldHelp>
           </div>
           <div className="space-y-2">
             <p className="text-sm font-semibold">
@@ -147,13 +166,14 @@ export function IncomeStep({
       {incomeType === "negocio-proprio" ? (
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income">Quanto retira por mês?</Label>
+            <Label htmlFor="onboarding-income">Retirada mensal pessoal</Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
-              placeholder="Só o pessoal"
+              placeholder="0,00"
             />
+            <FieldHelp>{incomeFieldHelp("negocio-proprio")}</FieldHelp>
           </div>
           <div className="space-y-2">
             <p className="text-sm font-semibold">
@@ -176,39 +196,48 @@ export function IncomeStep({
 
       {incomeType === "renda-variavel" ? (
         <div className="mt-5 space-y-1.5">
-          <Label htmlFor="onboarding-income">
-            Média do mês <span className="font-normal text-muted-foreground">opcional</span>
-          </Label>
+          <Label htmlFor="onboarding-income">Média aproximada</Label>
           <CurrencyInput
             id="onboarding-income"
             value={monthlyIncome}
             onChange={setMonthlyIncome}
-            placeholder="Pode pular"
+            placeholder="0,00"
           />
+          <FieldHelp>{incomeFieldHelp("renda-variavel")}</FieldHelp>
         </div>
       ) : null}
 
       {incomeType === "ocasional" ? (
         <div className="mt-5 space-y-1.5">
-          <Label htmlFor="onboarding-income">
-            Quanto costuma receber? <span className="font-normal text-muted-foreground">opcional</span>
-          </Label>
+          <Label htmlFor="onboarding-income">Valor aproximado quando recebe</Label>
           <CurrencyInput
             id="onboarding-income"
             value={monthlyIncome}
             onChange={setMonthlyIncome}
-            placeholder="Pode pular"
+            placeholder="0,00"
           />
+          <FieldHelp>{incomeFieldHelp("ocasional")}</FieldHelp>
         </div>
       ) : null}
 
-      {incomeType ? (
+      {incomeType === "sem-renda" ? (
+        <p className="mt-5 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+          {incomeFieldHelp("sem-renda")}
+        </p>
+      ) : null}
+
+      {incomeType && incomeType !== "sem-renda" ? (
         <p className="mt-4 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
           {pennyIncomeMessage(incomeType)}
         </p>
       ) : null}
 
-      <OnboardingActions onContinue={handleContinue} onSkip={onSkip} continueDisabled={!canContinue} />
+      <OnboardingActions
+        onContinue={handleContinue}
+        onSkip={onSkip}
+        continueDisabled={!canContinue}
+        continueDisabledLabel={continueDisabledLabel}
+      />
     </div>
   )
 }

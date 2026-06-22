@@ -90,5 +90,6 @@ describe("onboarding personalization", () => {
     expect(getDashboardFocus("controlar-gastos", undefined, "ocasional").showLimitsProminent).toBe(false)
     expect(getDashboardFocus("sair-dividas", undefined, "sem-renda").showCommittedPercent).toBe(false)
     expect(pennyIncomeMessage("renda-variavel")).toContain("ajustam")
+    expect(pennyIncomeMessage("salario-fixo")).toContain("limites")
   })
 })

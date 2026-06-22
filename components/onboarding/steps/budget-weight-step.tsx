@@ -1,7 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { BUDGET_WEIGHT_GROUPS, budgetWeightLabel } from "@/lib/onboarding-personalization"
+import {
+  BUDGET_WEIGHT_GROUPS,
+  BUDGET_WEIGHT_UNSURE_HELP,
+  budgetWeightLabel,
+} from "@/lib/onboarding-personalization"
 import type { BudgetWeight } from "@/lib/types"
 import { OnboardingActions } from "../onboarding-actions"
 import { ChoiceGroup, OnboardingChoiceLayout } from "../onboarding-choice-layout"
@@ -18,12 +22,12 @@ export function BudgetWeightStep({
 
   return (
     <OnboardingChoiceLayout
-      title="O que mais pesa no mês?"
+      title="O que mais pesa no seu mês?"
+      description="Escolha o ponto que mais afeta seu orçamento hoje."
       actions={
         <OnboardingActions
           onContinue={() => selected && onContinue(selected)}
           onSkip={onSkip}
-          skipLabel="Pular"
           continueDisabled={!selected}
         />
       }
@@ -51,6 +55,12 @@ export function BudgetWeightStep({
           </ChoiceGroup>
         ))}
       </div>
+
+      {selected === "nao-sei" ? (
+        <p className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+          {BUDGET_WEIGHT_UNSURE_HELP}
+        </p>
+      ) : null}
     </OnboardingChoiceLayout>
   )
 }

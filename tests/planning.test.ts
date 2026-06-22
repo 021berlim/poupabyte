@@ -104,6 +104,33 @@ describe("monthly planning income", () => {
     expect(planning.projectedSavings).toBe(500)
   })
 
+  it("calcula comprometimento e sobra com base no extrato", () => {
+    const profile = {
+      ...EMPTY_FINANCIAL_PROFILE,
+      configured: true,
+      monthlySalary: 1000,
+      monthlyReserve: 100,
+    }
+    const transactions: Transaction[] = [
+      importIncome({ amount: 1000 }),
+      importIncome({
+        id: "expense-1",
+        type: "expense",
+        amount: 400,
+        category: "alimentacao",
+      }),
+    ]
+
+    const planning = buildMonthlyPlanning(profile, transactions, [], [], [], [], ref)
+
+    expect(planning.importBasedIncome).toBe(1000)
+    expect(planning.importBasedExpenses).toBe(400)
+    expect(planning.statementNet).toBe(600)
+    expect(planning.pendingObligations).toBe(100)
+    expect(planning.safeToSpend).toBe(500)
+    expect(planning.statementCommittedPercent).toBe(50)
+  })
+
   it("não projeta com salário declarado sem confirmação no extrato", () => {
     const profile = {
       ...EMPTY_FINANCIAL_PROFILE,

@@ -29,6 +29,13 @@ export function FirstGoalStep({
   const targetValue = parseAmountInput(target)
   const canFinishWithGoal = wantsGoal === true && name.trim().length > 0 && targetValue > 0 && deadline.length > 0
 
+  const continueDisabledLabel =
+    wantsGoal === null
+      ? "Escolha uma opção para continuar"
+      : wantsGoal === true && !canFinishWithGoal
+        ? "Preencha os campos da meta"
+        : "Escolha uma opção para continuar"
+
   function handleFinish() {
     if (wantsGoal === false) {
       onFinish()
@@ -44,27 +51,29 @@ export function FirstGoalStep({
 
   return (
     <OnboardingChoiceLayout
-      title="Criar uma meta agora?"
+      title="Quer criar uma meta agora?"
+      description="Você pode começar com uma meta simples ou deixar para depois."
       actions={
         <OnboardingActions
           onContinue={handleFinish}
           onSkip={() => onFinish()}
-          continueLabel={wantsGoal === true ? "Concluir" : "Continuar"}
-          skipLabel="Pular"
+          continueLabel="Começar agora"
           continueDisabled={wantsGoal === null || (wantsGoal === true && !canFinishWithGoal)}
+          continueDisabledLabel={continueDisabledLabel}
+          skipLabel="Pular por enquanto"
         />
       }
     >
       <div className="grid grid-cols-2 gap-1.5">
         <OptionButton
           layout="chip"
-          label="Sim"
+          label="Criar uma meta"
           selected={wantsGoal === true}
           onClick={() => setWantsGoal(true)}
         />
         <OptionButton
           layout="chip"
-          label="Agora não"
+          label="Pular por enquanto"
           selected={wantsGoal === false}
           onClick={() => setWantsGoal(false)}
         />
@@ -81,15 +90,20 @@ export function FirstGoalStep({
               className="h-10"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex.: Viagem, celular novo…"
+              placeholder="Ex: reserva, celular, viagem, curso"
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label htmlFor="onboarding-goal-target" className="text-xs">
-                Valor
+                Valor desejado
               </Label>
-              <CurrencyInput id="onboarding-goal-target" value={target} onChange={setTarget} />
+              <CurrencyInput
+                id="onboarding-goal-target"
+                value={target}
+                onChange={setTarget}
+                placeholder="0,00"
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="onboarding-goal-deadline" className="text-xs">
@@ -104,6 +118,9 @@ export function FirstGoalStep({
               />
             </div>
           </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            A Penny calcula quanto você precisa guardar por mês.
+          </p>
         </div>
       ) : null}
     </OnboardingChoiceLayout>

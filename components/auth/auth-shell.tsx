@@ -27,17 +27,17 @@ export function AuthShell({
 
     <div className="relative max-w-md">
      <h1 className="text-balance text-[clamp(2rem,4vw,2.5rem)] font-extrabold leading-tight">
-      Suas finanças em um só lugar.
+      Suas finanças, do seu jeito.
      </h1>
      <p className="mt-4 text-pretty text-base text-secondary-foreground/70">
-      Controle gastos, crie metas e acompanhe o mês. Simples e direto.
+      Organize entradas, gastos e metas em uma visão simples do seu mês.
      </p>
 
      <ul className="mt-[clamp(2rem,5vh,2.5rem)] space-y-4">
       {[
-       { icon: TrendingUp, text: "Veja para onde vai o dinheiro" },
-       { icon: Target, text: "Metas e limites do seu jeito" },
-       { icon: ShieldCheck, text: "Seus dados, seu controle" },
+       { icon: TrendingUp, text: "Veja para onde seu dinheiro vai" },
+       { icon: Target, text: "Acompanhe limites e metas" },
+       { icon: ShieldCheck, text: "Receba análises da Penny quando precisar" },
       ].map(({ icon: Icon, text }) => (
        <li key={text} className="flex items-center gap-3 text-sm">
         <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/20 text-primary">

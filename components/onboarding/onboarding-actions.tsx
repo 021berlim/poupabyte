@@ -6,17 +6,21 @@ export function OnboardingActions({
   onContinue,
   onSkip,
   continueLabel = "Continuar",
-  skipLabel = "Pular",
+  continueDisabledLabel = "Escolha uma opção para continuar",
+  skipLabel = "Pular por enquanto",
   loading = false,
   continueDisabled = false,
 }: {
   onContinue: () => void
   onSkip: () => void
   continueLabel?: string
+  continueDisabledLabel?: string
   skipLabel?: string
   loading?: boolean
   continueDisabled?: boolean
 }) {
+  const buttonLabel = continueDisabled && !loading ? continueDisabledLabel : continueLabel
+
   return (
     <div className="mt-4">
       <Button
@@ -32,7 +36,7 @@ export function OnboardingActions({
             <span aria-hidden="true" className="h-4 w-24 animate-pulse rounded bg-primary-foreground/70" />
           </>
         ) : (
-          continueLabel
+          buttonLabel
         )}
       </Button>
       <p className="mt-3 text-center text-sm text-muted-foreground">
