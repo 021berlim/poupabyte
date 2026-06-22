@@ -5,7 +5,7 @@ import type { ReactNode } from "react"
 
 /** Wrapper fino — reutiliza o mesmo layout visual de login e cadastro. */
 export function OnboardingShell({ children }: { children: ReactNode }) {
-  return <AuthShell>{children}</AuthShell>
+  return <AuthShell compact>{children}</AuthShell>
 }
 
 export function OnboardingStepHeader({

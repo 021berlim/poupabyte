@@ -6,7 +6,7 @@ export function OnboardingProgress({ step, total }: { step: number; total: numbe
   const progress = (step / total) * 100
 
   return (
-    <div className="mb-6">
+    <div className="mb-3">
       <div className="flex items-center gap-3">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
           <div

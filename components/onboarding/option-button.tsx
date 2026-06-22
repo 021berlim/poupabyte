@@ -9,13 +9,33 @@ export function OptionButton({
   selected,
   onClick,
   layout = "stack",
+  className,
 }: {
   label: string
   description?: string
   selected: boolean
   onClick: () => void
-  layout?: "stack" | "inline" | "minimal"
+  layout?: "stack" | "inline" | "minimal" | "chip"
+  className?: string
 }) {
+  if (layout === "chip") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "w-full rounded-lg border px-2 py-2 text-center text-xs font-bold leading-tight text-balance transition-colors",
+          selected
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border/70 bg-card/40 hover:border-primary/40 hover:bg-muted/30",
+          className,
+        )}
+      >
+        {label}
+      </button>
+    )
+  }
+
   if (layout === "minimal") {
     return (
       <button
@@ -27,6 +47,7 @@ export function OptionButton({
           selected
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border/70 bg-card/40 hover:border-primary/40 hover:bg-muted/30",
+          className,
         )}
       >
         {label}

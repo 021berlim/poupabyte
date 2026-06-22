@@ -18,7 +18,7 @@ export function OnboardingActions({
   continueDisabled?: boolean
 }) {
   return (
-    <div className="mt-6">
+    <div className="mt-4">
       <Button
         type="button"
         size="lg"
@@ -35,7 +35,7 @@ export function OnboardingActions({
           continueLabel
         )}
       </Button>
-      <p className="mt-4 text-center text-sm text-muted-foreground">
+      <p className="mt-3 text-center text-sm text-muted-foreground">
         <button
           type="button"
           onClick={onSkip}

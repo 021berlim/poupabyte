@@ -31,33 +31,46 @@ export type OnboardingAnswers = {
 export const FINANCIAL_MOMENT_OPTIONS: Array<{
   value: FinancialObjective
   label: string
+  shortLabel: string
   description: string
 }> = [
   {
     value: "entender-gastos",
     label: "Entender para onde meu dinheiro vai",
+    shortLabel: "Entender gastos",
     description: "Organização e visão por categoria",
   },
   {
     value: "controlar-gastos",
     label: "Parar de gastar sem perceber",
+    shortLabel: "Controlar gastos",
     description: "Limites e controle do mês",
   },
   {
     value: "sair-dividas",
     label: "Sair das dívidas",
+    shortLabel: "Sair das dívidas",
     description: "Foco em parcelas e comprometimento",
   },
   {
     value: "reserva-emergencia",
     label: "Guardar dinheiro",
+    shortLabel: "Guardar dinheiro",
     description: "Reserva e separação do disponível",
   },
   {
     value: "planejar-metas",
     label: "Comprar algo ou alcançar uma meta",
+    shortLabel: "Alcançar uma meta",
     description: "Metas e quanto guardar por mês",
   },
+]
+
+/** Grade 2x2 + destaque — cabe na tela sem rolagem */
+export const FINANCIAL_MOMENT_LAYOUT: FinancialObjective[][] = [
+  ["entender-gastos", "controlar-gastos"],
+  ["sair-dividas", "reserva-emergencia"],
+  ["planejar-metas"],
 ]
 
 export const BUDGET_WEIGHT_OPTIONS: Array<{
@@ -67,11 +80,30 @@ export const BUDGET_WEIGHT_OPTIONS: Array<{
   { value: "alimentacao", label: "Alimentação" },
   { value: "transporte", label: "Transporte" },
   { value: "moradia", label: "Moradia" },
-  { value: "cartao-credito", label: "Cartão de crédito" },
+  { value: "cartao-credito", label: "Cartão" },
   { value: "dividas", label: "Dívidas" },
   { value: "lazer", label: "Lazer" },
-  { value: "nao-sei", label: "Não sei ainda" },
+  { value: "nao-sei", label: "Não sei" },
 ]
+
+export const BUDGET_WEIGHT_GROUPS: Array<{
+  label: string
+  values: BudgetWeight[]
+}> = [
+  { label: "Dia a dia", values: ["alimentacao", "transporte", "moradia"] },
+  { label: "Compromissos", values: ["cartao-credito", "dividas"] },
+  { label: "Outros", values: ["lazer", "nao-sei"] },
+]
+
+export function financialMomentLabel(value: FinancialObjective, compact = true): string {
+  const option = FINANCIAL_MOMENT_OPTIONS.find((item) => item.value === value)
+  if (!option) return value
+  return compact ? option.shortLabel : option.label
+}
+
+export function budgetWeightLabel(value: BudgetWeight): string {
+  return BUDGET_WEIGHT_OPTIONS.find((item) => item.value === value)?.label ?? value
+}
 
 export const EXTRA_INCOME_OPTIONS: Array<{
   value: Extract<ExtraIncomeFrequency, "none" | "monthly">

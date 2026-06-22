@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { parseAmountInput } from "@/lib/finance"
 import type { OnboardingGoalData } from "@/lib/onboarding-personalization"
 import { OnboardingActions } from "../onboarding-actions"
-import { OnboardingStepHeader } from "../onboarding-shell"
+import { OnboardingChoiceLayout } from "../onboarding-choice-layout"
 import { OptionButton } from "../option-button"
 
 function defaultDeadline(): string {
@@ -43,18 +43,27 @@ export function FirstGoalStep({
   }
 
   return (
-    <div>
-      <OnboardingStepHeader title="Quer criar uma meta agora?" />
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
+    <OnboardingChoiceLayout
+      title="Quer criar uma meta agora?"
+      actions={
+        <OnboardingActions
+          onContinue={handleFinish}
+          onSkip={() => onFinish()}
+          continueLabel={wantsGoal === true ? "Concluir" : "Continuar"}
+          skipLabel="Pular"
+          continueDisabled={wantsGoal === null || (wantsGoal === true && !canFinishWithGoal)}
+        />
+      }
+    >
+      <div className="grid grid-cols-2 gap-1.5">
         <OptionButton
-          layout="minimal"
+          layout="chip"
           label="Sim"
           selected={wantsGoal === true}
           onClick={() => setWantsGoal(true)}
         />
         <OptionButton
-          layout="minimal"
+          layout="chip"
           label="Agora não"
           selected={wantsGoal === false}
           onClick={() => setWantsGoal(false)}
@@ -62,39 +71,41 @@ export function FirstGoalStep({
       </div>
 
       {wantsGoal === true ? (
-        <div className="mt-4 space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="onboarding-goal-name">Nome da meta</Label>
+        <div className="mt-3 space-y-2.5">
+          <div className="space-y-1">
+            <Label htmlFor="onboarding-goal-name" className="text-xs">
+              Nome da meta
+            </Label>
             <Input
               id="onboarding-goal-name"
+              className="h-10"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex.: Viagem, celular novo…"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="onboarding-goal-target">Valor desejado</Label>
-            <CurrencyInput id="onboarding-goal-target" value={target} onChange={setTarget} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="onboarding-goal-deadline">Prazo</Label>
-            <Input
-              id="onboarding-goal-deadline"
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="onboarding-goal-target" className="text-xs">
+                Valor
+              </Label>
+              <CurrencyInput id="onboarding-goal-target" value={target} onChange={setTarget} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="onboarding-goal-deadline" className="text-xs">
+                Prazo
+              </Label>
+              <Input
+                id="onboarding-goal-deadline"
+                className="h-10"
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       ) : null}
-
-      <OnboardingActions
-        onContinue={handleFinish}
-        onSkip={() => onFinish()}
-        continueLabel={wantsGoal === true ? "Concluir" : "Continuar"}
-        skipLabel="Pular"
-        continueDisabled={wantsGoal === null || (wantsGoal === true && !canFinishWithGoal)}
-      />
-    </div>
+    </OnboardingChoiceLayout>
   )
 }
