@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import { TransactionRecurrenceFields } from "@/components/app/transaction-recurrence-fields"
 import { isManageCategoriesSelectValue, ManageCategoriesSelectOption } from "@/components/app/manage-categories-select-option"
+import { FORM, TOAST, TRANSACTION_TYPES } from "@/lib/copy"
 import { ROUTES } from "@/lib/routes"
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/categories"
 import { getCategoryIcon } from "@/lib/category-icons"
@@ -112,7 +113,7 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
   })
   const errors = validateTransaction(payload)
   if (errors.length > 0) {
-   notify({ kind: "error", type: "error", title: "Transacao invalida", message: errors[0] })
+   notify({ kind: "error", type: "error", title: "Lançamento inválido", message: errors[0] ?? TOAST.error.invalidTransaction })
    return
   }
 
@@ -132,9 +133,23 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
    {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
    <DialogContent className="max-h-[min(92vh,48rem)] overflow-y-auto">
     <DialogHeader>
-     <DialogTitle>{isEdit ? "Editar transação" : "Nova transação"}</DialogTitle>
+     <DialogTitle>
+      {isEdit
+       ? "Editar lançamento"
+       : type === "income"
+         ? FORM.newIncome
+         : type === "expense"
+           ? FORM.newExpense
+           : FORM.newTransaction}
+     </DialogTitle>
      <DialogDescription>
-      {isEdit ? "Atualize os dados da movimentação." : "Registre uma nova receita ou despesa."}
+      {isEdit
+       ? "Atualize valor, data e categoria."
+       : type === "transfer"
+         ? "Registre uma transferência entre suas contas."
+         : type === "income"
+           ? "Registre dinheiro que entrou no mês."
+           : "Registre um gasto do dia a dia."}
      </DialogDescription>
     </DialogHeader>
 
@@ -142,9 +157,9 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
      <div className="space-y-4 px-6 py-5">
       <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-muted p-1">
       {([
-       { value: "expense" as const, label: "Despesa" },
-       { value: "income" as const, label: "Receita" },
-       { value: "transfer" as const, label: "Entre contas" },
+       { value: "expense" as const, label: TRANSACTION_TYPES.expense },
+       { value: "income" as const, label: TRANSACTION_TYPES.income },
+       { value: "transfer" as const, label: TRANSACTION_TYPES.transfer },
       ]).map((option) => (
        <button
         key={option.value}
@@ -167,7 +182,7 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
      </div>
      {type === "transfer" ? (
       <p className="text-xs text-muted-foreground">
-       Use quando o valor foi entre suas contas. Não entra como receita nem despesa do mês.
+       Use quando o valor foi entre suas contas. Não entra como entrada nem gasto do mês.
       </p>
      ) : null}
 
@@ -177,13 +192,15 @@ export function TransactionDialog({ trigger, transaction, open, onOpenChange, de
        id="tx-desc"
        value={description}
        onChange={(e) => setDescription(e.target.value)}
-       placeholder="Ex.: Supermercado"
+       placeholder={type === "income" ? FORM.incomeSource : FORM.whereSpent}
       />
      </div>
 
      <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
       <div className="space-y-1.5">
-       <Label htmlFor="tx-amount">Valor</Label>
+       <Label htmlFor="tx-amount">
+        {type === "income" ? FORM.incomeAmount : type === "expense" ? FORM.expenseAmount : "Valor"}
+       </Label>
        <CurrencyInput
         id="tx-amount"
         value={amount}

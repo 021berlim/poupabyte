@@ -918,8 +918,8 @@ function salaryAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Salário não registrado",
-    message: `Dia ${data.financialProfile.salaryDay} — ainda sem salário este mês.`,
+    title: "Entrada principal não registrada",
+    message: `Dia ${data.financialProfile.salaryDay} — ainda sem entrada principal neste mês.`,
     dedupeKey: monthDedupe("planning:salary-missing"),
     persist: true,
   }
@@ -944,8 +944,8 @@ function pendingReviewAlert(transactions: Transaction[]): NotificationPayload | 
   return {
     kind: "transaction",
     type: "warning",
-    title: "Lançamentos pra revisar",
-    message: `${pending.length} pra confirmar ou categorizar.`,
+    title: "Lançamentos para revisar",
+    message: `${pending.length} para confirmar ou categorizar.`,
     dedupeKey: monthDedupe(`planning:pending-review:${pending.length}`),
     persist: true,
   }
@@ -986,7 +986,7 @@ function safeMarginAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Pouco espaço pra novos gastos",
+    title: "Pouco saldo disponível para novos gastos",
     message: `Margem segura: ${longTerm.safeMargin.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
     dedupeKey: monthDedupe("planning:safe-margin"),
     persist: true,
@@ -1006,8 +1006,8 @@ function fixedExpensesAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Fixos altos",
-    message: `${longTerm.fixedExpensesPercent.toFixed(0)}% do salário em compromissos fixos.`,
+    title: "Compromissos fixos altos",
+    message: `${longTerm.fixedExpensesPercent.toFixed(0)}% da renda em compromissos fixos.`,
     dedupeKey: monthDedupe("planning:fixed-expenses"),
     persist: true,
   }
@@ -1049,7 +1049,7 @@ function importSummaryAlert(data: DataState): NotificationPayload | null {
     kind: "transaction",
     type: "warning",
     title: "Importação pendente",
-    message: `${last.pendingReview} de "${last.fileName}" pra revisar.`,
+    message: `${last.pendingReview} de "${last.fileName}" para revisar.`,
     dedupeKey: monthDedupe(`planning:import-pending:${last.fileName}`),
     persist: true,
   }
@@ -1319,7 +1319,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const prepared = applyRecurrenceFlags(tx)
       const errors = validateTransaction(prepared)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Lançamento inválido", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Verifique o lançamento", message: errors[0] })
         return
       }
 
@@ -1329,7 +1329,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "transaction",
         type: "success",
-        title: "Lançamento criado",
+        title: "Lançamento salvo",
         message: `"${tx.description}" adicionado.`,
       })
       if (!created.needsReview && created.category !== "nao-categorizado") {
@@ -1394,7 +1394,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const prepared = applyRecurrenceFlags(tx)
       const errors = validateTransaction(prepared)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Lançamento inválido", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Verifique o lançamento", message: errors[0] })
         return
       }
 
@@ -1414,7 +1414,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "transaction",
         type: "success",
-        title: "Lançamento editado",
+        title: "Lançamento atualizado",
         message: `"${next.description}" atualizado.`,
       })
       if (next.type === "expense") {
@@ -1590,7 +1590,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "transaction",
         type: "success",
-        title: "Lançamento removido",
+        title: "Lançamento excluído",
         message: removed ? `"${removed.description}" removido.` : "Lançamento removido.",
       })
     },
@@ -1772,7 +1772,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const setFinancialProfile = useCallback(
     (profile: FinancialProfile) => {
       if (!Number.isFinite(profile.monthlySalary) || profile.monthlySalary <= 0) {
-        notify({ kind: "error", type: "error", title: "Salário inválido", message: "Informe um salário mensal maior que zero." })
+        notify({ kind: "error", type: "error", title: "Renda inválida", message: "Informe um valor de renda maior que zero." })
         return
       }
       dispatch({ type: "SET_FINANCIAL_PROFILE", payload: normalizeSalaryHistory({ ...profile, configured: true, currency: "BRL" }) })
@@ -1780,7 +1780,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "success",
         type: "success",
         title: "Renda atualizada",
-        message: "Salário e renda salvos.",
+        message: "Renda atualizada.",
       })
     },
     [notify],

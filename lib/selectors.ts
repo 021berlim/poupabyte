@@ -365,15 +365,15 @@ export function goalSummary(goals: Goal[]): GoalSummary {
 }
 
 export const INVESTMENT_TYPE_LABELS: Record<InvestmentType, string> = {
-  poupanca: "Poupanca",
+  poupanca: "Poupança",
   cdb: "CDB",
   "tesouro-direto": "Tesouro Direto",
-  acoes: "Acoes",
-  "fundos-imobiliarios": "Fundos Imobiliarios",
+  acoes: "Ações",
+  "fundos-imobiliarios": "Fundos Imobiliários",
   etfs: "ETFs",
   fundos: "Fundos",
   criptomoedas: "Criptomoedas",
-  previdencia: "Previdencia",
+  previdencia: "Previdência",
   outros: "Outros",
 }
 
@@ -614,6 +614,6 @@ export function financialHealthScore(
   score -= Math.min(15, goalStats.atRisk * 5)
   score = Math.max(0, Math.min(100, score))
 
-  const label = score >= 80 ? "Saudavel" : score >= 60 ? "Em atencao" : "Critica"
+  const label = score >= 80 ? "Saudável" : score >= 60 ? "Em atenção" : "Crítica"
   return { score, label }
 }

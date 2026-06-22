@@ -10,6 +10,7 @@ import {
  SelectTrigger,
  SelectValue,
 } from "@/components/ui/select"
+import { METRICS } from "@/lib/copy"
 import { formatCurrency } from "@/lib/format"
 import { monthlySeries } from "@/lib/selectors"
 import { useStore } from "@/lib/store"
@@ -82,7 +83,7 @@ export function CashflowChart({ animationDelay = 0 }: { animationDelay?: number 
       Últimos {months} meses
      </h2>
      <p className="mt-1 text-sm text-muted-foreground">
-      Comparativo entre entradas e saídas com leitura mensal.
+      Entradas e gastos mês a mês no período escolhido.
      </p>
     </div>
 
@@ -106,13 +107,13 @@ export function CashflowChart({ animationDelay = 0 }: { animationDelay?: number 
      <div className="grid min-w-0 grid-cols-2 gap-3">
       <CashflowMetric
        icon={ArrowUpRight}
-       label="Entradas"
+       label={METRICS.income}
        value={totalIncome}
        tone="income"
       />
       <CashflowMetric
        icon={ArrowDownRight}
-       label="Saídas"
+       label={METRICS.expense}
        value={totalExpense}
        tone="expense"
       />
@@ -122,8 +123,8 @@ export function CashflowChart({ animationDelay = 0 }: { animationDelay?: number 
 
    <ChartInteractiveLegend
     items={[
-     { key: "income", label: "Receitas", color: "var(--chart-3)" },
-     { key: "expense", label: "Despesas", color: "var(--chart-1)" },
+     { key: "income", label: METRICS.income, color: "var(--chart-3)" },
+     { key: "expense", label: METRICS.expense, color: "var(--chart-1)" },
     ]}
     activeKey={activeSeries}
     onActiveChange={setActiveSeries}
@@ -160,7 +161,7 @@ export function CashflowChart({ animationDelay = 0 }: { animationDelay?: number 
       <Area
        type="monotone"
        dataKey="income"
-       name="Receitas"
+       name={METRICS.income}
        stroke="var(--chart-3)"
        fill="url(#fillIncome)"
        strokeWidth={3}
@@ -174,7 +175,7 @@ export function CashflowChart({ animationDelay = 0 }: { animationDelay?: number 
       <Area
        type="monotone"
        dataKey="expense"
-       name="Despesas"
+       name={METRICS.expense}
        stroke="var(--chart-1)"
        fill="url(#fillExpense)"
        strokeWidth={3}

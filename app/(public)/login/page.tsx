@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
+import { TOAST } from "@/lib/copy"
 
 export default function LoginPage() {
  const { login, user, hydrated, onboardingCompleted } = useStore()
@@ -30,10 +31,10 @@ export default function LoginPage() {
   setTimeout(() => {
    const res = login(email.trim(), password)
    if (res.ok) {
-    toast.success("Bem-vindo!")
+    toast.success(TOAST.success.welcome)
     router.replace(APP_HOME)
    } else {
-    toast.error(res.error ?? "Não foi possível entrar.")
+    toast.error(res.error ?? TOAST.error.login)
     setLoading(false)
    }
   }, 600)

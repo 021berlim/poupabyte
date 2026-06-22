@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
+import { TRANSACTION_TYPES } from "@/lib/copy"
 import { formatCurrency } from "@/lib/format"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -234,7 +235,7 @@ export function PreferencesSettings() {
    <div className="flex items-start justify-between gap-4 py-3">
     <div className="flex min-w-0 items-start gap-3">
      <Moon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Tema escuro" description="Melhor para ambientes escuros" />
+     <SettingCopy title="Tema escuro" description="Ative para telas com pouca luz" />
     </div>
     <Switch aria-label="Tema escuro" className="shrink-0" checked={resolvedTheme === "dark"} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} />
    </div>
@@ -242,7 +243,7 @@ export function PreferencesSettings() {
    <div className="flex items-start justify-between gap-4 py-3">
     <div className="flex min-w-0 items-start gap-3">
      <Bell aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Alertas de limite e metas" description="Avise quando passar do teto ou da meta" />
+     <SettingCopy title="Alertas de limite e metas" description="Aviso quando passar do limite ou da meta" />
     </div>
     <Switch aria-label="Alertas de limite e metas" className="shrink-0" checked={notificationsEnabled} onCheckedChange={handleNotificationsChange} />
    </div>
@@ -252,7 +253,7 @@ export function PreferencesSettings() {
      <Sparkles aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
      <SettingCopy
       title="Penny pode criar lançamentos"
-      description="Registra um lançamento por vez, sempre com sua confirmação"
+      description="Cada lançamento precisa da sua confirmação"
      />
     </div>
     <Switch
@@ -276,7 +277,7 @@ export function PrivacySettings() {
    ["Data", "Tipo", "Descrição", "Categoria", "Valor"],
    ...transactions.map((transaction) => [
     new Date(transaction.date).toLocaleDateString("pt-BR"),
-    transaction.type === "income" ? "Receita" : "Despesa",
+    transaction.type === "income" ? TRANSACTION_TYPES.income : TRANSACTION_TYPES.expense,
     transaction.description,
     transaction.category,
     transaction.amount.toFixed(2).replace(".", ","),
@@ -303,7 +304,7 @@ export function PrivacySettings() {
   const rows = transactions.map((transaction) => `
    <tr>
     <td>${escapeHtml(new Date(transaction.date).toLocaleDateString("pt-BR"))}</td>
-    <td>${transaction.type === "income" ? "Receita" : "Despesa"}</td>
+    <td>${transaction.type === "income" ? TRANSACTION_TYPES.income : TRANSACTION_TYPES.expense}</td>
     <td>${escapeHtml(transaction.description)}</td>
     <td>${escapeHtml(formatCurrency(transaction.amount))}</td>
    </tr>`).join("")

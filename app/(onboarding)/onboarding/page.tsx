@@ -13,6 +13,7 @@ import { APP_HOME } from "@/lib/routes"
 import type { OnboardingAnswers } from "@/lib/onboarding-personalization"
 import type { BudgetWeight, FinancialObjective } from "@/lib/types"
 import { useStore } from "@/lib/store"
+import { TOAST } from "@/lib/copy"
 import { toast } from "sonner"
 
 const TOTAL_STEPS = 4
@@ -45,7 +46,7 @@ function OnboardingWizard() {
       goal,
     })
 
-    toast.success("Seu controle está pronto.")
+    toast.success(TOAST.success.onboardingDone)
     router.replace(APP_HOME)
   }
 

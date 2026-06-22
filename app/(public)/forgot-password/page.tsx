@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, MailCheck } from "lucide-react"
 import { toast } from "sonner"
+import { TOAST } from "@/lib/copy"
 
 export default function ForgotPasswordPage() {
  const { resetPassword } = useStore()
@@ -25,7 +26,7 @@ export default function ForgotPasswordPage() {
    if (res.ok) {
     setSent(true)
    } else {
-    toast.error(res.error ?? "E-mail não encontrado.")
+    toast.error(res.error ?? TOAST.error.emailNotFound)
    }
   }, 700)
  }

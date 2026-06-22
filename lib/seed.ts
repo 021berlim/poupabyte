@@ -135,11 +135,11 @@ function buildTransactions(): Transaction[] {
   const tx: Transaction[] = []
 
   const incomes: Array<[number, number, string, Transaction["category"], number, Partial<Transaction>]> = [
-    [0, 5, "Salário mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
+    [0, 5, "Entrada fixa mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
     [0, 20, "Freelance - landing page", "renda-extra", 1850, { source: "manual" }],
-    [1, 5, "Salário mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
-    [2, 5, "Salário mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
-    [3, 5, "Salário mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
+    [1, 5, "Entrada fixa mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
+    [2, 5, "Entrada fixa mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
+    [3, 5, "Entrada fixa mensal", "salario", 7200, { isFixed: true, source: "fixed" }],
   ]
   for (const [m, day, desc, cat, amount, meta] of incomes) {
     tx.push({ id: uid("tx"), type: "income", description: desc, amount, category: cat, date: dateAt(m, day), ...meta })

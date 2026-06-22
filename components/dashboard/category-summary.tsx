@@ -20,7 +20,7 @@ export function CategorySummary({ animationDelay = 0 }: { animationDelay?: numbe
     <div className="min-w-0">
      <p className="text-xs font-semibold text-foreground/60">Categorias</p>
      <h2 className="mt-1 text-xl font-extrabold text-foreground">Resumo financeiro</h2>
-     <p className="mt-1 text-sm text-foreground/55">Despesas por categoria neste mês</p>
+     <p className="mt-1 text-sm text-foreground/55">Gastos por categoria neste mês</p>
     </div>
     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-foreground">
      <PieChart className="h-5 w-5" />
@@ -33,8 +33,8 @@ export function CategorySummary({ animationDelay = 0 }: { animationDelay?: numbe
       <PieChart className="h-5 w-5" />
      </span>
      <div>
-      <p className="text-sm font-bold text-foreground">Nenhuma despesa registrada</p>
-      <p className="mt-1 text-xs text-foreground/55">As categorias aparecem quando houver movimentações.</p>
+      <p className="text-sm font-bold text-foreground">Nenhum gasto neste mês</p>
+      <p className="mt-1 text-xs text-foreground/55">Registre um gasto para ver o resumo por categoria.</p>
      </div>
     </div>
    ) : (

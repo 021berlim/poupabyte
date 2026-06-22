@@ -159,9 +159,9 @@ export function FinancialPlanningSettings() {
       <section>
         <SectionLabel id="subscriptions" icon={Repeat2}>Assinaturas ({formatCurrency(subscriptionTotal)}/mês)</SectionLabel>
         <form onSubmit={addSub} className="mb-4 grid gap-3 sm:grid-cols-2">
-          <Input placeholder="Nome" value={subName} onChange={(e) => setSubName(e.target.value)} />
-          <CurrencyInput placeholder="Valor" value={subAmount} onChange={setSubAmount} />
-          <Input type="number" min={1} max={31} placeholder="Dia cobrança" value={subDay} onChange={(e) => setSubDay(e.target.value)} />
+          <Input placeholder="Nome da assinatura" value={subName} onChange={(e) => setSubName(e.target.value)} />
+          <CurrencyInput placeholder="Valor mensal" value={subAmount} onChange={setSubAmount} />
+          <Input type="number" min={1} max={31} placeholder="Dia da cobrança" value={subDay} onChange={(e) => setSubDay(e.target.value)} />
           <Select value={subCategory} onValueChange={(v) => setSubCategory(v as CategoryId)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{EXPENSE_CATEGORIES.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}</SelectContent>
@@ -187,10 +187,10 @@ export function FinancialPlanningSettings() {
       <section>
         <SectionLabel id="installments" icon={Split}>Parcelamentos</SectionLabel>
         <form onSubmit={addInst} className="mb-4 grid gap-3 sm:grid-cols-2">
-          <Input placeholder="Descrição" value={instName} onChange={(e) => setInstName(e.target.value)} />
-          <CurrencyInput placeholder="Parcela mensal" value={instMonthly} onChange={setInstMonthly} />
+          <Input placeholder="O que você parcelou?" value={instName} onChange={(e) => setInstName(e.target.value)} />
+          <CurrencyInput placeholder="Valor da parcela" value={instMonthly} onChange={setInstMonthly} />
           <Input type="number" min={1} placeholder="Parcela atual" value={instCurrent} onChange={(e) => setInstCurrent(e.target.value)} />
-          <Input type="number" min={1} placeholder="Total parcelas" value={instTotal} onChange={(e) => setInstTotal(e.target.value)} />
+          <Input type="number" min={1} placeholder="Total de parcelas" value={instTotal} onChange={(e) => setInstTotal(e.target.value)} />
           <Button type="submit" className="sm:col-span-2">Adicionar parcelamento</Button>
         </form>
         <ul className="divide-y">
@@ -210,8 +210,8 @@ export function FinancialPlanningSettings() {
         <SectionLabel id="cards" icon={CreditCard}>Cartões (controle manual)</SectionLabel>
         <form onSubmit={addCard} className="mb-4 grid gap-3 sm:grid-cols-3">
           <Input placeholder="Nome do cartão" value={cardName} onChange={(e) => setCardName(e.target.value)} className="sm:col-span-3" />
-          <Input type="number" min={1} max={31} placeholder="Fechamento" value={cardClosing} onChange={(e) => setCardClosing(e.target.value)} />
-          <Input type="number" min={1} max={31} placeholder="Vencimento" value={cardDue} onChange={(e) => setCardDue(e.target.value)} />
+          <Input type="number" min={1} max={31} placeholder="Dia do fechamento" value={cardClosing} onChange={(e) => setCardClosing(e.target.value)} />
+          <Input type="number" min={1} max={31} placeholder="Dia do vencimento" value={cardDue} onChange={(e) => setCardDue(e.target.value)} />
           <Button type="submit">Adicionar cartão</Button>
         </form>
         <ul className="divide-y">

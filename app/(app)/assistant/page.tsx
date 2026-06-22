@@ -33,6 +33,7 @@ import { financialHealthScore } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-url";
 import { buildPennyStarterSuggestions, PENNY_STARTER_SUGGESTIONS } from "@/lib/ui-suggestions";
+import { EMPTY_STATES, PAGE_SUBTITLES, TOAST } from "@/lib/copy";
 import { SendHorizontal, Sparkles, Square } from "lucide-react";
 import { useRipple } from "@/hooks/use-ripple";
 
@@ -86,9 +87,9 @@ function SuggestionChips({
         <Sparkles className="h-5 w-5" aria-hidden="true" />
       </span>
       <div className="space-y-1">
-        <p className="font-semibold text-foreground">Como posso ajudar?</p>
+        <p className="font-semibold text-foreground">{EMPTY_STATES.penny.title}</p>
         <p className="text-sm text-muted-foreground">
-          Escolha uma sugestão ou escreva sua pergunta.
+          {EMPTY_STATES.penny.description}
         </p>
       </div>
       <div className="flex flex-wrap justify-center gap-2">
@@ -489,7 +490,7 @@ export default function AssistantPage() {
           } | null;
           throw new Error(
             payload?.error ||
-              "Não foi possível obter resposta da Penny",
+              TOAST.error.pennyResponse,
           );
         }
         if (!response.body)
@@ -609,7 +610,7 @@ export default function AssistantPage() {
           setError(
             caught instanceof Error
               ? caught.message
-              : "Erro ao consultar a Penny",
+              : TOAST.error.pennyQuery,
           );
         }
       } finally {
@@ -649,7 +650,7 @@ export default function AssistantPage() {
     >
       <PageHeader
         title="Penny"
-        subtitle="Pergunte sobre suas finanças."
+        subtitle={PAGE_SUBTITLES.assistant}
       />
 
       <div className="flex min-h-0 flex-1 flex-col pt-4 md:pt-0">

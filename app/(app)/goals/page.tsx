@@ -19,6 +19,7 @@ import { goalProgress, goalSummary } from "@/lib/selectors"
 import { useStore } from "@/lib/store"
 import type { Goal } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { EMPTY_STATES, FORM, PAGE_SUBTITLES, TOAST } from "@/lib/copy"
 import { AlertTriangle, CalendarDays, CheckCircle2, Pencil, Plus, Target, Trash2 } from "lucide-react"
 import { ActionSheet } from "@/components/app/action-sheet"
 import { useLongPress } from "@/hooks/use-long-press"
@@ -39,12 +40,12 @@ function GoalDialog({ goal, trigger }: { goal?: Goal; trigger: ReactNode }) {
  function submit(event: FormEvent) {
   event.preventDefault()
   const targetValue = parseAmountInput(target); const currentValue = current ? parseAmountInput(current) : 0
-  if (!name.trim() || targetValue <= 0 || currentValue < 0 || !deadline) { notify({ kind: "error", type: "error", title: "Meta inválida", message: "Preencha os dados da meta corretamente." }); return }
+  if (!name.trim() || targetValue <= 0 || currentValue < 0 || !deadline) { notify({ kind: "error", type: "error", title: "Meta inválida", message: TOAST.error.invalidGoal }); return }
   const payload = { name: name.trim(), target: targetValue, current: currentValue, deadline: new Date(`${deadline}T12:00:00`).toISOString(), color: goal?.color ?? "#c72c3b" }
   if (goal) updateGoal({ ...payload, id: goal.id }); else addGoal(payload)
   setOpen(false)
  }
- return <Dialog open={open} onOpenChange={onOpenChange}><DialogTrigger asChild>{trigger}</DialogTrigger><DialogContent><DialogHeader><DialogTitle>{goal ? "Editar meta" : "Nova meta"}</DialogTitle><DialogDescription>Nome, valor e prazo.</DialogDescription></DialogHeader><form onSubmit={submit}><div className="space-y-4 px-6 py-5"><div className="space-y-1.5"><Label htmlFor="goal-name">Nome</Label><Input id="goal-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Viagem para o Chile" /></div><div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="goal-target">Valor da meta</Label><CurrencyInput id="goal-target" value={target} onChange={setTarget} /></div><div className="space-y-1.5"><Label htmlFor="goal-current">Valor atual</Label><CurrencyInput id="goal-current" value={current} onChange={setCurrent} /></div></div><div className="space-y-1.5"><Label htmlFor="goal-deadline">Prazo</Label><Input id="goal-deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div></div><DialogFooter><Button type="button" variant="outline" size="lg" className="flex-1" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" size="lg" className="flex-1">Salvar meta</Button></DialogFooter></form></DialogContent></Dialog>
+ return <Dialog open={open} onOpenChange={onOpenChange}><DialogTrigger asChild>{trigger}</DialogTrigger><DialogContent><DialogHeader><DialogTitle>{goal ? "Editar meta" : "Nova meta"}</DialogTitle><DialogDescription>Nome, valor desejado e prazo.</DialogDescription></DialogHeader><form onSubmit={submit}><div className="space-y-4 px-6 py-5"><div className="space-y-1.5"><Label htmlFor="goal-name">{FORM.goalName}</Label><Input id="goal-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Viagem para o Chile" /></div><div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="goal-target">{FORM.goalTarget}</Label><CurrencyInput id="goal-target" value={target} onChange={setTarget} /></div><div className="space-y-1.5"><Label htmlFor="goal-current">{FORM.goalCurrent}</Label><CurrencyInput id="goal-current" value={current} onChange={setCurrent} /></div></div><div className="space-y-1.5"><Label htmlFor="goal-deadline">{FORM.goalDeadline}</Label><Input id="goal-deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div></div><DialogFooter><Button type="button" variant="outline" size="lg" className="flex-1" onClick={() => setOpen(false)}>{FORM.cancel}</Button><Button type="submit" size="lg" className="flex-1">{FORM.save}</Button></DialogFooter></form></DialogContent></Dialog>
 }
 
 function GoalRow({ goal }: { goal: Goal }) {
@@ -107,15 +108,15 @@ export default function GoalsPage() {
   <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
    <PageHeader
     title="Metas"
-    subtitle="Defina e acompanhe o progresso."
+    subtitle={PAGE_SUBTITLES.goals}
     action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Nova meta</Button>} />}
    />
 
    {goals.length === 0 ? (
     <EmptyModuleCard
      icon={<Target className="h-6 w-6" />}
-     title="Crie sua primeira meta"
-     description="Defina valor e prazo para acompanhar."
+     title={EMPTY_STATES.goals.title}
+     description={EMPTY_STATES.goals.description}
      action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Criar meta</Button>} />}
     />
    ) : (

@@ -25,6 +25,7 @@ import { limitMonthlyHistory, limitUsage, type LimitHistoryItem } from "@/lib/se
 import { useStore } from "@/lib/store"
 import type { CategoryRef, SpendingLimit } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { EMPTY_STATES, PAGE_SUBTITLES, TOAST } from "@/lib/copy"
 import { CalendarRange, ChevronDown, Gauge, Pencil, Plus, Trash2 } from "lucide-react"
 import { ActionSheet } from "@/components/app/action-sheet"
 import { useLongPress } from "@/hooks/use-long-press"
@@ -62,7 +63,7 @@ function LimitDialog({ limit, trigger, ctx }: { limit?: SpendingLimit; trigger: 
     event.preventDefault()
     const value = parseAmountInput(amount)
     if (value <= 0) {
-      notify({ kind: "error", type: "error", title: "Limite inválido", message: "Informe um valor maior que zero." })
+      notify({ kind: "error", type: "error", title: "Limite inválido", message: TOAST.error.invalidLimit })
       return
     }
     const { category, subcategoryId } = parseCategorySelectValue(categoryValue)
@@ -151,7 +152,7 @@ function LimitRow({
   const percent = Math.round(usage.percent)
   const over = usage.remaining < 0
   const tone = limitProgressTone(percent)
-  const status = over ? "Estourado" : percent >= 80 ? "Atenção" : "Ok"
+  const status = over ? "Limite ultrapassado" : percent >= 80 ? "Perto do limite" : "Dentro do limite"
   const longPress = useLongPress<HTMLDivElement>(() => setActionsOpen(true))
   const createRipple = useRipple<HTMLDivElement>()
   const label = resolved.parentLabel ? `${resolved.parentLabel} › ${resolved.label}` : resolved.label
@@ -303,14 +304,14 @@ export default function LimitsPage() {
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
         title="Limites"
-        subtitle="Quanto gastar por categoria."
+        subtitle={PAGE_SUBTITLES.limits}
         action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Novo limite</Button>} />}
       />
       {usages.length === 0 ? (
         <EmptyModuleCard
           icon={<Gauge className="h-6 w-6" />}
-          title="Crie seu primeiro limite"
-          description="Defina um teto mensal por categoria."
+          title={EMPTY_STATES.limits.title}
+          description={EMPTY_STATES.limits.description}
           action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Criar limite</Button>} />}
         />
       ) : (
@@ -329,9 +330,9 @@ export default function LimitsPage() {
                 tone: totalPercent > 100 ? "text-destructive" : totalPercent >= 71 ? "text-primary" : "text-success",
               },
               {
-                label: "Estourado",
+                label: "Ultrapassado",
                 value: formatCurrency(totals.exceeded),
-                detail: totals.exceeded ? "acima do teto" : "tudo dentro do limite",
+                detail: totals.exceeded ? "acima do limite" : "dentro do limite",
                 tone: totals.exceeded ? "text-destructive" : "text-success",
               },
             ]}

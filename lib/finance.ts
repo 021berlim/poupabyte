@@ -63,9 +63,9 @@ export interface TransactionInput {
 export function validateTransaction(input: TransactionInput): string[] {
   const errors: string[] = []
   if (input.type !== "income" && input.type !== "expense" && input.type !== "transfer") {
-    errors.push("Selecione receita, despesa ou transferência.")
+    errors.push("Selecione entrada, gasto ou transferência.")
   }
-  if (!hasValue(input.description)) errors.push("Informe uma descrição.")
+  if (!hasValue(input.description)) errors.push("Informe uma descrição do lançamento.")
   if (!isPositiveAmount(input.amount ?? Number.NaN)) errors.push("Informe um valor maior que zero.")
   if (!hasValue(input.category)) errors.push("Selecione uma categoria.")
   if (!isValidDateValue(input.date)) errors.push("Informe uma data válida.")

@@ -22,6 +22,7 @@ import { scaleIn } from "@/src/lib/animations"
 import { PersonalizedWelcome } from "@/components/dashboard/personalized-welcome"
 import { getDashboardFocus } from "@/lib/onboarding-personalization"
 import { buildDashboardSuggestions } from "@/lib/ui-suggestions"
+import { ALERTS } from "@/lib/copy"
 import { AlertTriangle, ArrowRight, ChevronDown, Eye, EyeOff, Pencil, ShieldAlert, Sparkles, Target } from "lucide-react"
 
 function monthCommitmentHistory(
@@ -119,31 +120,32 @@ export default function DashboardPage() {
   if (pendingReview > 0) {
    return {
     href: ROUTES.transactions,
-    title: "Revisar lançamentos",
-    subtitle: `${pendingReview} lançamento(s) para confirmar`,
+    title: ALERTS.reviewTransactions,
+    subtitle: `${pendingReview} ${pendingReview === 1 ? "lançamento precisa" : "lançamentos precisam"} de confirmação`,
    }
   }
   if (limitAlerts.length > 0) {
    const item = limitAlerts[0]
+   const exceeded = item.status === "exceeded"
    return {
     href: ROUTES.limits,
-    title: `Limite de ${getCategory(item.limit.category).label}`,
-    subtitle: `${Math.round(item.percent)}% utilizado`,
+    title: `${exceeded ? ALERTS.limitExceeded : ALERTS.limitNear}: ${getCategory(item.limit.category).label}`,
+    subtitle: `${formatCurrency(item.spent)} de ${formatCurrency(item.limit.amount)} · ${Math.round(item.percent)}% usado`,
    }
   }
   if (goalAlerts.length > 0) {
    const { goal, progress } = goalAlerts[0]
    return {
     href: ROUTES.goals,
-    title: `Meta em risco: ${goal.name}`,
-    subtitle: `${progress.percent}% concluída`,
+    title: `${ALERTS.goalAtRisk}: ${goal.name}`,
+    subtitle: `${progress.percent}% concluída · faltam ${formatCurrency(progress.remaining)}`,
    }
   }
   if (upcoming.length > 0) {
    return {
     href: ROUTES.transactions,
-    title: "Assinaturas nos próximos 7 dias",
-    subtitle: `${upcoming.length} cobrança(s) prevista(s)`,
+    title: ALERTS.subscriptionsSoon,
+    subtitle: `${upcoming.length} ${upcoming.length === 1 ? "cobrança prevista" : "cobranças previstas"}`,
    }
   }
   return null
@@ -236,8 +238,9 @@ export default function DashboardPage() {
     >
      <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
-       <p className="text-xl font-extrabold leading-none tracking-tight text-white sm:text-2xl">
-        Pode gastar
+       <p className="text-xs font-bold uppercase tracking-wide text-white/45">Resumo do mês</p>
+       <p className="mt-1 text-xl font-extrabold leading-none tracking-tight text-white sm:text-2xl">
+        Saldo disponível
        </p>
        <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
         {incomeContext.subtitle}
@@ -359,7 +362,7 @@ export default function DashboardPage() {
     <section className="flex min-w-0 flex-col">
      <SectionHeading
       eyebrow="Penny"
-      title="Dicas pra você"
+      title="Dicas para você"
       action={<Link href={ROUTES.assistant} className="text-sm font-bold text-primary hover:underline">Abrir assistente</Link>}
      />
      <div className="app-list-section border-t">
@@ -384,7 +387,7 @@ export default function DashboardPage() {
     <section className="flex min-w-0 flex-col">
      <SectionHeading
       eyebrow="Limites"
-      title="Limites perto do teto"
+      title="Limites do mês"
       action={<Link href={ROUTES.limits} className="text-sm font-bold text-primary hover:underline">Ver limites</Link>}
      />
      <div className="app-list-section border-t">
@@ -414,7 +417,7 @@ export default function DashboardPage() {
      <section className="flex min-w-0 flex-col">
       <SectionHeading
        eyebrow="Metas"
-       title="Próximas do prazo"
+       title="Metas em andamento"
        action={<Link href={ROUTES.goals} className="text-sm font-bold text-primary hover:underline">Ver metas</Link>}
       />
       <div className="app-list-section flex-1 border-t">
@@ -441,7 +444,7 @@ export default function DashboardPage() {
      <section className="flex min-w-0 flex-col">
       <SectionHeading
        eyebrow="Lançamentos"
-       title="Recentes"
+       title="Últimos lançamentos"
        action={<Link href={ROUTES.transactions} className="text-sm font-bold text-primary hover:underline">Ver todas</Link>}
       />
       <div className="app-list-section flex-1 border-t">

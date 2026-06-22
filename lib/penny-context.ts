@@ -67,7 +67,7 @@ export function buildAttentionPanelItem({
     return {
       type: "pending-review",
       title: "Revisar lançamentos",
-      message: `${pendingReview} pra revisar`,
+      message: `${pendingReview} para revisar`,
       screen: "Lançamentos",
     }
   }

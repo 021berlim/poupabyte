@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
+import { TOAST } from "@/lib/copy"
 
 export default function SignupPage() {
  const { register, user, hydrated, onboardingCompleted } = useStore()
@@ -36,11 +37,11 @@ export default function SignupPage() {
   setLoading(true)
   const res = register(name.trim(), email.trim(), password)
   if (res.ok) {
-   toast.success("Conta criada!")
+   toast.success(TOAST.success.accountCreated)
    router.replace(ROUTES.onboarding)
    return
   }
-  toast.error(res.error ?? "Não foi possível cadastrar.")
+  toast.error(res.error ?? TOAST.error.signup)
   setLoading(false)
  }
 

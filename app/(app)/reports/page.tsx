@@ -39,6 +39,7 @@ import { buildAnalysisInsights } from "@/lib/insights"
 import { buildMonthlyPlanning } from "@/lib/planning"
 import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { EMPTY_STATES, PAGE_SUBTITLES } from "@/lib/copy"
 import type { CategoryId } from "@/lib/types"
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, XAxis, YAxis, type TooltipProps } from "recharts"
 import { Activity, CalendarRange, Landmark, PieChart as PieChartIcon, Target } from "lucide-react"
@@ -56,8 +57,8 @@ const REPORT_PERIODS: { value: ReportPeriod; label: string }[] = [
 const periodDateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", year: "numeric" })
 
 const monthlyConfig = {
-  income: { label: "Receitas", color: "var(--chart-3)" },
-  expense: { label: "Despesas", color: "var(--chart-1)" },
+  income: { label: "Entradas", color: "var(--chart-3)" },
+  expense: { label: "Gastos", color: "var(--chart-1)" },
   balance: { label: "Saldo", color: "var(--foreground)" },
   accumulatedBalance: { label: "Saldo acumulado", color: "var(--chart-2)" },
 } satisfies ChartConfig
@@ -214,9 +215,9 @@ export default function ReportsPage() {
   const periodContext = useMemo(() => periodDescription(period), [period])
   const pageSubtitle = useMemo(() => {
     if (period === "year") return `Resumo de ${new Date().getFullYear()}.`
-    if (period === "month") return "Resumo do mês."
+    if (period === "month") return PAGE_SUBTITLES.dashboard
     if (period === "3m") return "Resumo dos últimos 3 meses."
-    return "Resumo de todo o histórico."
+    return PAGE_SUBTITLES.reports
   }, [period])
   const selectedCategoryLabel =
     category === "all" ? null : (CATEGORY_LIST.find((item) => item.id === category)?.label ?? getCategory(category).label)
@@ -386,10 +387,10 @@ export default function ReportsPage() {
       </div>
 
       <StatStrip items={[
-        { label: "Receitas do período", value: formatCurrency(summary.income), tone: "text-success", detail: `${incomeCount} lançamentos` },
-        { label: "Despesas do período", value: formatCurrency(summary.expense), tone: "text-destructive", detail: `${expenseCount} lançamentos` },
-        { label: "Resultado", value: formatCurrency(summary.balance), tone: summary.balance >= 0 ? "text-success" : "text-destructive", detail: "receitas menos despesas" },
-        { label: "Renda já usada", value: `${Math.round(buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits).monthCommittedPercent)}%`, detail: `salário: ${formatCurrency(financialProfile.monthlySalary)}` },
+        { label: "Entradas do período", value: formatCurrency(summary.income), tone: "text-success", detail: `${incomeCount} lançamentos` },
+        { label: "Gastos do período", value: formatCurrency(summary.expense), tone: "text-destructive", detail: `${expenseCount} lançamentos` },
+        { label: "Resultado", value: formatCurrency(summary.balance), tone: summary.balance >= 0 ? "text-success" : "text-destructive", detail: "entradas menos gastos" },
+        { label: "Renda já usada", value: `${Math.round(buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits).monthCommittedPercent)}%`, detail: `renda: ${formatCurrency(financialProfile.monthlySalary)}` },
       ]} />
 
       {insights.length > 0 ? (
@@ -429,23 +430,24 @@ export default function ReportsPage() {
       {!hasFinancialData ? (
         <section className="app-open-section flex flex-col items-center gap-2 py-[clamp(3rem,12vh,4rem)] text-center">
           <PieChartIcon className="h-8 w-8 text-muted-foreground/50" />
-          <p className="font-semibold">Sem dados suficientes neste período.</p>
+          <p className="font-semibold">{EMPTY_STATES.reports.title}</p>
+          <p className="text-sm text-muted-foreground">{EMPTY_STATES.reports.description}</p>
         </section>
       ) : (
         <>
           <div className="grid min-w-0 gap-8 lg:grid-cols-2">
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
-                <h2 className="text-sm font-medium text-foreground">Despesas por categoria</h2>
-                <p className="text-xs text-muted-foreground">Gastos do período</p>
+                <h2 className="text-sm font-medium text-foreground">Gastos por categoria</h2>
+                <p className="text-xs text-muted-foreground">Distribuição do período</p>
               </div>
               {categoryData.length === 0 ? (
-                <EmptyChart icon={<PieChartIcon className="h-8 w-8" />} text="Nenhuma despesa para exibir." />
+                <EmptyChart icon={<PieChartIcon className="h-8 w-8" />} text={EMPTY_STATES.reportsExpenses} />
               ) : (
                 <div className="app-chart-with-legend w-full items-center gap-4">
                   <ChartContainer config={categoryConfig} className="app-chart-canvas aspect-auto min-w-0 w-full">
                     <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                      <ChartTooltip content={<ReportsChartTooltip valueLabel="Despesas" />} />
+                      <ChartTooltip content={<ReportsChartTooltip valueLabel="Gastos" />} />
                       <Pie
                         data={categoryData}
                         dataKey="total"
@@ -517,12 +519,12 @@ export default function ReportsPage() {
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
                 <h2 className="text-sm font-medium text-foreground">Comparativo mensal</h2>
-                <p className="text-xs text-muted-foreground">Receitas e despesas por mês</p>
+                <p className="text-xs text-muted-foreground">Entradas e gastos por mês</p>
               </div>
               <ReportsInlineLegend
                 items={[
-                  { key: "income", label: "Receitas", color: "var(--chart-3)" },
-                  { key: "expense", label: "Despesas", color: "var(--chart-1)" },
+                  { key: "income", label: "Entradas", color: "var(--chart-3)" },
+                  { key: "expense", label: "Gastos", color: "var(--chart-1)" },
                 ]}
                 activeKey={activeSeriesFor("monthly")}
                 onActiveChange={(key) => setActiveSeriesFor("monthly", key)}
@@ -535,7 +537,7 @@ export default function ReportsPage() {
                   <ChartTooltip content={<ReportsChartTooltip visibleDataKey={activeSeriesFor("monthly")} />} cursor={{ fill: "var(--muted)", opacity: 0.2 }} />
                   <Bar
                     dataKey="income"
-                    name="Receitas"
+                    name="Entradas"
                     fill="var(--color-income)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={32}
@@ -546,7 +548,7 @@ export default function ReportsPage() {
                   />
                   <Bar
                     dataKey="expense"
-                    name="Despesas"
+                    name="Gastos"
                     fill="var(--color-expense)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={32}
@@ -568,7 +570,7 @@ export default function ReportsPage() {
                 <p className="text-xs text-muted-foreground">Gastos reais e limites</p>
               </div>
               {plannedVsActual.length === 0 ? (
-                <EmptyChart icon={<Activity className="h-8 w-8" />} text="Nenhum limite definido para comparar." />
+                <EmptyChart icon={<Activity className="h-8 w-8" />} text={EMPTY_STATES.reportsLimits} />
               ) : (
                 <>
                   <ReportsInlineLegend
@@ -616,12 +618,12 @@ export default function ReportsPage() {
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
                 <h2 className="text-sm font-medium text-foreground">Comparativo anual</h2>
-                <p className="text-xs text-muted-foreground">Receitas, despesas e saldo por ano</p>
+                <p className="text-xs text-muted-foreground">Entradas, gastos e saldo por ano</p>
               </div>
               <ReportsInlineLegend
                 items={[
-                  { key: "income", label: "Receitas", color: "var(--chart-3)" },
-                  { key: "expense", label: "Despesas", color: "var(--chart-1)" },
+                  { key: "income", label: "Entradas", color: "var(--chart-3)" },
+                  { key: "expense", label: "Gastos", color: "var(--chart-1)" },
                   { key: "balance", label: "Saldo", color: "var(--foreground)" },
                 ]}
                 activeKey={activeSeriesFor("annual")}
@@ -635,7 +637,7 @@ export default function ReportsPage() {
                   <ChartTooltip content={<ReportsChartTooltip visibleDataKey={activeSeriesFor("annual")} />} cursor={{ fill: "var(--muted)", opacity: 0.2 }} />
                   <Bar
                     dataKey="income"
-                    name="Receitas"
+                    name="Entradas"
                     fill="var(--color-income)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={32}
@@ -646,7 +648,7 @@ export default function ReportsPage() {
                   />
                   <Bar
                     dataKey="expense"
-                    name="Despesas"
+                    name="Gastos"
                     fill="var(--color-expense)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={32}
@@ -844,7 +846,7 @@ export default function ReportsPage() {
               <p className="text-xs text-muted-foreground">Aplicado vs valor atual</p>
             </div>
             {investmentEvolution.every((item) => item.current === 0 && item.invested === 0) ? (
-              <EmptyChart icon={<Landmark className="h-8 w-8" />} text="Sem historico de carteira para exibir." />
+              <EmptyChart icon={<Landmark className="h-8 w-8" />} text={EMPTY_STATES.reportsPortfolio} />
             ) : (
               <>
                 <ReportsInlineLegend

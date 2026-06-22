@@ -21,6 +21,7 @@ import { PullToRefresh } from "@/components/app/pull-to-refresh"
 import { useRouter } from "next/navigation"
 import { isManageCategoriesSelectValue, ManageCategoriesSelectOption } from "@/components/app/manage-categories-select-option"
 import { ROUTES } from "@/lib/routes"
+import { EMPTY_STATES, FORM, PAGE_SUBTITLES } from "@/lib/copy"
 
 function groupByDay(txs: ReturnType<typeof useStore>["transactions"]) {
  const groups = new Map<string, typeof txs>()
@@ -75,8 +76,8 @@ export default function TransactionsPage() {
      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
      <SelectContent>
       <SelectItem value="all">Todos</SelectItem>
-      <SelectItem value="income">Receitas</SelectItem>
-      <SelectItem value="expense">Despesas</SelectItem>
+      <SelectItem value="income">Entradas</SelectItem>
+      <SelectItem value="expense">Gastos</SelectItem>
      </SelectContent>
     </Select>
    </div>
@@ -112,11 +113,11 @@ export default function TransactionsPage() {
   <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
    <PageHeader
     title="Lançamentos"
-    subtitle="Revise e organize tudo."
+    subtitle={PAGE_SUBTITLES.transactions}
     action={(
      <div className="flex w-full items-center gap-2 sm:w-auto">
       <StatementImportSheet />
-      <TransactionDialog trigger={<Button><Plus className="h-4 w-4" />Novo lançamento</Button>} />
+      <TransactionDialog trigger={<Button><Plus className="h-4 w-4" />{FORM.newTransaction}</Button>} />
      </div>
     )}
    />
@@ -143,7 +144,7 @@ export default function TransactionsPage() {
     <div className="app-open-section text-sm text-muted-foreground">
      {pendingReview > 0 ? (
       <p>
-       <span className="font-bold text-foreground">{pendingReview}</span> para revisar
+       <span className="font-bold text-foreground">{pendingReview}</span> {pendingReview === 1 ? "lançamento para revisar" : "lançamentos para revisar"}
       </p>
      ) : null}
      {lastImport ? (
@@ -156,7 +157,7 @@ export default function TransactionsPage() {
 
    <PullToRefresh onRefresh={() => router.refresh()}>
    {filtered.length === 0 ? (
-    <div className="app-open-section flex flex-col items-center gap-2 py-14 text-center"><Receipt className="h-8 w-8 text-muted-foreground/50" /><p className="font-semibold">Nenhum lançamento encontrado</p><p className="text-sm text-muted-foreground">Ajuste os filtros ou adicione um lançamento.</p></div>
+    <div className="app-open-section flex flex-col items-center gap-2 py-14 text-center"><Receipt className="h-8 w-8 text-muted-foreground/50" /><p className="font-semibold">{filterCount > 0 || search ? EMPTY_STATES.transactionsFiltered.title : EMPTY_STATES.transactions.title}</p><p className="text-sm text-muted-foreground">{filterCount > 0 || search ? EMPTY_STATES.transactionsFiltered.description : EMPTY_STATES.transactions.description}</p></div>
    ) : (
     <div className="app-list-section">
      <p className="border-b px-[clamp(0.75rem,3vw,1rem)] py-3 text-sm text-muted-foreground">

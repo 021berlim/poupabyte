@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/format"
 import { buildMonthlyPlanning, monthlyCashflowPlanning } from "@/lib/planning"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { NAV_LABELS, PAGE_SUBTITLES } from "@/lib/copy"
 import { ArrowDownRight, ArrowUpRight, CalendarRange } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
@@ -40,7 +41,7 @@ export default function CashflowPage() {
 
  return (
   <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
-   <PageHeader title="Fluxo" subtitle="Como o mês está indo." />
+   <PageHeader title={NAV_LABELS.cashflow} subtitle={PAGE_SUBTITLES.cashflow} />
 
    <div className="border-b">
     <div className="grid min-w-0 grid-cols-3">
@@ -49,9 +50,9 @@ export default function CashflowPage() {
    </div>
 
    <StatStrip items={[
-    { label: "Entrou (realizado)", value: formatCurrency(current?.realizedIncome ?? 0), detail: "receitas confirmadas", tone: "text-success" },
-    { label: "Saiu (realizado)", value: formatCurrency(current?.realizedExpense ?? 0), detail: "despesas confirmadas", tone: "text-destructive" },
-    { label: "Sobra no fim do mês", value: formatCurrency(current?.projectedBalance ?? 0), detail: currentPlanning.daysLeft > 0 ? `${currentPlanning.daysLeft} dias restantes` : "mês encerrando", tone: (current?.projectedBalance ?? 0) >= 0 ? "text-success" : "text-destructive" },
+    { label: "Entradas (realizado)", value: formatCurrency(current?.realizedIncome ?? 0), detail: "confirmadas no período", tone: "text-success" },
+    { label: "Gastos (realizado)", value: formatCurrency(current?.realizedExpense ?? 0), detail: "confirmados no período", tone: "text-destructive" },
+    { label: "Saldo no fim do mês", value: formatCurrency(current?.projectedBalance ?? 0), detail: currentPlanning.daysLeft > 0 ? `${currentPlanning.daysLeft} dias restantes` : "mês encerrando", tone: (current?.projectedBalance ?? 0) >= 0 ? "text-success" : "text-destructive" },
    ]} />
 
    <section className="app-open-section">
@@ -92,19 +93,19 @@ export default function CashflowPage() {
         <XAxis dataKey="label" axisLine={false} tickLine={false} minTickGap={24} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
         <YAxis axisLine={false} tickLine={false} width={72} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(value) => Intl.NumberFormat("pt-BR", { notation: "compact", style: "currency", currency: "BRL" }).format(value)} />
         <Tooltip content={<ChartValueTooltipContent valueLabel="Valor" formatValue={formatCurrency} />} cursor={{ fill: "var(--muted)", opacity: 0.2 }} />
-        <Bar dataKey="realizedExpense" name="Despesa realizada" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-        <Bar dataKey="projectedExpense" name="Despesa prevista" fill="var(--chart-3)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+        <Bar dataKey="realizedExpense" name="Gasto realizado" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+        <Bar dataKey="projectedExpense" name="Gasto previsto" fill="var(--chart-3)" radius={[4, 4, 0, 0]} maxBarSize={28} />
        </BarChart>
        </ResponsiveContainer>
       </div>
      </div>
 
      <div className="divide-y border-y lg:border-y-0 lg:border-l lg:pl-6">
-      <div className="py-5 lg:pt-0"><ArrowUpRight className="h-4 w-4 text-success" /><p className="mt-3 text-xs text-muted-foreground">Maior receita</p><p className="mt-1 font-extrabold tabular-nums text-success">{biggestIncome ? formatCurrency(biggestIncome.amount) : "—"}</p><p className="mt-1 truncate text-xs text-muted-foreground">{biggestIncome?.description ?? "Sem receitas"}</p></div>
-      <div className="py-5"><ArrowDownRight className="h-4 w-4 text-destructive" /><p className="mt-3 text-xs text-muted-foreground">Maior despesa</p><p className="mt-1 font-extrabold tabular-nums text-destructive">{biggestExpense ? formatCurrency(biggestExpense.amount) : "—"}</p><p className="mt-1 truncate text-xs text-muted-foreground">{biggestExpense?.description ?? "Sem despesas"}</p></div>
-      <div className="py-5"><p className="text-xs text-muted-foreground">Renda já usada</p><p className="mt-1 font-extrabold tabular-nums">{Math.round(currentPlanning.monthCommittedPercent)}%</p><p className="mt-1 text-xs text-muted-foreground">salário: {formatCurrency(currentPlanning.declaredSalary)}</p></div>
-      <div className="py-5"><p className="text-xs text-muted-foreground">Despesas fixas pendentes</p><p className="mt-1 font-extrabold tabular-nums">{formatCurrency(currentPlanning.pendingFixedExpenses)}</p><p className="mt-1 text-xs text-muted-foreground">assinaturas e parcelas</p></div>
-      <div className="py-5"><p className="text-xs text-muted-foreground">Pode gastar</p><p className="mt-1 font-extrabold tabular-nums text-success">{formatCurrency(currentPlanning.safeToSpend)}</p><p className="mt-1 text-xs text-muted-foreground">com {formatCurrency(currentPlanning.receivedIncome)} recebidos no mês</p></div>
+      <div className="py-5 lg:pt-0"><ArrowUpRight className="h-4 w-4 text-success" /><p className="mt-3 text-xs text-muted-foreground">Maior entrada</p><p className="mt-1 font-extrabold tabular-nums text-success">{biggestIncome ? formatCurrency(biggestIncome.amount) : "—"}</p><p className="mt-1 truncate text-xs text-muted-foreground">{biggestIncome?.description ?? "Sem entradas"}</p></div>
+      <div className="py-5"><ArrowDownRight className="h-4 w-4 text-destructive" /><p className="mt-3 text-xs text-muted-foreground">Maior gasto</p><p className="mt-1 font-extrabold tabular-nums text-destructive">{biggestExpense ? formatCurrency(biggestExpense.amount) : "—"}</p><p className="mt-1 truncate text-xs text-muted-foreground">{biggestExpense?.description ?? "Sem gastos"}</p></div>
+      <div className="py-5"><p className="text-xs text-muted-foreground">Renda já usada</p><p className="mt-1 font-extrabold tabular-nums">{Math.round(currentPlanning.monthCommittedPercent)}%</p><p className="mt-1 text-xs text-muted-foreground">renda: {formatCurrency(currentPlanning.declaredSalary)}</p></div>
+      <div className="py-5"><p className="text-xs text-muted-foreground">Gastos fixos pendentes</p><p className="mt-1 font-extrabold tabular-nums">{formatCurrency(currentPlanning.pendingFixedExpenses)}</p><p className="mt-1 text-xs text-muted-foreground">assinaturas e parcelas</p></div>
+      <div className="py-5"><p className="text-xs text-muted-foreground">Saldo disponível</p><p className="mt-1 font-extrabold tabular-nums text-success">{formatCurrency(currentPlanning.safeToSpend)}</p><p className="mt-1 text-xs text-muted-foreground">com {formatCurrency(currentPlanning.receivedIncome)} de entradas no mês</p></div>
      </div>
     </div>
    </section>

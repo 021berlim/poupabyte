@@ -18,7 +18,7 @@ function percentOf(value: number, total: number): number {
 }
 
 function incomeBaseLabel(profile: FinancialProfile): string {
-  return isPredictableIncome(profile.incomeType) ? "salário" : "renda"
+  return isPredictableIncome(profile.incomeType) ? "renda fixa" : "renda"
 }
 
 function money(value: number): string {
@@ -118,7 +118,7 @@ export function buildAnalysisInsights(
   if (scope === "calendar-month" && planning.projectedSavings < 0) {
     insights.push({
       id: "negative-projection",
-      title: "Fim do mês no vermelho",
+      title: "Mês pode fechar no negativo",
       message: `No ritmo atual, faltam ${money(Math.abs(planning.projectedSavings))}.`,
       tone: "critical",
     })
@@ -144,16 +144,16 @@ export function buildAnalysisInsights(
   const longTerm = buildLongTermPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
   insights.push({
     id: "safe-margin",
-    title: "Quanto dá pra comprometer",
-    message: `Com ${incomeBaseLabel(profile)} de ${money(longTerm.fixedSalary)}, dá pra comprometer ${money(longTerm.safeMargin)}.`,
+      title: "Quanto pode comprometer",
+      message: `Com ${incomeBaseLabel(profile)} de ${money(longTerm.fixedSalary)}, pode comprometer ${money(longTerm.safeMargin)}.`,
     tone: longTerm.safeMargin < 500 ? "warning" : "neutral",
   })
 
   if (longTerm.fixedExpensesPercent >= 75) {
     insights.push({
       id: "fixed-expenses-high",
-      title: "Fixos altos",
-      message: `Fixos: ${longTerm.fixedExpensesPercent.toFixed(0)}% da ${incomeBaseLabel(profile)}.`,
+      title: "Compromissos fixos altos",
+      message: `Compromissos fixos: ${longTerm.fixedExpensesPercent.toFixed(0)}% da ${incomeBaseLabel(profile)}.`,
       tone: "warning",
     })
   }

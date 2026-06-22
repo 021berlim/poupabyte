@@ -131,7 +131,7 @@ export function parseAmountFromText(text: string): number | null {
 
 function parseTransactionType(text: string): TransactionType {
   const normalized = normalizePennyText(text)
-  if (/\b(receita|salario|salário|ganhei|entrada|renda)\b/.test(normalized)) return "income"
+  if (/\b(receita|salario|salário|ganhei|entrada|renda|recebi)\b/.test(normalized)) return "income"
   return "expense"
 }
 
@@ -308,7 +308,7 @@ function buildCreatePlan(
 
   const summary = createEnabled
     ? `${typeLabel} de ${amountLabel} — "${proposedTransaction.description}" em ${dateLabel}${categoryLabel ? ` (${categoryLabel})` : ""}.`
-    : "Criação assistida desativada."
+    : "Criação assistida desativada nas preferências."
 
   const confirmationPrompt = createEnabled
     ? `Registro ${typeLabel} de ${amountLabel} como "${proposedTransaction.description}"${categoryLabel ? ` em ${categoryLabel}` : ""}?`
@@ -413,7 +413,7 @@ export function buildAssistedWritePlan(
   let confirmationPrompt = ""
 
   if (action === "confirm") {
-    summary = `${count} de ${merchantLabel} pra confirmar.`
+    summary = `${count} de ${merchantLabel} para confirmar.`
     confirmationPrompt = `Confirmo ${count === 1 ? "esse" : `os ${count}`}?`
   } else if (action === "categorize" && categoryLabel) {
     summary = `${count} de ${merchantLabel} sem categoria.`
@@ -466,7 +466,7 @@ export function buildUpdatedTransactions(
 export function formatAssistedWriteSuccess(plan: AssistedWritePlan, updatedCount: number): string {
   if (plan.action === "create") {
     if (!updatedCount || !plan.proposedTransaction) {
-      return "Não registrei — confere os dados em Lançamentos."
+      return "Não registrei. Verifique os dados em Lançamentos."
     }
 
     const { proposedTransaction } = plan
@@ -475,7 +475,7 @@ export function formatAssistedWriteSuccess(plan: AssistedWritePlan, updatedCount
   }
 
   if (!updatedCount) {
-    return "Não apliquei — confere em Lançamentos."
+    return "Não apliquei. Verifique em Lançamentos."
   }
 
   if (plan.action === "confirm") {

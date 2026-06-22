@@ -1,18 +1,18 @@
 import type { AiErrorCode, AiProviderId } from "./types"
 
 const USER_MESSAGES: Record<AiErrorCode, string> = {
-  missing_api_key: "IA não configurada. Fale com o suporte.",
-  invalid_api_key: "IA com credencial inválida. Fale com o suporte.",
-  timeout: "Demorou demais. Tente de novo.",
-  rate_limit: "Muitas perguntas seguidas. Espere um pouco.",
-  service_unavailable: "Penny indisponível. Tente de novo.",
+  missing_api_key: "A Penny não está configurada. Fale com o suporte.",
+  invalid_api_key: "A Penny não pôde se conectar. Fale com o suporte.",
+  timeout: "A resposta demorou demais. Tente novamente.",
+  rate_limit: "Muitas perguntas seguidas. Aguarde um momento.",
+  service_unavailable: "A Penny está indisponível. Tente novamente.",
   connection_error: "Sem conexão. Verifique a internet.",
-  invalid_response: "Resposta inválida. Tente de novo.",
-  invalid_request: "Não deu pra processar. Tente de novo.",
+  invalid_response: "Não foi possível ler a resposta. Tente novamente.",
+  invalid_request: "Não foi possível processar a pergunta. Tente novamente.",
   usage_limit: "Limite de uso atingido. Tente mais tarde.",
   model_not_found: "Modelo de IA não encontrado. Fale com o suporte.",
-  model_unavailable: "Modelo indisponível. Tente de novo.",
-  unknown: "Penny indisponível. Tente de novo.",
+  model_unavailable: "Modelo indisponível. Tente novamente.",
+  unknown: "A Penny está indisponível. Tente novamente.",
 }
 
 export function userMessageForError(code: AiErrorCode): string {

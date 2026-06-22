@@ -21,6 +21,7 @@ import {
   Trash2,
   Wallet,
 } from "lucide-react";
+import { EMPTY_STATES } from "@/lib/copy";
 import type { NotificationKind, NotificationType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -57,10 +58,10 @@ const TYPE_LABEL: Record<NotificationType, string> = {
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const h = Math.floor(diff / 3600000);
-  if (h < 1) return "agora ha pouco";
-  if (h < 24) return `ha ${h}h`;
+  if (h < 1) return "agora há pouco";
+  if (h < 24) return `há ${h}h`;
   const d = Math.floor(h / 24);
-  return d === 1 ? "ontem" : `ha ${d} dias`;
+  return d === 1 ? "ontem" : `há ${d} dias`;
 }
 
 export function NotificationCenter() {
@@ -81,7 +82,7 @@ export function NotificationCenter() {
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-2xl border border-border/70 bg-card/80 hover:bg-card"
-            aria-label={`Notificacoes: ${unread} nao lida(s)`}
+            aria-label={`Notificações: ${unread} não lida(s)`}
           >
             <Bell className="h-5 w-5" />
           </Button>
@@ -102,7 +103,7 @@ export function NotificationCenter() {
             <div className="min-w-0 space-y-0.5">
               <p className="text-sm font-extrabold">Notificações</p>
               <p className="text-xs text-muted-foreground">
-                {unread > 0 ? `${unread} nao lida(s)` : "Tudo em dia"}
+                {unread > 0 ? `${unread} não lida(s)` : "Tudo em dia"}
               </p>
             </div>
             {notifications.length > 0 && (
@@ -121,9 +122,9 @@ export function NotificationCenter() {
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center">
             <Bell className="h-7 w-7 text-muted-foreground/50" />
-            <p className="text-sm font-bold">Sem notificacoes</p>
+            <p className="text-sm font-bold">{EMPTY_STATES.notifications.title}</p>
             <p className="text-xs text-muted-foreground">
-              Suas atualizacoes aparecerao aqui.
+              {EMPTY_STATES.notifications.description}
             </p>
           </div>
         ) : (
@@ -176,7 +177,7 @@ export function NotificationCenter() {
                         size="icon"
                         className="h-8 w-8 rounded-2xl text-muted-foreground hover:text-destructive"
                         onClick={() => deleteNotification(n.id)}
-                        aria-label="Excluir notificacao"
+                        aria-label="Excluir notificação"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

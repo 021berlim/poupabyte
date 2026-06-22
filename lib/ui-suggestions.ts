@@ -16,52 +16,24 @@ import type {
 
 export const SHORT_HINT_MAX = 48
 
-export const PAGE_SUBTITLES = {
-  transactions: "Organize seus gastos.",
-  cashflow: "Como está o mês.",
-  goals: "Metas e prazos.",
-  limits: "Limite por categoria.",
-  investments: "O que você guardou.",
-  reports: "Para onde foi o dinheiro.",
-  categories: "Suas categorias.",
-  assistant: "Pergunte sobre seu dinheiro.",
-  profile: "Conta e preferências.",
-} as const
+import { PAGE_SUBTITLES, PENNY_STARTER_SUGGESTIONS } from "./copy"
 
-export const PENNY_STARTER_SUGGESTIONS = [
-  "Quanto ainda posso gastar?",
-  "Como estou este mês?",
-  "Onde posso cortar gastos?",
-  "Quais assinaturas pesam no mês?",
-  "Resumo do mês.",
-  "Limites com meu salário.",
-  "Renda extra conta no longo prazo?",
-  "Como funcionam as categorias?",
-  "O que os relatórios mostram?",
-  "Minha meta cabe na renda?",
-  "Quanto posso comprometer?",
-  "Reserva e investimento no plano.",
-  "Como importar extrato?",
-  "Quantos meses minha reserva cobre?",
-  "Meus gastos vs 50/30/20?",
-  "Este mês costuma ser mais caro?",
-  "Tenho dinheiro parado?",
-] as const
+export { PAGE_SUBTITLES, PENNY_STARTER_SUGGESTIONS }
 
 const SHORT_INSIGHT_HINTS: Record<string, string> = {
   "top-category": "Maior gasto do mês.",
   "salary-committed": "Parte da renda já tem destino.",
   "best-month": "Melhor mês recente.",
   "worst-month": "Mês mais apertado.",
-  "fixed-vs-variable": "Fixos vs variáveis.",
+  "fixed-vs-variable": "Fixos e variáveis do mês.",
   "goals-at-risk": "Metas precisam de atenção.",
-  "negative-projection": "Pode faltar dinheiro no fim do mês.",
-  "month-projection": "Fim do mês no positivo.",
-  "extra-income": "Entrada extra este mês.",
-  "safe-margin": "Quanto ainda dá pra comprometer.",
-  "fixed-expenses-high": "Fixos pesando na renda.",
+  "negative-projection": "O mês pode fechar no negativo.",
+  "month-projection": "O mês deve fechar no positivo.",
+  "extra-income": "Entrada extra neste mês.",
+  "safe-margin": "Quanto ainda pode comprometer.",
+  "fixed-expenses-high": "Compromissos fixos pesando na renda.",
   "top-subcategory": "Subcategoria em destaque.",
-  "moradia-high": "Moradia acima de 30%.",
+  "moradia-high": "Moradia acima de 30% da renda.",
 }
 
 export type DashboardSuggestion = {
@@ -109,7 +81,7 @@ export function buildDashboardSuggestions(
     pushUnique(suggestions, {
       id: "pending-review",
       title: "Revisar lançamentos",
-      hint: `${pendingReview} pra revisar.`,
+      hint: `${pendingReview} para confirmar ou categorizar.`,
       long: false,
     })
   }
@@ -126,8 +98,8 @@ export function buildDashboardSuggestions(
   if (profile.objective === "entender-gastos") {
     pushUnique(suggestions, {
       id: "track-spending",
-      title: "Registre gastos",
-      hint: "Mais lançamentos, visão melhor.",
+      title: "Registrar gastos",
+      hint: "Quanto mais você registra, melhor fica sua visão financeira.",
       long: false,
     })
     if (profile.budgetWeight && profile.budgetWeight !== "nao-sei") {
@@ -143,7 +115,7 @@ export function buildDashboardSuggestions(
   if (profile.objective === "controlar-gastos" && planning.safeToSpend > 0) {
     pushUnique(suggestions, {
       id: "safe-to-spend",
-      title: "Pode gastar",
+      title: "Saldo disponível",
       hint: `${planning.safeToSpend.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} disponíveis.`,
       long: false,
     })

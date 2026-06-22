@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
+import { METRICS, TOAST, TRANSACTION_TYPES } from "@/lib/copy"
 import { suggestCategory } from "@/lib/auto-categorize"
 import type { CategoryContext } from "@/lib/category-system"
 import { CATEGORY_LIST, getCategory } from "@/lib/categories"
@@ -46,8 +47,8 @@ const BANK_LABELS: Record<StatementBank, string> = {
 }
 
 const TYPE_LABELS: Record<TransactionType, string> = {
-  income: "Receita",
-  expense: "Despesa",
+  income: TRANSACTION_TYPES.income,
+  expense: TRANSACTION_TYPES.expense,
   transfer: "Entre minhas contas",
 }
 
@@ -362,7 +363,7 @@ export function StatementImportSheet() {
       setItems(reviewItems)
       setStage("review")
     } catch {
-      setError("Não foi possível processar o extrato. Verifique sua conexão e tente novamente.")
+      setError(TOAST.error.importProcess)
       setStage("upload")
     }
   }
@@ -422,7 +423,7 @@ export function StatementImportSheet() {
         kind: "transaction",
         type: "success",
         title: "Importação concluída",
-        message: `${imported} lançamentos importados · ${formatCurrency(incomeTotal)} em receitas · ${formatCurrency(expenseTotal)} em despesas${pendingReview > 0 ? ` · ${pendingReview} para revisar` : ""}.`,
+        message: `${imported} lançamentos importados · ${formatCurrency(incomeTotal)} em entradas · ${formatCurrency(expenseTotal)} em gastos${pendingReview > 0 ? ` · ${pendingReview} para revisar` : ""}.`,
       })
       handleOpenChange(false)
     }
@@ -438,7 +439,7 @@ export function StatementImportSheet() {
           <>
             <SheetHeader>
               <SheetTitle>Importar extrato</SheetTitle>
-              <SheetDescription>Envie o PDF do extrato. Revise antes de salvar.</SheetDescription>
+              <SheetDescription>Envie o PDF do banco. Você revisa cada lançamento antes de salvar.</SheetDescription>
             </SheetHeader>
             <div className="app-responsive-modal-body space-y-5 px-6 py-5">
               <div
@@ -455,8 +456,8 @@ export function StatementImportSheet() {
               >
                 {file ? <FileText className="size-8 text-primary" /> : <UploadCloud className="size-8 text-muted-foreground" />}
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{file ? file.name : "Selecione ou arraste o PDF"}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{file ? `${(file.size / 1024).toFixed(0)} KB` : "Arquivo original, até 10 MB"}</p>
+                  <p className="truncate text-sm font-semibold">{file ? file.name : "Selecione ou arraste o extrato em PDF"}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{file ? `${(file.size / 1024).toFixed(0)} KB` : "PDF do banco, até 10 MB"}</p>
                 </div>
                 <Input ref={inputRef} type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(event) => chooseFile(event.target.files?.[0])} />
               </div>
@@ -513,12 +514,12 @@ export function StatementImportSheet() {
             <SheetHeader>
               <div className="flex items-center gap-2"><SheetTitle>Revisar importação</SheetTitle><Badge variant="outline">{BANK_LABELS[detectedBank]}</Badge></div>
               <SheetDescription>
-                Encontramos {reviewSummary.total} lançamentos no PDF. Revise antes de importar.
+                Encontramos {reviewSummary.total} lançamentos. Confira tipo, valor e categoria antes de importar.
               </SheetDescription>
             </SheetHeader>
             <div className="shrink-0 space-y-2 border-b px-6 py-3 text-xs text-muted-foreground">
-              <p>{reviewSummary.autoCategorized} categorizadas automaticamente · {reviewSummary.pending} pendentes · {reviewSummary.duplicates} possíveis duplicatas</p>
-              <p>Receitas: {formatCurrency(reviewSummary.income)} · Despesas: {formatCurrency(reviewSummary.expense)}</p>
+              <p>{reviewSummary.autoCategorized} com categoria automática · {reviewSummary.pending} para revisar · {reviewSummary.duplicates} possíveis duplicatas</p>
+              <p>{METRICS.income}: {formatCurrency(reviewSummary.income)} · {METRICS.expense}: {formatCurrency(reviewSummary.expense)}</p>
             </div>
             <div className="flex shrink-0 items-center justify-between gap-3 border-b px-6 py-3">
               <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">

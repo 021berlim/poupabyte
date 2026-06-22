@@ -12,6 +12,7 @@ import {
  DropdownMenuSeparator,
  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { TOAST } from "@/lib/copy"
 import { ROUTES } from "@/lib/routes"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -45,7 +46,7 @@ export function ProfileMenu({ className, variant = "desktop" }: ProfileMenuProps
 
  function handleLogout() {
   logout()
-  toast.success("Sessao encerrada.")
+  toast.success(TOAST.success.sessionEnded)
   router.replace("/login")
  }
 

@@ -44,6 +44,7 @@ import { monthExpense, monthIncome, monthlyComparison, totalBalance } from "@/li
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { PAGE_SUBTITLES, TOAST } from "@/lib/copy"
 
 const DEFAULT_AVATAR_SRC = "/images/onboarding-hero.jpg"
 
@@ -117,7 +118,7 @@ export default function ProfilePage() {
 
  function handleLogout() {
   logout()
-  toast.success("Sessão encerrada.")
+  toast.success(TOAST.success.sessionEnded)
   router.replace("/login")
  }
 
@@ -131,19 +132,19 @@ export default function ProfilePage() {
   const file = event.target.files?.[0]
   if (!file) return
   if (!file.type.startsWith("image/")) {
-   toast.error("Escolha um arquivo de imagem.")
+   toast.error(TOAST.error.invalidImage)
    event.target.value = ""
    return
   }
   if (file.size > 2 * 1024 * 1024) {
-   toast.error("A imagem deve ter no máximo 2 MB.")
+   toast.error(TOAST.error.imageTooLarge)
    event.target.value = ""
    return
   }
 
   const reader = new FileReader()
   reader.onload = () => setPhotoPreview(String(reader.result))
-  reader.onerror = () => toast.error("Não foi possível ler a imagem.")
+  reader.onerror = () => toast.error(TOAST.error.imageRead)
   reader.readAsDataURL(file)
  }
 
@@ -151,11 +152,11 @@ export default function ProfilePage() {
   if (!user || !photoPreview) return
   const result = updateProfile({ name: user.name, email: user.email, avatar: photoPreview })
   if (!result.ok) {
-   toast.error(result.error ?? "Não foi possível salvar a foto.")
+   toast.error(result.error ?? TOAST.error.photoSave)
    return
   }
   setPhotoOpen(false)
-  toast.success("Foto de perfil atualizada.")
+  toast.success(TOAST.success.photoUpdated)
  }
 
  function handleEditOpen(open: boolean) {
@@ -170,23 +171,23 @@ export default function ProfilePage() {
   event.preventDefault()
   const result = updateProfile({ name: profileName, email: profileEmail, avatar: user?.avatar })
   if (!result.ok) {
-   toast.error(result.error ?? "Não foi possível atualizar o perfil.")
+   toast.error(result.error ?? TOAST.error.profileSave)
    return
   }
   setEditOpen(false)
-  toast.success("Perfil atualizado.")
+  toast.success(TOAST.success.profileUpdated)
  }
 
  const statItems = [
   { label: "Saldo total", mobileLabel: "Saldo", value: formatCurrency(stats.balance), detail: "posição da conta", tone: stats.balance >= 0 ? "text-success" : "text-destructive" },
-  { label: "Receitas do mês", mobileLabel: "Receitas", value: formatCurrency(stats.income), detail: changeLabel(stats.comparison.incomeChange), tone: "text-success" },
-  { label: "Despesas do mês", mobileLabel: "Despesas", value: formatCurrency(stats.expense), detail: changeLabel(stats.comparison.expenseChange), tone: "text-destructive" },
+  { label: "Entradas do mês", mobileLabel: "Entradas", value: formatCurrency(stats.income), detail: changeLabel(stats.comparison.incomeChange), tone: "text-success" },
+  { label: "Gastos do mês", mobileLabel: "Gastos", value: formatCurrency(stats.expense), detail: changeLabel(stats.comparison.expenseChange), tone: "text-destructive" },
  ]
 
  return (
   <div className="min-w-0">
    <div className="hidden">
-    <PageHeader title="Minha conta" subtitle="Conta, preferências e privacidade." />
+    <PageHeader title="Minha conta" subtitle={PAGE_SUBTITLES.profile} />
    </div>
 
    <div className="md:hidden">
@@ -228,11 +229,11 @@ export default function ProfilePage() {
     </div>
 
     <nav aria-label="Configurações do perfil" className="flex flex-col">
-     <ProfileMenuRow icon={Lock} title="Segurança" subtitle="Senha, sessões ativas" href={ROUTES.profileSecurity} />
+     <ProfileMenuRow icon={Lock} title="Segurança" subtitle="Senha e sessões ativas" href={ROUTES.profileSecurity} />
      <Separator />
-     <ProfileMenuRow icon={SlidersHorizontal} title="Preferências" subtitle="Tema, notificações" href={ROUTES.profilePreferences} />
+     <ProfileMenuRow icon={SlidersHorizontal} title="Preferências" subtitle="Tema e notificações" href={ROUTES.profilePreferences} />
      <Separator />
-     <ProfileMenuRow icon={ShieldCheck} title="Dados e privacidade" subtitle="Exportar dados, termos" href={ROUTES.profilePrivacy} />
+     <ProfileMenuRow icon={ShieldCheck} title="Dados e privacidade" subtitle="Exportar dados e termos" href={ROUTES.profilePrivacy} />
     </nav>
 
     <div className="flex flex-col items-center gap-3 pb-4 pt-8">

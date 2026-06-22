@@ -25,6 +25,7 @@ import { formatCurrency } from "@/lib/format"
 import { useStore } from "@/lib/store"
 import type { CategoryGroup, CategoryId, CategoryKind, CategoryRef, UserCategory } from "@/lib/types"
 import { Copy, EyeOff, FolderTree, Lock, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
+import { HELP, PAGE_SUBTITLES } from "@/lib/copy"
 
 const KIND_LABELS: Record<CategoryKind, string> = {
   income: "Receita",
@@ -375,7 +376,7 @@ export default function CategoriesPage() {
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
         title="Categorias"
-        subtitle="Como você classifica gastos."
+        subtitle={PAGE_SUBTITLES.categories}
         action={
           <CategoryDialog
             trigger={
@@ -391,7 +392,7 @@ export default function CategoriesPage() {
       <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Lock className="h-4 w-4 shrink-0" />
-          <span>Categorias padrão do sistema não podem ser editadas.</span>
+          <span>{HELP.categories}</span>
         </div>
         {hiddenCount > 0 ? (
           <Button variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => setShowAll((value) => !value)}>

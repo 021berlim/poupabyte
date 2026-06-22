@@ -11,11 +11,11 @@ export interface CategoryMeta {
 
 export const CATEGORIES: Record<CategoryId, CategoryMeta> = {
   // Receitas
-  salario: { id: "salario", label: "Salário", color: "#22c55e", defaultType: "income", group: "receitas", isSystem: true },
+  salario: { id: "salario", label: "Entrada fixa", color: "#22c55e", defaultType: "income", group: "receitas", isSystem: true },
   "renda-extra": { id: "renda-extra", label: "Renda extra", color: "#14b8a6", defaultType: "income", group: "receitas", isSystem: true },
   reembolsos: { id: "reembolsos", label: "Reembolsos", color: "#06b6d4", defaultType: "income", group: "receitas", isSystem: true },
   rendimentos: { id: "rendimentos", label: "Rendimentos", color: "#10b981", defaultType: "income", group: "receitas", isSystem: true },
-  "outras-receitas": { id: "outras-receitas", label: "Outras receitas", color: "#0d9488", defaultType: "income", group: "receitas", isSystem: true },
+  "outras-receitas": { id: "outras-receitas", label: "Outras entradas", color: "#0d9488", defaultType: "income", group: "receitas", isSystem: true },
 
   // Despesas
   moradia: { id: "moradia", label: "Moradia", color: "#8b5cf6", defaultType: "expense", group: "despesas", isSystem: true },
@@ -95,6 +95,6 @@ export const FINANCIAL_OBJECTIVE_LABELS: Record<
   "sair-dividas": "Organizar dívidas",
   "reserva-emergencia": "Começar a guardar dinheiro",
   "planejar-metas": "Guardar para uma meta",
-  "organizar-salario": "Organizar o salário",
+  "organizar-salario": "Organizar entradas fixas",
   "controlar-cartao": "Controlar o cartão",
 }

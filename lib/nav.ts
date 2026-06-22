@@ -9,6 +9,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react"
+import { NAV_GROUPS, NAV_LABELS } from "@/lib/copy"
 import { ROUTES, type Screen } from "@/lib/routes"
 
 export type { Screen }
@@ -25,15 +26,20 @@ export interface NavItem {
 
 export type NavGroup = "Hoje" | "Planejar" | "Investir" | "Entender"
 
-export const NAV_GROUP_ORDER: NavGroup[] = ["Hoje", "Planejar", "Investir", "Entender"]
+export const NAV_GROUP_ORDER: NavGroup[] = [
+  NAV_GROUPS.hoje,
+  NAV_GROUPS.planejar,
+  NAV_GROUPS.investir,
+  NAV_GROUPS.entender,
+]
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: ROUTES.dashboard, label: "Início", icon: LayoutGrid, group: "Hoje" },
-  { href: ROUTES.transactions, label: "Lançamentos", icon: ArrowLeftRight, group: "Hoje" },
-  { href: ROUTES.limits, label: "Limites", icon: ShieldAlert, group: "Planejar" },
-  { href: ROUTES.assistant, label: "Penny", icon: Sparkles, group: "Entender" },
-  { href: ROUTES.cashflow, label: "Fluxo", icon: Wallet, group: "Planejar" },
-  { href: ROUTES.goals, label: "Metas", icon: Target, group: "Planejar" },
-  { href: ROUTES.investments, label: "Investimentos", icon: Landmark, group: "Investir" },
-  { href: ROUTES.reports, label: "Relatórios", icon: PieChart, group: "Entender" },
+  { href: ROUTES.dashboard, label: NAV_LABELS.dashboard, icon: LayoutGrid, group: NAV_GROUPS.hoje },
+  { href: ROUTES.transactions, label: NAV_LABELS.transactions, icon: ArrowLeftRight, group: NAV_GROUPS.hoje },
+  { href: ROUTES.limits, label: NAV_LABELS.limits, icon: ShieldAlert, group: NAV_GROUPS.planejar },
+  { href: ROUTES.assistant, label: NAV_LABELS.assistant, icon: Sparkles, group: NAV_GROUPS.entender },
+  { href: ROUTES.cashflow, label: NAV_LABELS.cashflow, icon: Wallet, group: NAV_GROUPS.planejar },
+  { href: ROUTES.goals, label: NAV_LABELS.goals, icon: Target, group: NAV_GROUPS.planejar },
+  { href: ROUTES.investments, label: NAV_LABELS.investments, icon: Landmark, group: NAV_GROUPS.investir },
+  { href: ROUTES.reports, label: NAV_LABELS.reports, icon: PieChart, group: NAV_GROUPS.entender },
 ]

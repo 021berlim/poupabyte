@@ -80,6 +80,7 @@ import { PullToRefresh } from "@/components/app/pull-to-refresh"
 import { useLongPress } from "@/hooks/use-long-press"
 import { useRipple } from "@/hooks/use-ripple"
 import { useRouter } from "next/navigation"
+import { EMPTY_STATES, PAGE_SUBTITLES, TOAST } from "@/lib/copy"
 
 const comparisonConfig = {
   investedAmount: { label: "Valor aplicado", color: "var(--chart-2)" },
@@ -149,7 +150,7 @@ function InvestmentDialog({ investment, trigger }: { investment?: Investment; tr
     }
     const errors = validateInvestment(draft)
     if (errors.length > 0) {
-      notify({ kind: "error", type: "error", title: "Investimento invalido", message: errors[0] })
+      notify({ kind: "error", type: "error", title: "Investimento inválido", message: errors[0] ?? TOAST.error.invalidInvestment })
       return
     }
 
@@ -174,7 +175,7 @@ function InvestmentDialog({ investment, trigger }: { investment?: Investment; tr
       <DialogContent className="app-desktop-panel-wide">
         <DialogHeader>
           <DialogTitle>{investment ? "Editar investimento" : "Novo investimento"}</DialogTitle>
-          <DialogDescription>Cadastre ativos, valores, instituicao e prazos da carteira.</DialogDescription>
+          <DialogDescription>Cadastre ativos, valores, instituição e prazos da carteira.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
@@ -202,7 +203,7 @@ function InvestmentDialog({ investment, trigger }: { investment?: Investment; tr
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="investment-institution">Instituicao ou corretora</Label>
+            <Label htmlFor="investment-institution">Instituição ou corretora</Label>
             <Input id="investment-institution" value={institution} onChange={(event) => setInstitution(event.target.value)} placeholder="Ex.: Banco Byte" />
           </div>
 
@@ -223,7 +224,7 @@ function InvestmentDialog({ investment, trigger }: { investment?: Investment; tr
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="investment-date">Data da aplicacao</Label>
+              <Label htmlFor="investment-date">Data da aplicação</Label>
               <Input id="investment-date" type="date" value={applicationDate} onChange={(event) => setApplicationDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
@@ -233,7 +234,7 @@ function InvestmentDialog({ investment, trigger }: { investment?: Investment; tr
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="investment-notes">Observacoes</Label>
+            <Label htmlFor="investment-notes">Observações</Label>
             <Textarea id="investment-notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Opcional" />
           </div>
 
@@ -244,7 +245,7 @@ function InvestmentDialog({ investment, trigger }: { investment?: Investment; tr
               Cancelar
             </Button>
             <Button type="submit" size="lg" className="flex-1">
-              {investment ? "Salvar alteracoes" : "Cadastrar investimento"}
+              {investment ? "Salvar alterações" : "Cadastrar investimento"}
             </Button>
           </DialogFooter>
         </form>
@@ -279,7 +280,7 @@ function MovementDialog({ investment, trigger }: { investment: Investment; trigg
     const draft = { type, amount: value, date, note: note.trim() || undefined }
     const errors = validateInvestmentMovement(draft, investment)
     if (errors.length > 0) {
-      notify({ kind: "error", type: "error", title: "Movimentacao invalida", message: errors[0] })
+      notify({ kind: "error", type: "error", title: "Movimentação inválida", message: errors[0] ?? TOAST.error.invalidInvestment })
       return
     }
 
@@ -299,7 +300,7 @@ function MovementDialog({ investment, trigger }: { investment: Investment; trigg
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 px-6 py-5">
           <div className="space-y-1.5">
-            <Label>Tipo de movimentacao</Label>
+            <Label>Tipo de movimentação</Label>
             <Select value={type} onValueChange={(value) => setType(value as InvestmentMovementType)}>
               <SelectTrigger>
                 <SelectValue />
@@ -307,7 +308,7 @@ function MovementDialog({ investment, trigger }: { investment: Investment; trigg
               <SelectContent>
                 <SelectItem value="contribution">Aporte</SelectItem>
                 <SelectItem value="withdrawal">Resgate</SelectItem>
-                <SelectItem value="value-update">Atualizacao de valor</SelectItem>
+                <SelectItem value="value-update">Atualização de valor</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -324,7 +325,7 @@ function MovementDialog({ investment, trigger }: { investment: Investment; trigg
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="movement-note">Observacao</Label>
+            <Label htmlFor="movement-note">Observação</Label>
             <Input id="movement-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Opcional" />
           </div>
 
@@ -335,7 +336,7 @@ function MovementDialog({ investment, trigger }: { investment: Investment; trigg
               Cancelar
             </Button>
             <Button type="submit" size="lg" className="flex-1">
-              Registrar movimentacao
+              Registrar movimentação
             </Button>
           </DialogFooter>
         </form>
@@ -351,7 +352,7 @@ function DeleteInvestmentDialog({ investment, open, onOpenChange }: { investment
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir investimento?</AlertDialogTitle>
-          <AlertDialogDescription>O investimento &quot;{investment.name}&quot; e seu historico serao removidos.</AlertDialogDescription>
+          <AlertDialogDescription>O investimento &quot;{investment.name}&quot; e seu histórico serão removidos.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -388,7 +389,7 @@ function InvestmentCard({ investment }: { investment: Investment; index?: number
             <h2 className="truncate text-base font-bold">{investment.name}</h2>
             <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
-              <span className="truncate">{investment.institution || "Sem instituicao"}</span>
+              <span className="truncate">{investment.institution || "Sem instituição"}</span>
             </p>
           </div>
         </div>
@@ -519,7 +520,7 @@ export default function InvestmentsPage() {
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
         title="Investimentos"
-        subtitle="O que você já guardou."
+        subtitle={PAGE_SUBTITLES.investments}
         action={
           <InvestmentDialog
             trigger={
@@ -535,8 +536,8 @@ export default function InvestmentsPage() {
       {investments.length === 0 ? (
         <EmptyModuleCard
           icon={<Landmark className="h-6 w-6" />}
-          title="Cadastre seu primeiro investimento"
-          description="Registre reservas e aplicações."
+          title={EMPTY_STATES.investments.title}
+          description={EMPTY_STATES.investments.description}
           action={
             <InvestmentDialog
               trigger={
@@ -587,7 +588,7 @@ export default function InvestmentsPage() {
           <TabsContent value="portfolio" className="space-y-4">
            <PullToRefresh onRefresh={() => router.refresh()}>
             {filtered.length === 0 ? (
-              <EmptyState icon={<Search className="h-8 w-8 text-muted-foreground/50" />} title="Nenhum ativo encontrado" description="Ajuste os filtros para localizar investimentos da carteira." />
+              <EmptyState icon={<Search className="h-8 w-8 text-muted-foreground/50" />} title={EMPTY_STATES.investmentsFiltered.title} description={EMPTY_STATES.investmentsFiltered.description} />
             ) : (
               <div className="app-list-section divide-y border-t">
                 {filtered.map((investment, index) => (
@@ -602,8 +603,8 @@ export default function InvestmentsPage() {
             <div className="grid min-w-0 gap-8 lg:grid-cols-2">
               <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
                 <div className="mb-4">
-                  <h2 className="text-sm font-medium text-foreground">Distribuicao por tipo</h2>
-                  <p className="text-xs text-muted-foreground">Participacao percentual na carteira</p>
+                  <h2 className="text-sm font-medium text-foreground">Distribuição por tipo</h2>
+                  <p className="text-xs text-muted-foreground">Participação percentual na carteira</p>
                 </div>
                 <div className="app-chart-with-legend w-full items-center gap-4">
                   <ChartContainer config={typeChartConfig} className="app-chart-canvas aspect-auto min-w-0 w-full">
@@ -641,8 +642,8 @@ export default function InvestmentsPage() {
 
               <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
                 <div className="mb-4">
-                  <h2 className="text-sm font-medium text-foreground">Distribuicao por instituicao</h2>
-                  <p className="text-xs text-muted-foreground">Concentracao por banco ou corretora</p>
+                  <h2 className="text-sm font-medium text-foreground">Distribuição por instituição</h2>
+                  <p className="text-xs text-muted-foreground">Concentração por banco ou corretora</p>
                 </div>
                 <div className="app-chart-with-legend w-full items-center gap-4">
                   <ChartContainer config={institutionChartConfig} className="app-chart-canvas aspect-auto min-w-0 w-full">
@@ -683,7 +684,7 @@ export default function InvestmentsPage() {
               <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
                 <div className="mb-4">
                   <h2 className="text-sm font-medium text-foreground">Aplicado vs. atual</h2>
-                  <p className="text-xs text-muted-foreground">Comparacao por ativo</p>
+                  <p className="text-xs text-muted-foreground">Comparação por ativo</p>
                 </div>
                 <ChartInteractiveLegend
                   items={[
@@ -707,7 +708,7 @@ export default function InvestmentsPage() {
 
               <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
                 <div className="mb-4">
-                  <h2 className="text-sm font-medium text-foreground">Evolucao da carteira</h2>
+                  <h2 className="text-sm font-medium text-foreground">Evolução da carteira</h2>
                   <p className="text-xs text-muted-foreground">Valor aplicado, valor atual e rendimento</p>
                 </div>
                 <ChartInteractiveLegend
@@ -736,7 +737,7 @@ export default function InvestmentsPage() {
 
           <TabsContent value="history" className="space-y-4">
             {movements.length === 0 ? (
-              <EmptyState icon={<Repeat2 className="h-8 w-8 text-muted-foreground/50" />} title="Sem movimentos" description="Aportes e resgates aparecem aqui." />
+              <EmptyState icon={<Repeat2 className="h-8 w-8 text-muted-foreground/50" />} title={EMPTY_STATES.movements.title} description={EMPTY_STATES.movements.description} />
             ) : (
               <div className="app-list-section">
                 {groupedMovements.map(([day, items]) => {
@@ -746,7 +747,7 @@ export default function InvestmentsPage() {
                       <ul className="divide-y">
                         {items.map((movement) => {
                           const Icon = movement.type === "contribution" ? ArrowUpFromLine : movement.type === "withdrawal" ? ArrowDownToLine : RefreshCcw
-                          const label = movement.type === "contribution" ? "Aporte" : movement.type === "withdrawal" ? "Resgate" : "Atualizacao"
+                          const label = movement.type === "contribution" ? "Aporte" : movement.type === "withdrawal" ? "Resgate" : "Atualização"
                           const tone = movement.type === "withdrawal" ? "text-destructive bg-destructive/10" : movement.type === "contribution" ? "text-success bg-success/10" : "text-primary bg-primary/10"
                           const valueTone = movement.type === "withdrawal" ? "text-destructive" : movement.type === "contribution" ? "text-success" : "text-primary"
                           const sign = movement.type === "contribution" ? "+" : movement.type === "withdrawal" ? "-" : ""

@@ -9,6 +9,7 @@ import {
  monthExpense,
  accumulatedSavings,
 } from "@/lib/selectors"
+import { METRICS } from "@/lib/copy"
 import { Wallet, ArrowUpRight, ArrowDownRight, PiggyBank } from "lucide-react"
 
 export function StatCards() {
@@ -20,31 +21,31 @@ export function StatCards() {
 
  const stats = [
   {
-   label: "Saldo total",
+   label: METRICS.availableBalance,
    value: balance,
-   helper: "Entradas menos saídas",
+   helper: "Entradas menos gastos",
    icon: Wallet,
    tone: "text-primary",
    iconTone: "bg-primary/10 text-primary",
   },
   {
-   label: "Receitas do mês",
+   label: METRICS.monthIncome,
    value: income,
-   helper: "Entradas confirmadas",
+   helper: "Dinheiro que entrou",
    icon: ArrowUpRight,
    tone: "text-success",
    iconTone: "bg-success/10 text-success",
   },
   {
-   label: "Despesas do mês",
+   label: METRICS.monthExpense,
    value: expense,
-   helper: "Saídas registradas",
+   helper: "Gastos registrados",
    icon: ArrowDownRight,
    tone: "text-destructive",
    iconTone: "bg-destructive/10 text-destructive",
   },
   {
-   label: "Economia acumulada",
+   label: METRICS.accumulatedSavings,
    value: savings,
    helper: savings >= 0 ? "No positivo" : "No negativo",
    icon: PiggyBank,

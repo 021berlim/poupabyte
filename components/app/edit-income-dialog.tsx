@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { HELP, TOAST } from "@/lib/copy"
 import { FINANCIAL_OBJECTIVE_LABELS } from "@/lib/categories"
 import { parseAmountInput } from "@/lib/finance"
 import { isPredictableIncome } from "@/lib/income"
@@ -46,9 +47,9 @@ type EditIncomeDialogProps = {
 }
 
 const SCOPE_HINTS: Record<SalaryEffectiveScope, string> = {
-  "current-month": "Meses anteriores mantêm a renda que estava vigente na época.",
-  "next-month": "O mês atual não muda; a nova renda vale do próximo mês em diante.",
-  "all-months": "Todo o histórico passa a usar a nova renda — use com cuidado em relatórios.",
+  "current-month": "Meses anteriores continuam com a renda antiga.",
+  "next-month": "O mês atual não muda. A nova renda vale a partir do próximo mês.",
+  "all-months": "Todo o histórico usa a nova renda. Use só se precisar corrigir meses passados.",
 }
 
 function incomeAmountLabel(incomeType: IncomeType): string {
@@ -122,7 +123,7 @@ export function EditIncomeDialog({ open, onOpenChange, trigger }: EditIncomeDial
         kind: "error",
         type: "error",
         title: "Renda inválida",
-        message: "Informe um valor de renda maior que zero.",
+        message: TOAST.error.invalidIncome,
       })
       return
     }
@@ -158,7 +159,9 @@ export function EditIncomeDialog({ open, onOpenChange, trigger }: EditIncomeDial
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar renda</DialogTitle>
-          <DialogDescription>Altere tipo e valores. Tudo recalcula sozinho.</DialogDescription>
+          <DialogDescription>
+            Ajuste tipo, valor e dia de recebimento. {HELP.incomeGeneral} {HELP.incomeAdjustLater}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
