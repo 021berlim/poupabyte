@@ -44,20 +44,17 @@ export function FirstGoalStep({
 
   return (
     <div>
-      <OnboardingStepHeader
-        title="Primeira meta"
-        description="Opcional — você pode criar depois, quando fizer sentido."
-      />
+      <OnboardingStepHeader title="Quer criar uma meta agora?" />
 
-      <p className="mt-6 text-sm font-semibold">Quer criar uma meta agora?</p>
-
-      <div className="mt-3 space-y-2">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <OptionButton
+          layout="minimal"
           label="Sim"
           selected={wantsGoal === true}
           onClick={() => setWantsGoal(true)}
         />
         <OptionButton
+          layout="minimal"
           label="Agora não"
           selected={wantsGoal === false}
           onClick={() => setWantsGoal(false)}
@@ -65,7 +62,7 @@ export function FirstGoalStep({
       </div>
 
       {wantsGoal === true ? (
-        <div className="mt-5 space-y-4 rounded-2xl border border-border bg-muted/30 p-4">
+        <div className="mt-4 space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="onboarding-goal-name">Nome da meta</Label>
             <Input
@@ -77,11 +74,7 @@ export function FirstGoalStep({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="onboarding-goal-target">Valor desejado</Label>
-            <CurrencyInput
-              id="onboarding-goal-target"
-              value={target}
-              onChange={setTarget}
-            />
+            <CurrencyInput id="onboarding-goal-target" value={target} onChange={setTarget} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="onboarding-goal-deadline">Prazo</Label>
@@ -98,8 +91,8 @@ export function FirstGoalStep({
       <OnboardingActions
         onContinue={handleFinish}
         onSkip={() => onFinish()}
-        continueLabel={wantsGoal === false ? "Concluir" : "Criar meta e concluir"}
-        skipLabel="Pular e concluir"
+        continueLabel={wantsGoal === true ? "Concluir" : "Continuar"}
+        skipLabel="Pular"
         continueDisabled={wantsGoal === null || (wantsGoal === true && !canFinishWithGoal)}
       />
     </div>

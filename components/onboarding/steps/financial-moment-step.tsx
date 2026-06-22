@@ -18,19 +18,14 @@ export function FinancialMomentStep({
 
   return (
     <div>
-      <OnboardingStepHeader
-        title="Seu momento financeiro"
-        description="Isso define o caminho inicial da Penny no app."
-      />
+      <OnboardingStepHeader title="Hoje, o que você mais quer melhorar?" />
 
-      <p className="mt-6 text-sm font-semibold">Hoje, o que você mais quer melhorar?</p>
-
-      <div className="mt-3 space-y-2">
+      <div className="mt-4 space-y-1.5">
         {FINANCIAL_MOMENT_OPTIONS.map((option) => (
           <OptionButton
             key={option.value}
+            layout="minimal"
             label={option.label}
-            description={option.description}
             selected={selected === option.value}
             onClick={() => setSelected(option.value)}
           />
@@ -40,6 +35,7 @@ export function FinancialMomentStep({
       <OnboardingActions
         onContinue={() => selected && onContinue(selected)}
         onSkip={onSkip}
+        skipLabel="Pular"
         continueDisabled={!selected}
       />
     </div>

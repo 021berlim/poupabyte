@@ -18,17 +18,13 @@ export function BudgetWeightStep({
 
   return (
     <div>
-      <OnboardingStepHeader
-        title="Maior peso do mês"
-        description="Ajuda a priorizar gráficos, alertas e sugestões iniciais."
-      />
+      <OnboardingStepHeader title="O que mais pesa no seu orçamento hoje?" />
 
-      <p className="mt-6 text-sm font-semibold">O que mais pesa no seu orçamento hoje?</p>
-
-      <div className="mt-3 space-y-2">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         {BUDGET_WEIGHT_OPTIONS.map((option) => (
           <OptionButton
             key={option.value}
+            layout="minimal"
             label={option.label}
             selected={selected === option.value}
             onClick={() => setSelected(option.value)}
@@ -39,6 +35,7 @@ export function BudgetWeightStep({
       <OnboardingActions
         onContinue={() => selected && onContinue(selected)}
         onSkip={onSkip}
+        skipLabel="Pular"
         continueDisabled={!selected}
       />
     </div>

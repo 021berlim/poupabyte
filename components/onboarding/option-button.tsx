@@ -14,8 +14,26 @@ export function OptionButton({
   description?: string
   selected: boolean
   onClick: () => void
-  layout?: "stack" | "inline"
+  layout?: "stack" | "inline" | "minimal"
 }) {
+  if (layout === "minimal") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "w-full rounded-xl border px-3 py-2.5 text-sm font-semibold leading-snug transition-colors",
+          description ? "text-left" : "text-center",
+          selected
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border/70 bg-card/40 hover:border-primary/40 hover:bg-muted/30",
+        )}
+      >
+        {label}
+      </button>
+    )
+  }
+
   if (layout === "inline") {
     return (
       <button

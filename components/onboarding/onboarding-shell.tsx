@@ -8,11 +8,19 @@ export function OnboardingShell({ children }: { children: ReactNode }) {
   return <AuthShell>{children}</AuthShell>
 }
 
-export function OnboardingStepHeader({ title, description }: { title: string; description: string }) {
+export function OnboardingStepHeader({
+  title,
+  description,
+}: {
+  title: string
+  description?: string
+}) {
   return (
     <div>
-      <h2 className="text-[clamp(1.5rem,6vw,1.75rem)] font-extrabold tracking-tight">{title}</h2>
-      <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
+      <h2 className="text-[clamp(1.35rem,5vw,1.6rem)] font-extrabold leading-snug tracking-tight text-balance">
+        {title}
+      </h2>
+      {description ? <p className="mt-1.5 text-sm text-muted-foreground">{description}</p> : null}
     </div>
   )
 }
