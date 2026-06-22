@@ -74,12 +74,11 @@ export const BUDGET_WEIGHT_OPTIONS: Array<{
 ]
 
 export const EXTRA_INCOME_OPTIONS: Array<{
-  value: ExtraIncomeFrequency
+  value: Extract<ExtraIncomeFrequency, "none" | "monthly">
   label: string
 }> = [
-  { value: "none", label: "Não" },
-  { value: "sometimes", label: "Sim, às vezes" },
-  { value: "monthly", label: "Sim, todo mês" },
+  { value: "none", label: "Não tenho" },
+  { value: "monthly", label: "Todo mês" },
 ]
 
 const BUDGET_WEIGHT_LIMIT_SHARE: Record<Exclude<BudgetWeight, "nao-sei">, number> = {

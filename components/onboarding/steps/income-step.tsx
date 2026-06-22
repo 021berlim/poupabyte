@@ -32,7 +32,7 @@ export function IncomeStep({
     const day = Number.parseInt(salaryDay, 10)
     let expectedExtraIncome = 0
 
-    if (extraFrequency === "monthly" || extraFrequency === "sometimes") {
+    if (extraFrequency === "monthly") {
       expectedExtraIncome = Math.max(0, parseAmountInput(extraIncome))
     }
 
@@ -76,7 +76,7 @@ export function IncomeStep({
 
         <div className="space-y-2">
           <p className="text-sm font-semibold">Você tem renda extra?</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {EXTRA_INCOME_OPTIONS.map((option) => (
               <OptionButton
                 key={option.value}
@@ -91,18 +91,6 @@ export function IncomeStep({
             ))}
           </div>
         </div>
-
-        {extraFrequency === "sometimes" ? (
-          <div className="space-y-1.5">
-            <Label htmlFor="onboarding-extra-sometimes">Média aproximada (opcional)</Label>
-            <CurrencyInput
-              id="onboarding-extra-sometimes"
-              value={extraIncome}
-              onChange={setExtraIncome}
-              placeholder="Pode pular se não souber"
-            />
-          </div>
-        ) : null}
 
         {extraFrequency === "monthly" ? (
           <div className="space-y-1.5">
