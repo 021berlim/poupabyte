@@ -17,52 +17,51 @@ import type {
 export const SHORT_HINT_MAX = 48
 
 export const PAGE_SUBTITLES = {
-  transactions: "Revise e organize seus lançamentos.",
-  cashflow: "Veja como o mês está indo.",
-  goals: "Defina metas e acompanhe o progresso.",
-  limits: "Controle quanto gastar por categoria.",
-  investments: "Acompanhe o que você já guardou.",
-  reports: "Entenda para onde vai seu dinheiro.",
-  categories: "Organize como você classifica gastos.",
-  assistant: "Tire dúvidas sobre suas finanças.",
+  transactions: "Organize seus gastos.",
+  cashflow: "Como está o mês.",
+  goals: "Metas e prazos.",
+  limits: "Limite por categoria.",
+  investments: "O que você guardou.",
+  reports: "Para onde foi o dinheiro.",
+  categories: "Suas categorias.",
+  assistant: "Pergunte sobre seu dinheiro.",
   profile: "Conta e preferências.",
 } as const
 
-/** Perguntas iniciais na P.E.N.N.Y. — textos longos e orientações detalhadas */
 export const PENNY_STARTER_SUGGESTIONS = [
-  "Quanto ainda posso gastar este mês?",
-  "Como está minha saúde financeira este mês?",
-  "Onde posso reduzir gastos?",
-  "Quais assinaturas estão pesando no orçamento?",
-  "O que já aconteceu no mês e pra onde ele está indo?",
-  "Como usar orçamentos com base no meu salário fixo?",
-  "Por que renda extra não entra em decisões de longo prazo?",
-  "Como funcionam categorias padrão e personalizadas?",
-  "O que significam as interpretações dos meus relatórios?",
-  "Minha meta financeira é viável com minha renda atual?",
-  "Qual a margem segura para decisões de longo prazo?",
-  "Como reservas e investimentos se encaixam no planejamento?",
-  "Como importar e revisar um extrato em PDF?",
-  "Minha reserva de emergência cobre quantos meses?",
-  "Meus gastos se comparam ao método 50/30/20?",
-  "Esse período costuma ser mais caro pra mim?",
-  "Tenho dinheiro parado sem destino?",
+  "Quanto ainda posso gastar?",
+  "Como estou este mês?",
+  "Onde posso cortar gastos?",
+  "Quais assinaturas pesam no mês?",
+  "Resumo do mês.",
+  "Limites com meu salário.",
+  "Renda extra conta no longo prazo?",
+  "Como funcionam as categorias?",
+  "O que os relatórios mostram?",
+  "Minha meta cabe na renda?",
+  "Quanto posso comprometer?",
+  "Reserva e investimento no plano.",
+  "Como importar extrato?",
+  "Quantos meses minha reserva cobre?",
+  "Meus gastos vs 50/30/20?",
+  "Este mês costuma ser mais caro?",
+  "Tenho dinheiro parado?",
 ] as const
 
 const SHORT_INSIGHT_HINTS: Record<string, string> = {
-  "top-category": "Categoria líder nas despesas do mês.",
-  "salary-committed": "Parte da renda já está comprometida.",
-  "best-month": "Melhor resultado recente identificado.",
-  "worst-month": "Mês mais apertado no período recente.",
-  "fixed-vs-variable": "Compare gastos fixos e variáveis.",
-  "goals-at-risk": "Há metas que precisam de atenção.",
-  "negative-projection": "Risco de déficit no fim do mês.",
-  "month-projection": "Projeção positiva para o fim do mês.",
-  "extra-income": "Renda extra detectada neste mês.",
-  "safe-margin": "Margem segura para decisões longas.",
-  "fixed-expenses-high": "Compromissos fixos estão elevados.",
-  "top-subcategory": "Subcategoria em destaque no mês.",
-  "moradia-high": "Moradia acima do ideal de 30%.",
+  "top-category": "Maior gasto do mês.",
+  "salary-committed": "Parte da renda já tem destino.",
+  "best-month": "Melhor mês recente.",
+  "worst-month": "Mês mais apertado.",
+  "fixed-vs-variable": "Fixos vs variáveis.",
+  "goals-at-risk": "Metas precisam de atenção.",
+  "negative-projection": "Pode faltar dinheiro no fim do mês.",
+  "month-projection": "Fim do mês no positivo.",
+  "extra-income": "Entrada extra este mês.",
+  "safe-margin": "Quanto ainda dá pra comprometer.",
+  "fixed-expenses-high": "Fixos pesando na renda.",
+  "top-subcategory": "Subcategoria em destaque.",
+  "moradia-high": "Moradia acima de 30%.",
 }
 
 export type DashboardSuggestion = {
@@ -102,15 +101,24 @@ export function buildDashboardSuggestions(
   max = 3,
 ): DashboardSuggestion[] {
   const planning = buildMonthlyPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
-  const focus = getDashboardFocus(profile.objective, profile.budgetWeight)
+  const focus = getDashboardFocus(profile.objective, profile.budgetWeight, profile.incomeType)
   const suggestions: DashboardSuggestion[] = []
 
   const pendingReview = transactions.filter((tx) => tx.needsReview || tx.category === "nao-categorizado").length
   if (pendingReview > 0) {
     pushUnique(suggestions, {
       id: "pending-review",
-      title: "Lançamentos para revisar",
-      hint: `${pendingReview} movimentação(ões) aguardando confirmação.`,
+      title: "Revisar lançamentos",
+      hint: `${pendingReview} pra revisar.`,
+      long: false,
+    })
+  }
+
+  if (focus.showIncomeTracking) {
+    pushUnique(suggestions, {
+      id: "track-income",
+      title: "Cadastrar entradas",
+      hint: "O mês atualiza com cada entrada.",
       long: false,
     })
   }
@@ -118,15 +126,15 @@ export function buildDashboardSuggestions(
   if (profile.objective === "entender-gastos") {
     pushUnique(suggestions, {
       id: "track-spending",
-      title: "Registre seus gastos",
-      hint: "Quanto mais lançamentos, melhor a visão por categoria.",
+      title: "Registre gastos",
+      hint: "Mais lançamentos, visão melhor.",
       long: false,
     })
     if (profile.budgetWeight && profile.budgetWeight !== "nao-sei") {
       pushUnique(suggestions, {
         id: "focus-category",
-        title: `Acompanhe ${getCategory(profile.budgetWeight).label.toLowerCase()}`,
-        hint: "Essa categoria pesa no seu orçamento — vale observar de perto.",
+        title: `Olhe ${getCategory(profile.budgetWeight).label.toLowerCase()}`,
+        hint: "Pesa mais no seu mês.",
         long: false,
       })
     }
@@ -135,8 +143,8 @@ export function buildDashboardSuggestions(
   if (profile.objective === "controlar-gastos" && planning.safeToSpend > 0) {
     pushUnique(suggestions, {
       id: "safe-to-spend",
-      title: "Disponível para gastar",
-      hint: `Ainda pode gastar ${planning.safeToSpend.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      title: "Pode gastar",
+      hint: `${planning.safeToSpend.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} disponíveis.`,
       long: false,
     })
   }
@@ -145,8 +153,8 @@ export function buildDashboardSuggestions(
   if (focus.showLimitsProminent && limitAlerts.length > 0) {
     pushUnique(suggestions, {
       id: "limit-alerts",
-      title: "Orçamentos em atenção",
-      hint: `${limitAlerts.length} categoria(s) perto ou acima do limite.`,
+      title: "Limites em atenção",
+      hint: `${limitAlerts.length} limite(s) no teto.`,
       long: false,
     })
   }
@@ -154,8 +162,8 @@ export function buildDashboardSuggestions(
   if (profile.objective === "sair-dividas" && planning.monthCommittedPercent > 0) {
     pushUnique(suggestions, {
       id: "salary-committed",
-      title: "Renda comprometida",
-      hint: `${Math.round(planning.monthCommittedPercent)}% da renda já tem destino neste mês.`,
+      title: "Renda com destino",
+      hint: `${Math.round(planning.monthCommittedPercent)}% da renda já tem destino.`,
       long: false,
     })
   }
@@ -163,8 +171,8 @@ export function buildDashboardSuggestions(
   if (focus.showReserveSplit && profile.monthlyReserve > 0) {
     pushUnique(suggestions, {
       id: "monthly-reserve",
-      title: "Reserva mensal sugerida",
-      hint: `Separe ${profile.monthlyReserve.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} para guardar.`,
+      title: "Reserva do mês",
+      hint: `Guarde ${profile.monthlyReserve.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
       long: false,
     })
   }
@@ -174,7 +182,7 @@ export function buildDashboardSuggestions(
     pushUnique(suggestions, {
       id: "goals-at-risk",
       title: "Metas em risco",
-      hint: `${atRiskGoals.length} meta(s) precisam de ajuste de prazo ou valor.`,
+      hint: `${atRiskGoals.length} meta(s) precisam de ajuste.`,
       long: false,
     })
   }
@@ -227,22 +235,22 @@ export function buildPennyStarterSuggestions(
   const candidates: string[] = []
 
   if (pendingReview > 0) {
-    candidates.push("Quais lançamentos ainda preciso revisar?")
+    candidates.push("O que falta revisar?")
   }
   if (planning.safeToSpend > 0) {
-    candidates.push("Quanto ainda posso gastar este mês?")
+    candidates.push("Quanto ainda posso gastar?")
   }
   if (topCategory) {
-    candidates.push("Onde estou gastando mais este mês?")
+    candidates.push("Onde gastei mais este mês?")
   }
   if (limitAlerts.length > 0) {
-    candidates.push("Quais orçamentos estão perto do limite?")
+    candidates.push("Quais limites estão no limite?")
   }
   if (subscriptions.length > 0) {
-    candidates.push("Quais assinaturas estão pesando no orçamento?")
+    candidates.push("Quais assinaturas pesam no mês?")
   }
   if (goals.length > 0) {
-    candidates.push("Minha meta financeira é viável com minha renda atual?")
+    candidates.push("Minha meta cabe na renda?")
   }
 
   for (const fallback of PENNY_STARTER_SUGGESTIONS) {
@@ -253,9 +261,10 @@ export function buildPennyStarterSuggestions(
 }
 
 export function shortGoalViabilityMessage(fullMessage: string): string {
-  if (fullMessage.startsWith("Com sua renda atual, esse objetivo é viável")) return "Viável com sua renda atual."
-  if (fullMessage.startsWith("Viável, mas apertado")) return "Viável, mas apertado."
-  if (fullMessage.startsWith("Com a renda atual, esse objetivo está em risco")) return "Em risco com a renda atual."
-  if (fullMessage.startsWith("Prazo vencido")) return "Prazo vencido — revise a meta."
+  if (fullMessage.startsWith("Cabe na renda")) return "Cabe na renda."
+  if (fullMessage.startsWith("Dá, mas apertado")) return "Dá, mas apertado."
+  if (fullMessage.startsWith("Em risco")) return "Em risco com a renda."
+  if (fullMessage.startsWith("Prazo vencido")) return "Prazo vencido. Ajuste a meta."
+  if (fullMessage.startsWith("Meta concluída")) return "Meta concluída."
   return fullMessage
 }

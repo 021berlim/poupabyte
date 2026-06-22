@@ -27,18 +27,17 @@ export function AuthShell({
 
     <div className="relative max-w-md">
      <h1 className="text-balance text-[clamp(2rem,4vw,2.5rem)] font-extrabold leading-tight">
-      Toda a sua vida financeira em um só lugar.
+      Suas finanças em um só lugar.
      </h1>
      <p className="mt-4 text-pretty text-base text-secondary-foreground/70">
-      Controle receitas e despesas, defina metas, acompanhe limites e visualize relatórios
-      inteligentes. Simples, moderno e feito para o seu dia a dia.
+      Controle gastos, crie metas e acompanhe o mês. Simples e direto.
      </p>
 
      <ul className="mt-[clamp(2rem,5vh,2.5rem)] space-y-4">
       {[
-       { icon: TrendingUp, text: "Relatórios e gráficos em tempo real" },
-       { icon: Target, text: "Metas e limites de gastos personalizados" },
-       { icon: ShieldCheck, text: "Seus dados sob seu controle" },
+       { icon: TrendingUp, text: "Veja para onde vai o dinheiro" },
+       { icon: Target, text: "Metas e limites do seu jeito" },
+       { icon: ShieldCheck, text: "Seus dados, seu controle" },
       ].map(({ icon: Icon, text }) => (
        <li key={text} className="flex items-center gap-3 text-sm">
         <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/20 text-primary">

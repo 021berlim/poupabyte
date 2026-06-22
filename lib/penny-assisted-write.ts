@@ -307,12 +307,12 @@ function buildCreatePlan(
   const dateLabel = formatDate(proposedTransaction.date)
 
   const summary = createEnabled
-    ? `Posso registrar uma ${typeLabel} de ${amountLabel} (${proposedTransaction.description}) em ${dateLabel}${categoryLabel ? `, categoria ${categoryLabel}` : ""}.`
-    : "A criação assistida de lançamentos está desativada na sua conta."
+    ? `${typeLabel} de ${amountLabel} — "${proposedTransaction.description}" em ${dateLabel}${categoryLabel ? ` (${categoryLabel})` : ""}.`
+    : "Criação assistida desativada."
 
   const confirmationPrompt = createEnabled
-    ? `Quer que eu registre essa ${typeLabel} de ${amountLabel} como "${proposedTransaction.description}"${categoryLabel ? ` em ${categoryLabel}` : ""}?`
-    : "Ative em Minha conta → Preferências a opção de permitir que a P.E.N.N.Y. crie lançamentos, se quiser que eu registre isso por aqui."
+    ? `Registro ${typeLabel} de ${amountLabel} como "${proposedTransaction.description}"${categoryLabel ? ` em ${categoryLabel}` : ""}?`
+    : "Ative em Minha conta → Preferências para eu criar lançamentos."
 
   return {
     id: `plan-${Date.now()}`,
@@ -413,17 +413,17 @@ export function buildAssistedWritePlan(
   let confirmationPrompt = ""
 
   if (action === "confirm") {
-    summary = `${count} lançamento(s) pendente(s) de ${merchantLabel} aguardam confirmação.`
-    confirmationPrompt = `Quer que eu confirme ${count === 1 ? "esse lançamento" : `os ${count} lançamentos`}?`
+    summary = `${count} de ${merchantLabel} pra confirmar.`
+    confirmationPrompt = `Confirmo ${count === 1 ? "esse" : `os ${count}`}?`
   } else if (action === "categorize" && categoryLabel) {
-    summary = `${count} lançamento(s) de ${merchantLabel} estão sem categoria ou pendentes.`
-    confirmationPrompt = `Quer que eu marque ${count === 1 ? "esse lançamento" : `os ${count}`} como ${categoryLabel}?`
+    summary = `${count} de ${merchantLabel} sem categoria.`
+    confirmationPrompt = `Marco ${count === 1 ? "esse" : `os ${count}`} como ${categoryLabel}?`
   } else if (categoryLabel) {
-    summary = `${count} lançamento(s) de ${merchantLabel} podem ser organizados como ${categoryLabel}.`
-    confirmationPrompt = `Quer que eu marque ${count === 1 ? "esse lançamento" : `os ${count}`} como ${categoryLabel} e confirme em Movimentações?`
+    summary = `${count} de ${merchantLabel} → ${categoryLabel}.`
+    confirmationPrompt = `Marco como ${categoryLabel} e confirmo?`
   } else {
-    summary = `${count} lançamento(s) pendente(s) encontrados.`
-    confirmationPrompt = `Quer que eu confirme ${count === 1 ? "esse lançamento" : `os ${count} lançamentos`}?`
+    summary = `${count} lançamento(s) pendente(s).`
+    confirmationPrompt = `Confirmo ${count === 1 ? "esse" : `os ${count}`}?`
   }
 
   return {
@@ -466,27 +466,27 @@ export function buildUpdatedTransactions(
 export function formatAssistedWriteSuccess(plan: AssistedWritePlan, updatedCount: number): string {
   if (plan.action === "create") {
     if (!updatedCount || !plan.proposedTransaction) {
-      return "Não consegui registrar esse lançamento — confere os dados ou adiciona em Movimentações."
+      return "Não registrei — confere os dados em Lançamentos."
     }
 
     const { proposedTransaction } = plan
     const typeLabel = proposedTransaction.type === "income" ? "receita" : "despesa"
-    return `Pronto, registrei a ${typeLabel} "${proposedTransaction.description}" de ${formatCurrency(proposedTransaction.amount)}. Dá pra revisar em Movimentações.`
+    return `Pronto — ${typeLabel} "${proposedTransaction.description}" de ${formatCurrency(proposedTransaction.amount)}.`
   }
 
   if (!updatedCount) {
-    return "Não consegui aplicar essa organização — os lançamentos podem ter mudado. Confere em Movimentações?"
+    return "Não apliquei — confere em Lançamentos."
   }
 
   if (plan.action === "confirm") {
-    return `Pronto, ${updatedCount} ${updatedCount === 1 ? "lançamento foi confirmado" : "lançamentos foram confirmados"}. Se algum não fizer sentido, dá pra ajustar em Movimentações.`
+    return `Pronto — ${updatedCount} confirmado(s).`
   }
 
   if (plan.categoryLabel) {
-    return `Pronto, ${updatedCount} ${updatedCount === 1 ? "foi categorizado" : "foram categorizados"} como ${plan.categoryLabel}${plan.action === "categorize_and_confirm" ? " e confirmados" : ""}. Se algum não fizer sentido, dá pra ajustar em Movimentações.`
+    return `Pronto — ${updatedCount} como ${plan.categoryLabel}${plan.action === "categorize_and_confirm" ? ", confirmados" : ""}.`
   }
 
-  return `Pronto, organizei ${updatedCount} lançamento(s). Dá pra revisar em Movimentações.`
+  return `Pronto — ${updatedCount} organizado(s).`
 }
 
 export const PENDING_ASSISTED_WRITE_PLAN_KEY = "poupabyte:penny:pending-write-plan"

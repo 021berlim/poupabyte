@@ -23,17 +23,17 @@ export interface NavItem {
   mobileOrder?: number
 }
 
-export type NavGroup = "Hoje" | "Planejar" | "Crescer" | "Entender"
+export type NavGroup = "Hoje" | "Planejar" | "Investir" | "Entender"
 
-export const NAV_GROUP_ORDER: NavGroup[] = ["Hoje", "Planejar", "Crescer", "Entender"]
+export const NAV_GROUP_ORDER: NavGroup[] = ["Hoje", "Planejar", "Investir", "Entender"]
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: ROUTES.dashboard, label: "Visão geral", icon: LayoutGrid, group: "Hoje" },
-  { href: ROUTES.transactions, label: "Movimentações", icon: ArrowLeftRight, group: "Hoje" },
-  { href: ROUTES.limits, label: "Orçamentos", icon: ShieldAlert, group: "Planejar" },
-  { href: ROUTES.assistant, label: "P.E.N.N.Y.", icon: Sparkles, group: "Entender" },
-  { href: ROUTES.cashflow, label: "Planejamento", icon: Wallet, group: "Planejar" },
-  { href: ROUTES.goals, label: "Objetivos", icon: Target, group: "Planejar" },
-  { href: ROUTES.investments, label: "Patrimônio", icon: Landmark, group: "Crescer" },
-  { href: ROUTES.reports, label: "Análises", icon: PieChart, group: "Entender" },
+  { href: ROUTES.dashboard, label: "Início", icon: LayoutGrid, group: "Hoje" },
+  { href: ROUTES.transactions, label: "Lançamentos", icon: ArrowLeftRight, group: "Hoje" },
+  { href: ROUTES.limits, label: "Limites", icon: ShieldAlert, group: "Planejar" },
+  { href: ROUTES.assistant, label: "Penny", icon: Sparkles, group: "Entender" },
+  { href: ROUTES.cashflow, label: "Fluxo", icon: Wallet, group: "Planejar" },
+  { href: ROUTES.goals, label: "Metas", icon: Target, group: "Planejar" },
+  { href: ROUTES.investments, label: "Investimentos", icon: Landmark, group: "Investir" },
+  { href: ROUTES.reports, label: "Relatórios", icon: PieChart, group: "Entender" },
 ]

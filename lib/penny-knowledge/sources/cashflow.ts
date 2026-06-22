@@ -5,8 +5,8 @@ import type { PennyKnowledgeSource } from "../types"
 
 export const cashflowSource: PennyKnowledgeSource = {
   id: "cashflow",
-  title: "Planejamento mensal",
-  description: "Evolução do saldo baseada nos lançamentos registrados.",
+  title: "Fluxo",
+  description: "Evolução do saldo pelos lançamentos.",
   topics: ["cashflow"],
   availableInformation: ["saldo inicial e final", "variação", "evolução diária", "maior entrada e saída"],
   examples: ["Como evoluiu meu saldo?", "Qual foi o saldo no mês passado?", "Qual foi minha maior saída?"],

@@ -44,7 +44,7 @@ export function FirstGoalStep({
 
   return (
     <OnboardingChoiceLayout
-      title="Quer criar uma meta agora?"
+      title="Criar uma meta agora?"
       actions={
         <OnboardingActions
           onContinue={handleFinish}

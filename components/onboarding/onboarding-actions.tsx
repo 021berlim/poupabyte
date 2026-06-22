@@ -6,7 +6,7 @@ export function OnboardingActions({
   onContinue,
   onSkip,
   continueLabel = "Continuar",
-  skipLabel = "Pular por agora",
+  skipLabel = "Pular",
   loading = false,
   continueDisabled = false,
 }: {

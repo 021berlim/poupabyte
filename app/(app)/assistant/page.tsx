@@ -133,7 +133,7 @@ function ChatBubble({
         "penny-message-enter flex w-full",
         fromUser ? "justify-end" : "justify-start",
       )}
-      aria-label={`Mensagem de ${fromUser ? "você" : "P.E.N.N.Y"}`}
+      aria-label={`Mensagem de ${fromUser ? "você" : "Penny"}`}
     >
       <div
         className={cn(
@@ -142,7 +142,7 @@ function ChatBubble({
         )}
       >
         <p className="px-1 text-[11px] font-semibold text-muted-foreground">
-          {fromUser ? "Você" : "P.E.N.N.Y"}
+          {fromUser ? "Você" : "Penny"}
         </p>
         <div
           className={cn(
@@ -489,7 +489,7 @@ export default function AssistantPage() {
           } | null;
           throw new Error(
             payload?.error ||
-              "Não foi possível obter uma resposta da P.E.N.N.Y",
+              "Não foi possível obter resposta da Penny",
           );
         }
         if (!response.body)
@@ -609,7 +609,7 @@ export default function AssistantPage() {
           setError(
             caught instanceof Error
               ? caught.message
-              : "Ocorreu um erro ao consultar a P.E.N.N.Y",
+              : "Erro ao consultar a Penny",
           );
         }
       } finally {
@@ -648,8 +648,8 @@ export default function AssistantPage() {
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
     >
       <PageHeader
-        title="P.E.N.N.Y"
-        subtitle="Tire dúvidas sobre suas finanças."
+        title="Penny"
+        subtitle="Pergunte sobre suas finanças."
       />
 
       <div className="flex min-h-0 flex-1 flex-col pt-4 md:pt-0">
@@ -698,9 +698,9 @@ export default function AssistantPage() {
             ) : null}
             <form className="flex items-center gap-2" onSubmit={handleSubmit}>
               <Input
-                aria-label="Mensagem para P.E.N.N.Y"
+                aria-label="Mensagem para Penny"
                 autoComplete="off"
-                placeholder="Pergunte sobre suas finanças..."
+                placeholder="Pergunte o que quiser..."
                 value={input}
                 disabled={!hydrated || isStreaming}
                 onChange={(event) => setInput(event.target.value)}
@@ -730,9 +730,8 @@ export default function AssistantPage() {
               )}
             </form>
             <p className="pt-2 text-center text-[11px] leading-4 text-muted-foreground">
-              A P.E.N.N.Y usa seus dados reais e pode organizar lançamentos
-              existentes — ou criar novos, se você autorizar em Minha conta —
-              sempre com confirmação explícita.
+              Penny usa seus dados e pode organizar lançamentos — ou criar
+              novos, se você autorizar em Minha conta. Sempre pede confirmação.
             </p>
           </div>
         </footer>

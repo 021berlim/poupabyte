@@ -29,7 +29,7 @@ async function requestOpenRouterCompletion(
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
           "HTTP-Referer": appUrl,
-          "X-Title": "PoupaByte P.E.N.N.Y",
+          "X-Title": "PoupaByte Penny",
         },
         body: JSON.stringify({
           model,

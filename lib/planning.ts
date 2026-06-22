@@ -1,5 +1,5 @@
 import { isSameMonth } from "./format"
-import { getDeclaredSalaryForMonth, getExpectedIncomeForMonth } from "./income"
+import { getDeclaredSalaryForMonth, getEffectivePlanningIncome, getExpectedIncomeForMonth, usesFlexiblePlanning } from "./income"
 import { buildMonthlyIncomeBreakdown } from "./long-term-planning"
 import { goalProgress } from "./selectors"
 import {
@@ -117,10 +117,14 @@ export function buildMonthlyPlanning(
   lastImport: ImportSummary | null = null,
 ): MonthlyPlanning {
   const declaredSalary = getDeclaredSalaryForMonth(profile, ref)
-  const incomeBreakdownMonth = buildMonthlyIncomeBreakdown(profile, transactions, ref, lastImport)
-  const expectedExtraIncome = getExpectedIncomeForMonth(profile, ref) - declaredSalary
-  const expectedIncome = getExpectedIncomeForMonth(profile, ref)
+  const effectiveDeclared = getEffectivePlanningIncome(profile, ref)
+  const flexibleIncome = usesFlexiblePlanning(profile.incomeType)
   const incomeBase = buildPlanningIncomeBase(profile, transactions, ref)
+  const incomeBreakdownMonth = buildMonthlyIncomeBreakdown(profile, transactions, ref, lastImport)
+  const expectedExtraIncome = flexibleIncome ? 0 : getExpectedIncomeForMonth(profile, ref) - declaredSalary
+  const expectedIncome = flexibleIncome
+    ? Math.max(effectiveDeclared, incomeBase.planningIncome)
+    : getExpectedIncomeForMonth(profile, ref)
 
   const importBasedIncome = incomeBase.importIncome
   const importBasedExpenses = incomeBase.importExpenses

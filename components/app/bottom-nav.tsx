@@ -101,7 +101,7 @@ export function BottomNav() {
     >
      <SheetHeader className="border-b px-6 py-5 pr-12 text-left">
       <SheetTitle>Mais opções</SheetTitle>
-      <SheetDescription>Acesse as demais áreas do PoupaByte.</SheetDescription>
+      <SheetDescription>Mais telas do app.</SheetDescription>
      </SheetHeader>
      <div className="app-responsive-modal-body flex flex-col px-2 py-2">
       {moreItems.map((item, index) => {

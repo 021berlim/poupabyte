@@ -518,8 +518,8 @@ export default function InvestmentsPage() {
   return (
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
-        title="Patrimônio"
-        subtitle="Acompanhe o que você já guardou."
+        title="Investimentos"
+        subtitle="O que você já guardou."
         action={
           <InvestmentDialog
             trigger={
@@ -536,7 +536,7 @@ export default function InvestmentsPage() {
         <EmptyModuleCard
           icon={<Landmark className="h-6 w-6" />}
           title="Cadastre seu primeiro investimento"
-          description="Registre reservas e aplicações para acompanhar seu patrimônio."
+          description="Registre reservas e aplicações."
           action={
             <InvestmentDialog
               trigger={
@@ -736,7 +736,7 @@ export default function InvestmentsPage() {
 
           <TabsContent value="history" className="space-y-4">
             {movements.length === 0 ? (
-              <EmptyState icon={<Repeat2 className="h-8 w-8 text-muted-foreground/50" />} title="Sem movimentacoes" description="Movimentações aparecerão aqui." />
+              <EmptyState icon={<Repeat2 className="h-8 w-8 text-muted-foreground/50" />} title="Sem movimentos" description="Aportes e resgates aparecem aqui." />
             ) : (
               <div className="app-list-section">
                 {groupedMovements.map(([day, items]) => {

@@ -18,7 +18,7 @@ export function BudgetWeightStep({
 
   return (
     <OnboardingChoiceLayout
-      title="O que mais pesa no seu orçamento hoje?"
+      title="O que mais pesa no mês?"
       actions={
         <OnboardingActions
           onContinue={() => selected && onContinue(selected)}

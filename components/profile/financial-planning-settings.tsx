@@ -123,19 +123,19 @@ export function FinancialPlanningSettings() {
   return (
     <div className="space-y-8">
       <section>
-        <SectionLabel id="salary-config" icon={Wallet}>Planejamento base</SectionLabel>
+        <SectionLabel id="salary-config" icon={Wallet}>Renda</SectionLabel>
         <form onSubmit={saveProfile} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="monthly-salary">Salário mensal líquido</Label>
+            <Label htmlFor="monthly-salary">Renda mensal</Label>
             <CurrencyInput id="monthly-salary" value={salary} onChange={setSalary} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="salary-day">Dia de recebimento</Label>
+              <Label htmlFor="salary-day">Dia que recebe</Label>
               <Input id="salary-day" type="number" min={1} max={31} value={salaryDay} onChange={(e) => setSalaryDay(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Objetivo principal</Label>
+              <Label>Foco principal</Label>
               <Select value={objective} onValueChange={(value) => setObjective(value as FinancialObjective)}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -147,7 +147,7 @@ export function FinancialPlanningSettings() {
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button type="submit" className="flex-1">Salvar planejamento</Button>
+            <Button type="submit" className="flex-1">Salvar renda</Button>
             <Button type="button" variant="outline" className="flex-1" onClick={() => setIncomeDialogOpen(true)}>
               Editar renda completa
             </Button>

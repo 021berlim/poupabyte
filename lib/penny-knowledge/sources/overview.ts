@@ -15,11 +15,11 @@ import type { PennyKnowledgeSource } from "../types"
 
 export const overviewSource: PennyKnowledgeSource = {
   id: "financial-overview",
-  title: "Visão financeira consolidada",
-  description: "Resumo derivado das fontes financeiras, sem expor registros individuais desnecessariamente.",
+  title: "Início",
+  description: "Resumo do mês: renda, gastos, metas e alertas.",
   topics: ["overview"],
   availableInformation: [
-    "salário declarado e planejamento mensal",
+    "renda declarada e planejamento do mês",
     "receitas, despesas e resultado do mês",
     "comparação mensal",
     "score de saúde financeira",

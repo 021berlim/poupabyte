@@ -3,8 +3,8 @@ import type { PennyKnowledgeSource } from "../types"
 
 export const goalsSource: PennyKnowledgeSource = {
   id: "goals",
-  title: "Objetivos",
-  description: "Objetivos financeiros e cálculos de progresso e prazo.",
+  title: "Metas",
+  description: "Metas, progresso e prazo.",
   topics: ["goals"],
   availableInformation: ["nome", "valor-alvo", "valor atual", "prazo", "progresso", "risco", "aporte diário necessário"],
   examples: ["Quanto falta para minha viagem?", "Quais metas estão em risco?", "Quanto preciso guardar por dia?"],

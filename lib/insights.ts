@@ -1,6 +1,6 @@
 import { getCategory } from "./categories"
 import { expenseBySubcategory, type CategoryContext } from "./category-system"
-import { getDeclaredSalaryForMonth } from "./income"
+import { getDeclaredSalaryForMonth, isPredictableIncome } from "./income"
 import { buildLongTermPlanning } from "./long-term-planning"
 import { buildMonthlyPlanning, monthExpenses, monthIncomeFromTransactions } from "./planning"
 import { expenseByCategory, goalProgress, monthlySeries, transactionSummary } from "./selectors"
@@ -15,6 +15,14 @@ export interface AnalysisInsight {
 
 function percentOf(value: number, total: number): number {
   return total > 0 ? (value / total) * 100 : 0
+}
+
+function incomeBaseLabel(profile: FinancialProfile): string {
+  return isPredictableIncome(profile.incomeType) ? "salário" : "renda"
+}
+
+function money(value: number): string {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 }
 
 export type AnalysisInsightScope = "calendar-month" | "filtered-period"
@@ -46,20 +54,20 @@ export function buildAnalysisInsights(
     const share = percentOf(categories[0].total, summary.expense)
     insights.push({
       id: "top-category",
-      title: "Categoria que mais consumiu",
+      title: "Maior gasto",
       message:
         scope === "filtered-period"
-          ? `${categories[0].label} representa ${share.toFixed(0)}% das despesas do período filtrado.`
-          : `${categories[0].label} representa ${share.toFixed(0)}% das despesas do mês atual.`,
+          ? `${categories[0].label}: ${share.toFixed(0)}% do período.`
+          : `${categories[0].label}: ${share.toFixed(0)}% do mês.`,
       tone: share >= 40 ? "warning" : "neutral",
     })
   }
 
-  if (scope === "calendar-month" && declared > 0) {
+  if (scope === "calendar-month" && (declared > 0 || planning.receivedIncome > 0)) {
     insights.push({
       id: "salary-committed",
-      title: "Renda comprometida",
-      message: `Com ${planning.receivedIncome.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} recebidos neste mês, ${planning.monthCommittedPercent.toFixed(0)}% já está comprometido.`,
+      title: "Renda com destino",
+      message: `De ${money(planning.receivedIncome)}, ${planning.monthCommittedPercent.toFixed(0)}% já tem destino.`,
       tone: planning.monthCommittedPercent >= 90 ? "critical" : planning.monthCommittedPercent >= 71 ? "warning" : "positive",
     })
   }
@@ -70,16 +78,16 @@ export function buildAnalysisInsights(
   if (best && best.balance > 0) {
     insights.push({
       id: "best-month",
-      title: "Melhor mês recente",
-      message: `${best.label} teve o maior resultado positivo: ${best.balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      title: "Melhor mês",
+      message: `${best.label}: +${money(best.balance)}.`,
       tone: "positive",
     })
   }
   if (worst && worst.balance < 0) {
     insights.push({
       id: "worst-month",
-      title: "Mês mais apertado",
-      message: `${worst.label} foi o período com maior déficit: ${Math.abs(worst.balance).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      title: "Mês mais difícil",
+      message: `${worst.label}: -${money(Math.abs(worst.balance))}.`,
       tone: "warning",
     })
   }
@@ -91,8 +99,8 @@ export function buildAnalysisInsights(
   if (summary.expense > 0) {
     insights.push({
       id: "fixed-vs-variable",
-      title: "Fixos vs variáveis",
-      message: `Despesas fixas: ${fixed.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} (${percentOf(fixed, summary.expense).toFixed(0)}%). Variáveis: ${variable.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      title: "Fixos e variáveis",
+      message: `Fixos ${money(fixed)} (${percentOf(fixed, summary.expense).toFixed(0)}%) · Variáveis ${money(variable)}.`,
       tone: "neutral",
     })
   }
@@ -101,8 +109,8 @@ export function buildAnalysisInsights(
   if (atRiskGoals.length) {
     insights.push({
       id: "goals-at-risk",
-      title: "Objetivos em risco",
-      message: `${atRiskGoals.length} objetivo(s) precisam de atenção: ${atRiskGoals.map((g) => g.name).join(", ")}.`,
+      title: "Metas em risco",
+      message: `${atRiskGoals.length} meta(s): ${atRiskGoals.map((g) => g.name).join(", ")}.`,
       tone: "warning",
     })
   }
@@ -110,25 +118,25 @@ export function buildAnalysisInsights(
   if (scope === "calendar-month" && planning.projectedSavings < 0) {
     insights.push({
       id: "negative-projection",
-      title: "Projeção negativa",
-      message: `Você deve terminar o mês com déficit de ${Math.abs(planning.projectedSavings).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} se mantiver o ritmo atual.`,
+      title: "Fim do mês no vermelho",
+      message: `No ritmo atual, faltam ${money(Math.abs(planning.projectedSavings))}.`,
       tone: "critical",
     })
   } else if (scope === "calendar-month" && planning.daysLeft > 0) {
     insights.push({
       id: "month-projection",
-      title: "Projeção de fim do mês",
-      message: `Você deve terminar o mês com ${planning.projectedSavings.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} se mantiver o ritmo atual.`,
+      title: "Fim do mês",
+      message: `No ritmo atual, sobram ${money(planning.projectedSavings)}.`,
       tone: "positive",
     })
   }
 
   const extra = planning.receivedIncome - planning.declaredSalary
-  if (scope === "calendar-month" && extra > 100) {
+  if (scope === "calendar-month" && extra > 100 && isPredictableIncome(profile.incomeType)) {
     insights.push({
       id: "extra-income",
-      title: "Renda extra detectada",
-      message: `Renda extra de ${extra.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} melhorou o mês, mas não deve ser tratada como recorrente para compromissos longos.`,
+      title: "Entrada extra",
+      message: `+${money(extra)}. Não use como renda fixa.`,
       tone: "warning",
     })
   }
@@ -136,16 +144,16 @@ export function buildAnalysisInsights(
   const longTerm = buildLongTermPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
   insights.push({
     id: "safe-margin",
-    title: "Margem segura",
-    message: `Para decisões longas, sua margem segura com base no salário fixo de ${longTerm.fixedSalary.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} é de ${longTerm.safeMargin.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+    title: "Quanto dá pra comprometer",
+    message: `Com ${incomeBaseLabel(profile)} de ${money(longTerm.fixedSalary)}, dá pra comprometer ${money(longTerm.safeMargin)}.`,
     tone: longTerm.safeMargin < 500 ? "warning" : "neutral",
   })
 
   if (longTerm.fixedExpensesPercent >= 75) {
     insights.push({
       id: "fixed-expenses-high",
-      title: "Compromissos fixos elevados",
-      message: `Despesas fixas comprometem ${longTerm.fixedExpensesPercent.toFixed(0)}% do salário fixo.`,
+      title: "Fixos altos",
+      message: `Fixos: ${longTerm.fixedExpensesPercent.toFixed(0)}% da ${incomeBaseLabel(profile)}.`,
       tone: "warning",
     })
   }
@@ -156,8 +164,8 @@ export function buildAnalysisInsights(
     const parentShare = categories[0] ? percentOf(subcategories[0].total, categories[0].total) : 0
     insights.push({
       id: "top-subcategory",
-      title: "Subcategoria em destaque",
-      message: `${subcategories[0].label} dentro de ${subcategories[0].parentLabel} representa ${parentShare.toFixed(0)}% da categoria neste mês.`,
+      title: "Subcategoria principal",
+      message: `${subcategories[0].label} em ${subcategories[0].parentLabel}: ${parentShare.toFixed(0)}%.`,
       tone: parentShare >= 40 ? "warning" : "neutral",
     })
   }
@@ -168,8 +176,8 @@ export function buildAnalysisInsights(
     if (moradiaShare > 35) {
       insights.push({
         id: "moradia-high",
-        title: "Moradia acima do ideal",
-        message: `Moradia representa ${moradiaShare.toFixed(0)}% do salário fixo — acima do ideal de 30%.`,
+        title: "Moradia alta",
+        message: `Moradia: ${moradiaShare.toFixed(0)}% da renda (ideal: 30%).`,
         tone: "warning",
       })
     }
@@ -184,7 +192,7 @@ export const BUDGET_SUGGESTIONS: Array<{ category: string; percent: number; labe
   { category: "transporte", percent: 10, label: "Transporte" },
   { category: "lazer", percent: 8, label: "Lazer" },
   { category: "saude", percent: 8, label: "Saúde" },
-  { category: "objetivos", percent: 15, label: "Objetivos" },
+  { category: "objetivos", percent: 15, label: "Metas" },
   { category: "investimentos", percent: 10, label: "Investimentos" },
 ]
 
@@ -205,14 +213,14 @@ export function goalViabilityMessage(
 ): string {
   const progress = goalProgress(goal)
   const planning = buildMonthlyPlanning(profile, transactions, [], subscriptions, installments, limits)
-  if (progress.completed) return "Objetivo concluído."
-  if (progress.daysLeft <= 0) return "Prazo vencido — revise a data ou o valor mensal."
+  if (progress.completed) return "Meta concluída."
+  if (progress.daysLeft <= 0) return "Prazo vencido. Ajuste data ou valor."
   const monthlyNeeded = progress.remaining / Math.max(1, Math.ceil(progress.daysLeft / 30))
   if (monthlyNeeded <= planning.safeToSpend * 0.5) {
-    return `Com sua renda atual, esse objetivo é viável. Guarde ${progress.estimate}.`
+    return `Cabe na renda. Guarde ${progress.estimate}/mês.`
   }
   if (monthlyNeeded <= planning.safeToSpend) {
-    return `Viável, mas apertado. Você precisa de ${progress.estimate} e ainda pode gastar ${planning.safeToSpend.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} no mês.`
+    return `Dá, mas apertado: ${progress.estimate}/mês · sobram ${money(planning.safeToSpend)}.`
   }
-  return `Com a renda atual, esse objetivo está em risco. Faltam ${progress.estimate} e o disponível mensal é ${planning.safeToSpend.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`
+  return `Em risco: faltam ${progress.estimate} · disponível ${money(planning.safeToSpend)}.`
 }

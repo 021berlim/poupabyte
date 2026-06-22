@@ -34,16 +34,16 @@ export const CATEGORIES: Record<CategoryId, CategoryMeta> = {
   "outros-gastos": { id: "outros-gastos", label: "Outros gastos", color: "#6b7280", defaultType: "expense", group: "despesas", isSystem: true },
 
   // Planejamento e patrimônio
-  "reserva-emergencia": { id: "reserva-emergencia", label: "Reserva de emergência", color: "#16a34a", defaultType: "expense", group: "planejamento", isSystem: true },
+  "reserva-emergencia": { id: "reserva-emergencia", label: "Reserva", color: "#16a34a", defaultType: "expense", group: "planejamento", isSystem: true },
   investimentos: { id: "investimentos", label: "Investimentos", color: "#22c55e", defaultType: "both", group: "planejamento", isSystem: true },
-  objetivos: { id: "objetivos", label: "Objetivos", color: "#3b82f6", defaultType: "expense", group: "planejamento", isSystem: true },
+  objetivos: { id: "objetivos", label: "Metas", color: "#3b82f6", defaultType: "expense", group: "planejamento", isSystem: true },
   aportes: { id: "aportes", label: "Aportes", color: "#15803d", defaultType: "expense", group: "planejamento", isSystem: true },
 
   // Controle
-  "cartao-credito": { id: "cartao-credito", label: "Cartão de crédito", color: "#6366f1", defaultType: "both", group: "controle", isSystem: true },
+  "cartao-credito": { id: "cartao-credito", label: "Cartão", color: "#6366f1", defaultType: "both", group: "controle", isSystem: true },
   parcelamentos: { id: "parcelamentos", label: "Parcelamentos", color: "#a855f7", defaultType: "expense", group: "controle", isSystem: true },
   transferencias: { id: "transferencias", label: "Transferências", color: "#94a3b8", defaultType: "both", group: "controle", isSystem: true },
-  "nao-categorizado": { id: "nao-categorizado", label: "Não categorizado", color: "#f59e0b", defaultType: "both", group: "controle", isSystem: true },
+  "nao-categorizado": { id: "nao-categorizado", label: "Sem categoria", color: "#f59e0b", defaultType: "both", group: "controle", isSystem: true },
 }
 
 export const CATEGORY_LIST = Object.values(CATEGORIES)
@@ -59,7 +59,7 @@ export const INCOME_CATEGORIES = CATEGORY_LIST.filter(
 export const CATEGORY_GROUP_LABELS: Record<CategoryGroup, string> = {
   receitas: "Receitas",
   despesas: "Despesas",
-  planejamento: "Planejamento e patrimônio",
+  planejamento: "Guardar e investir",
   controle: "Controle",
 }
 
@@ -90,11 +90,11 @@ export const FINANCIAL_OBJECTIVE_LABELS: Record<
   import("./types").FinancialObjective,
   string
 > = {
-  "entender-gastos": "Entender para onde meu dinheiro vai",
-  "controlar-gastos": "Parar de gastar sem perceber",
+  "entender-gastos": "Ver para onde vai",
+  "controlar-gastos": "Gastar com controle",
   "sair-dividas": "Sair das dívidas",
   "reserva-emergencia": "Guardar dinheiro",
-  "planejar-metas": "Comprar algo ou alcançar uma meta",
-  "organizar-salario": "Organizar salário",
-  "controlar-cartao": "Controlar cartão",
+  "planejar-metas": "Juntar pra uma meta",
+  "organizar-salario": "Organizar o salário",
+  "controlar-cartao": "Controlar o cartão",
 }

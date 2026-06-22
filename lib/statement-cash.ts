@@ -1,5 +1,5 @@
 import { isSameMonth } from "./format"
-import { getDeclaredSalaryForMonth } from "./income"
+import { getDeclaredSalaryForMonth, getEffectivePlanningIncome, usesFlexiblePlanning } from "./income"
 import { isPendingReview } from "./transaction-utils"
 import type { FinancialProfile, ImportSummary, Transaction } from "./types"
 import type { StatementParseResult } from "./statement-import"
@@ -84,20 +84,33 @@ export function buildPlanningIncomeBase(
   planningIncome: number
 } {
   const declaredSalary = getDeclaredSalaryForMonth(profile, ref)
+  const effectiveDeclared = getEffectivePlanningIncome(profile, ref)
   const importIncome = confirmedImportedIncome(transactions, ref)
   const importExpenses = confirmedImportedExpenses(transactions, ref)
   const salaryConfirmed = salaryConfirmedThisMonth(transactions, profile, ref)
   const confirmedSalary = confirmedSalaryIncome(transactions, ref)
   const otherImportedIncome = confirmedNonSalaryImportedIncome(transactions, ref)
+  const flexible = usesFlexiblePlanning(profile.incomeType)
 
-  const planningIncome = salaryConfirmed
-    ? Math.max(declaredSalary, confirmedSalary) + otherImportedIncome
-    : importIncome
+  let planningIncome: number
+  if (flexible) {
+    const receivedTotal = importIncome
+    planningIncome =
+      receivedTotal > 0
+        ? receivedTotal
+        : effectiveDeclared > 0
+          ? effectiveDeclared
+          : 0
+  } else {
+    planningIncome = salaryConfirmed
+      ? Math.max(declaredSalary, confirmedSalary) + otherImportedIncome
+      : importIncome
+  }
 
   return {
     importIncome,
     importExpenses,
-    salaryConfirmed,
+    salaryConfirmed: flexible ? importIncome > 0 : salaryConfirmed,
     confirmedSalary,
     planningIncome,
   }

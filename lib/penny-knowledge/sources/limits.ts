@@ -5,11 +5,11 @@ import type { PennyKnowledgeSource } from "../types"
 
 export const limitsSource: PennyKnowledgeSource = {
   id: "limits",
-  title: "Orçamento mensal",
-  description: "Orçamento por categoria confrontado com as despesas registradas.",
+  title: "Limites",
+  description: "Teto por categoria vs gasto do mês.",
   topics: ["limits"],
-  availableInformation: ["orçamento", "gasto", "percentual", "restante", "excesso", "status", "histórico de seis meses"],
-  examples: ["Estou dentro do orçamento?", "Quanto resta para alimentação?", "Qual categoria está mais perigosa?"],
+  availableInformation: ["limite", "gasto", "percentual", "restante", "excesso", "status", "histórico de seis meses"],
+  examples: ["Estou dentro do limite?", "Quanto resta para alimentação?", "Qual categoria está mais perigosa?"],
   sourceOfTruth: "poupabyte:data.limits + poupabyte:data.transactions",
   shouldQuery: (analysis) => !analysis.broad && analysis.topics.has("limits"),
   query: (snapshot, analysis) => {
@@ -33,7 +33,7 @@ export const limitsSource: PennyKnowledgeSource = {
       .sort((a, b) => b.usagePercent - a.usagePercent)
 
     return {
-      reason: "A pergunta consulta orçamento ou limite mensal de uma categoria.",
+      reason: "A pergunta consulta limite mensal de uma categoria.",
       data: {
         referenceMonth: requestedRange.label,
         thresholds: { attentionAtPercent: 71, criticalAtPercent: 91, exceededAtPercent: 100 },

@@ -59,8 +59,8 @@ export default function DashboardPage() {
  const [pennyAnalysisOpen, setPennyAnalysisOpen] = useState(false)
 
  const dashboardFocus = useMemo(
-  () => getDashboardFocus(financialProfile.objective, financialProfile.budgetWeight),
-  [financialProfile.objective, financialProfile.budgetWeight],
+  () => getDashboardFocus(financialProfile.objective, financialProfile.budgetWeight, financialProfile.incomeType),
+  [financialProfile.objective, financialProfile.budgetWeight, financialProfile.incomeType],
  )
 
  const monthHistory = useMemo(
@@ -120,14 +120,14 @@ export default function DashboardPage() {
    return {
     href: ROUTES.transactions,
     title: "Revisar lançamentos",
-    subtitle: `${pendingReview} movimentação(ões) aguardando confirmação`,
+    subtitle: `${pendingReview} lançamento(s) para confirmar`,
    }
   }
   if (limitAlerts.length > 0) {
    const item = limitAlerts[0]
    return {
     href: ROUTES.limits,
-    title: `Orçamento de ${getCategory(item.limit.category).label}`,
+    title: `Limite de ${getCategory(item.limit.category).label}`,
     subtitle: `${Math.round(item.percent)}% utilizado`,
    }
   }
@@ -159,7 +159,7 @@ export default function DashboardPage() {
   if (activePlanning.importBasedIncome === 0) {
    return {
     subtitle: "Baseado no extrato importado",
-    entriesDetail: "Importe e confirme movimentações",
+    entriesDetail: "Importe e confirme lançamentos",
    }
   }
   if (activePlanning.salaryConfirmed) {
@@ -168,12 +168,12 @@ export default function DashboardPage() {
     entriesDetail:
      activePlanning.extraIncomeDetected > 0
       ? `Salário confirmado + ${formatCurrency(activePlanning.extraIncomeDetected)} extras`
-      : "Salário confirmado nas movimentações",
+      : "Salário confirmado nos lançamentos",
    }
   }
   return {
    subtitle: `Entrou no extrato: ${formatCurrency(activePlanning.importBasedIncome)}`,
-   entriesDetail: "Somente movimentações confirmadas",
+   entriesDetail: "Só lançamentos confirmados",
   }
  }, [activePlanning])
 
@@ -191,16 +191,16 @@ export default function DashboardPage() {
    tone: "text-red-300",
   },
   {
-   label: "Comprometido",
+   label: "Já reservado",
    value: `${Math.round(activePlanning.monthCommittedPercent)}%`,
-   detail: `${formatCurrency(activePlanning.receivedIncome)} no extrato · ${formatCurrency(activePlanning.committedMoney)} comprometidos`,
+   detail: `${formatCurrency(activePlanning.receivedIncome)} no extrato · ${formatCurrency(activePlanning.committedMoney)} reservados`,
   },
   {
-   label: "Economia prevista",
+   label: "Deve sobrar",
    value: formatCurrency(activePlanning.projectedSavings),
    detail: activePlanning.salaryConfirmed
     ? `Com salário confirmado até dia ${financialProfile.salaryDay}`
-    : "Confirme o salário para projetar o mês",
+    : "Confirme o salário para ver o mês",
    tone: activePlanning.projectedSavings >= 0 ? "text-emerald-300" : "text-red-300",
   },
  ]
@@ -211,7 +211,7 @@ export default function DashboardPage() {
 
    <section className="space-y-5">
     <AnimatedSection as="div" className="md:hidden">
-     <h1 className="flex min-h-10 items-center text-2xl font-extrabold tracking-tight text-balance">Visão geral</h1>
+     <h1 className="flex min-h-10 items-center text-2xl font-extrabold tracking-tight text-balance">Início</h1>
     </AnimatedSection>
 
     {topAlert ? (
@@ -239,7 +239,7 @@ export default function DashboardPage() {
      <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
        <p className="text-xl font-extrabold leading-none tracking-tight text-white sm:text-2xl">
-        Disponível para gastar
+        Pode gastar
        </p>
        <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
         {incomeContext.subtitle}
@@ -285,8 +285,8 @@ export default function DashboardPage() {
        )}
        <p className="mt-2 text-sm font-medium text-white/55">
         {dashboardFocus.showReserveSplit && financialProfile.monthlyReserve > 0
-          ? `Reserva sugerida: ${formatCurrency(financialProfile.monthlyReserve)} · disponível ${formatCurrency(displayValue)}`
-          : `Ainda deve sobrar ${formatCurrency(activePlanning.projectedSavings)}.`}
+          ? `Reserva: ${formatCurrency(financialProfile.monthlyReserve)} · pode gastar ${formatCurrency(displayValue)}`
+          : `Deve sobrar ${formatCurrency(activePlanning.projectedSavings)}.`}
        </p>
       </div>
      </div>
@@ -360,7 +360,7 @@ export default function DashboardPage() {
     <section className="flex min-w-0 flex-col">
      <SectionHeading
       eyebrow="Penny"
-      title="Análise personalizada"
+      title="Dicas pra você"
       action={<Link href={ROUTES.assistant} className="text-sm font-bold text-primary hover:underline">Abrir assistente</Link>}
      />
      <div className="app-list-section border-t">
@@ -385,7 +385,7 @@ export default function DashboardPage() {
     <section className="flex min-w-0 flex-col">
      <SectionHeading
       eyebrow="Limites"
-      title="Orçamentos em atenção"
+      title="Limites perto do teto"
       action={<Link href={ROUTES.limits} className="text-sm font-bold text-primary hover:underline">Ver limites</Link>}
      />
      <div className="app-list-section border-t">
@@ -401,7 +401,7 @@ export default function DashboardPage() {
            </span>
           }
           title={getCategory(item.limit.category).label}
-          subtitle={`${Math.round(item.percent)}% do limite utilizado`}
+          subtitle={`${Math.round(item.percent)}% do limite usado`}
          />
         </li>
        ))}
@@ -414,8 +414,8 @@ export default function DashboardPage() {
     {showGoalsSection ? (
      <section className="flex min-w-0 flex-col">
       <SectionHeading
-       eyebrow="Objetivos"
-       title="Metas mais próximas"
+       eyebrow="Metas"
+       title="Próximas do prazo"
        action={<Link href={ROUTES.goals} className="text-sm font-bold text-primary hover:underline">Ver metas</Link>}
       />
       <div className="app-list-section flex-1 border-t">
@@ -441,8 +441,8 @@ export default function DashboardPage() {
     {showRecentTransactions ? (
      <section className="flex min-w-0 flex-col">
       <SectionHeading
-       eyebrow="Movimentações"
-       title="Últimos lançamentos"
+       eyebrow="Lançamentos"
+       title="Recentes"
        action={<Link href={ROUTES.transactions} className="text-sm font-bold text-primary hover:underline">Ver todas</Link>}
       />
       <div className="app-list-section flex-1 border-t">

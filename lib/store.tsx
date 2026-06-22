@@ -365,6 +365,9 @@ interface StoreContextValue extends FullState {
       expectedExtraIncome: number
       monthlyReserve: number
       objective: FinancialObjective
+      incomeType?: FinancialProfile["incomeType"]
+      incomeVariability?: FinancialProfile["incomeVariability"]
+      businessSeparation?: FinancialProfile["businessSeparation"]
     },
     scope: SalaryEffectiveScope,
   ) => void
@@ -526,7 +529,7 @@ function normalizeNotifications(notifications: unknown): AppNotification[] {
         id: notification.id ?? generateId("not"),
         kind,
         type: type === "info" ? "warning" : type,
-        title: notification.title ?? "Atualizacao",
+        title: notification.title ?? "Atualização",
         message: notification.message ?? "",
         date: notification.date ?? new Date().toISOString(),
         read: notification.read ?? false,
@@ -596,6 +599,9 @@ function normalizeFinancialProfile(profile: unknown): FinancialProfile {
     salaryHistory: Array.isArray(value.salaryHistory) ? value.salaryHistory : [],
     extraIncomeFrequency: value.extraIncomeFrequency,
     budgetWeight: value.budgetWeight,
+    incomeType: value.incomeType,
+    incomeVariability: value.incomeVariability,
+    businessSeparation: value.businessSeparation,
   })
 }
 
@@ -800,21 +806,15 @@ function limitAlert(limit: SpendingLimit, spent: number, ref = new Date()): Noti
   const usage = limit.amount > 0 ? (spent / limit.amount) * 100 : 0
   if (usage < 71) return null
   const category = getCategory(limit.category)
-  const remaining = limit.amount - spent
-  const daysLeft = Math.max(1, new Date(ref.getFullYear(), ref.getMonth() + 1, 0).getDate() - ref.getDate())
-  const dailySuggestion = remaining > 0 ? remaining / daysLeft : 0
-  const formattedDaily = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(dailySuggestion)
   const threshold = usage > 100 ? 100 : usage >= 91 ? 90 : 70
-  const title =
-    threshold === 100
-      ? `Orçamento de ${category.label} estourado`
-      : threshold === 90
-        ? `Orçamento de ${category.label} crítico`
-        : `Orçamento de ${category.label} em atenção`
+  const percent = Math.round(usage)
+  const title = `Limite de ${category.label}`
   const message =
     threshold === 100
-      ? `Você já usou ${Math.round(usage)}% do orçamento de ${category.label} e ultrapassou o planejado.`
-      : `Você já usou ${Math.round(usage)}% do orçamento de ${category.label} e ainda faltam dias no mês. Tente limitar essa categoria a ${formattedDaily} por dia.`
+      ? `${category.label}: ${percent}% — passou do limite`
+      : threshold === 90
+        ? `${category.label}: ${percent}% — quase no limite`
+        : `${category.label}: ${percent}% — em atenção`
   return {
     kind: "limit",
     type: "warning",
@@ -831,8 +831,8 @@ function goalAlert(goal: Goal): NotificationPayload | null {
     return {
       kind: "goal-done",
       type: "warning",
-      title: "Meta concluida",
-      message: `Voce atingiu a meta "${goal.name}".`,
+      title: "Meta concluída",
+      message: `Você bateu a meta "${goal.name}".`,
       dedupeKey: `goal:${goal.id}:done`,
       persist: true,
     }
@@ -844,7 +844,7 @@ function goalAlert(goal: Goal): NotificationPayload | null {
       kind: "goal",
       type: "warning",
       title: "Meta em risco",
-      message: `"${goal.name}" esta em ${progress.percent}% e precisa de ${progress.estimate} para cumprir o prazo.`,
+      message: `"${goal.name}": ${progress.percent}% — faltam ${progress.estimate}.`,
       dedupeKey: monthDedupe(`goal:${goal.id}:risk`),
       persist: true,
     }
@@ -853,9 +853,9 @@ function goalAlert(goal: Goal): NotificationPayload | null {
     return {
       kind: "goal",
       type: "warning",
-      title: "Meta proxima do vencimento",
-      message: `"${goal.name}" esta em ${progress.percent}% e vence ${
-        remainingDays === 0 ? "hoje" : `em ${remainingDays} dia(s)`
+      title: "Meta vence em breve",
+      message: `"${goal.name}": ${progress.percent}% — vence ${
+        remainingDays === 0 ? "hoje" : `em ${remainingDays} dias`
       }.`,
       dedupeKey: monthDedupe(`goal:${goal.id}:deadline`),
       persist: true,
@@ -872,7 +872,7 @@ function investmentAlert(investment: Investment): NotificationPayload | null {
   return {
     kind: "investment",
     type: "warning",
-    title: "Rentabilidade esperada atingida",
+    title: "Meta de rentabilidade",
     message: `"${investment.name}" atingiu a rentabilidade esperada.`,
     dedupeKey: `investment:${investment.id}:expected-return`,
     persist: true,
@@ -894,8 +894,8 @@ function planningAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Mês com previsão negativa",
-    message: `Com base no seu salário de ${planning.declaredSalary.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}, a projeção indica déficit de ${Math.abs(planning.projectedSavings).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} neste mês.`,
+    title: "Mês no vermelho",
+    message: `Projeção: déficit de ${Math.abs(planning.projectedSavings).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
     dedupeKey: monthDedupe("planning:negative"),
     persist: true,
   }
@@ -918,8 +918,8 @@ function salaryAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Salário ainda não registrado",
-    message: `Você declarou recebimento no dia ${data.financialProfile.salaryDay}, mas ainda não há salário registrado neste mês.`,
+    title: "Salário não registrado",
+    message: `Dia ${data.financialProfile.salaryDay} — ainda sem salário este mês.`,
     dedupeKey: monthDedupe("planning:salary-missing"),
     persist: true,
   }
@@ -932,7 +932,7 @@ function subscriptionAlert(subscriptions: Subscription[]): NotificationPayload |
     kind: "subscription",
     type: "warning",
     title: "Assinaturas próximas",
-    message: `Você tem ${upcoming.length} assinatura(s) prevista(s) para os próximos 7 dias.`,
+    message: `${upcoming.length} cobrança(s) nos próximos 7 dias.`,
     dedupeKey: monthDedupe(`subscription:upcoming:${upcoming.map((s) => s.id).join(",")}`),
     persist: true,
   }
@@ -944,8 +944,8 @@ function pendingReviewAlert(transactions: Transaction[]): NotificationPayload | 
   return {
     kind: "transaction",
     type: "warning",
-    title: "Movimentações pendentes de revisão",
-    message: `${pending.length} movimentação(ões) precisam de revisão ou categorização.`,
+    title: "Lançamentos pra revisar",
+    message: `${pending.length} pra confirmar ou categorizar.`,
     dedupeKey: monthDedupe(`planning:pending-review:${pending.length}`),
     persist: true,
   }
@@ -966,8 +966,8 @@ function extraIncomeAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Renda extra detectada",
-    message: `Você recebeu ${planning.extraIncomeDetected.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} de renda extra. Evite transformar isso em gasto fixo — use para acelerar objetivos, reforçar reserva ou reduzir dívidas.`,
+    title: "Entrada extra",
+    message: `${planning.extraIncomeDetected.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} a mais — use com cuidado.`,
     dedupeKey: monthDedupe("planning:extra-income"),
     persist: true,
   }
@@ -986,8 +986,8 @@ function safeMarginAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Margem segura apertada",
-    message: `Com base apenas no salário fixo de ${longTerm.fixedSalary.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}, sua margem segura para novos compromissos é de ${longTerm.safeMargin.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+    title: "Pouco espaço pra novos gastos",
+    message: `Margem segura: ${longTerm.safeMargin.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
     dedupeKey: monthDedupe("planning:safe-margin"),
     persist: true,
   }
@@ -1006,8 +1006,8 @@ function fixedExpensesAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Despesas fixas elevadas",
-    message: `Seus compromissos fixos comprometem ${longTerm.fixedExpensesPercent.toFixed(0)}% do salário fixo. Para decisões longas, considere apenas o salário de ${longTerm.fixedSalary.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+    title: "Fixos altos",
+    message: `${longTerm.fixedExpensesPercent.toFixed(0)}% do salário em compromissos fixos.`,
     dedupeKey: monthDedupe("planning:fixed-expenses"),
     persist: true,
   }
@@ -1033,8 +1033,8 @@ function reserveBelowPlannedAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "planning",
     type: "warning",
-    title: "Reserva mensal abaixo do planejado",
-    message: `Você planejou guardar ${reserve.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} por mês, mas ainda registrou apenas ${reserveTx.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} em reserva ou aportes.`,
+    title: "Reserva abaixo do plano",
+    message: `Planejado ${reserve.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} — registrou ${reserveTx.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
     dedupeKey: monthDedupe("planning:reserve-below"),
     persist: true,
   }
@@ -1048,8 +1048,8 @@ function importSummaryAlert(data: DataState): NotificationPayload | null {
   return {
     kind: "transaction",
     type: "warning",
-    title: "Itens pendentes após importação",
-    message: `${last.pendingReview} movimentação(ões) de "${last.fileName}" ainda precisam de revisão.`,
+    title: "Importação pendente",
+    message: `${last.pendingReview} de "${last.fileName}" pra revisar.`,
     dedupeKey: monthDedupe(`planning:import-pending:${last.fileName}`),
     persist: true,
   }
@@ -1319,7 +1319,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const prepared = applyRecurrenceFlags(tx)
       const errors = validateTransaction(prepared)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Transacao invalida", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Lançamento inválido", message: errors[0] })
         return
       }
 
@@ -1329,8 +1329,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "transaction",
         type: "success",
-        title: "Transacao criada",
-        message: `${tx.type === "income" ? "Receita" : "Despesa"} "${tx.description}" foi adicionada.`,
+        title: "Lançamento criado",
+        message: `"${tx.description}" adicionado.`,
       })
       if (!created.needsReview && created.category !== "nao-categorizado") {
         const rules = learnCategoryRule(
@@ -1366,7 +1366,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           kind: "error",
           type: "error",
           title: "Importação vazia",
-          message: "Nenhuma transação válida foi selecionada.",
+          message: "Nenhum lançamento válido selecionado.",
         })
         return 0
       }
@@ -1382,7 +1382,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "transaction",
         type: "success",
         title: "Extrato importado",
-        message: `${created.length} ${created.length === 1 ? "transação foi adicionada" : "transações foram adicionadas"}.`,
+        message: `${created.length} lançamento(s) importado(s).`,
       })
       return created.length
     },
@@ -1394,7 +1394,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const prepared = applyRecurrenceFlags(tx)
       const errors = validateTransaction(prepared)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Transacao invalida", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Lançamento inválido", message: errors[0] })
         return
       }
 
@@ -1414,8 +1414,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "transaction",
         type: "success",
-        title: "Transacao editada",
-        message: `"${next.description}" foi atualizada.`,
+        title: "Lançamento editado",
+        message: `"${next.description}" atualizado.`,
       })
       if (next.type === "expense") {
         const nextTransactions = state.transactions.map((t) => (t.id === next.id ? next : t))
@@ -1459,7 +1459,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "transaction",
         type: "success",
         title: "Lançamentos confirmados",
-        message: `${updated.length} movimentação(ões) de ${source.description} foram confirmadas.`,
+        message: `${updated.length} confirmado(s) — ${source.description}.`,
       })
       return updated.length
     },
@@ -1492,8 +1492,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         title: "Lançamentos organizados",
         message:
           plan.categoryLabel
-            ? `${updated.length} movimentação(ões) atualizadas como ${getCategory(plan.categoryId ?? updated[0].category).label}.`
-            : `${updated.length} movimentação(ões) confirmadas.`,
+            ? `${updated.length} como ${getCategory(plan.categoryId ?? updated[0].category).label}.`
+            : `${updated.length} confirmado(s).`,
       })
 
       return updated.length
@@ -1590,8 +1590,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "transaction",
         type: "success",
-        title: "Transacao removida",
-        message: removed ? `"${removed.description}" foi removida.` : "A movimentacao foi removida.",
+        title: "Lançamento removido",
+        message: removed ? `"${removed.description}" removido.` : "Lançamento removido.",
       })
     },
     [dispatch, notify, state.subscriptions, state.transactions],
@@ -1601,7 +1601,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (goal: Omit<Goal, "id">) => {
       const errors = validateGoal(goal)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Meta invalida", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Meta inválida", message: errors[0] })
         return
       }
 
@@ -1611,7 +1611,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "goal",
         type: "success",
         title: "Meta criada",
-        message: `"${goal.name}" foi adicionada ao seu planejamento.`,
+        message: `"${goal.name}" adicionada.`,
       })
       const alert = goalAlert(created)
       if (alert) notify(alert)
@@ -1623,7 +1623,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (goal: Goal) => {
       const errors = validateGoal(goal)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Meta invalida", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Meta inválida", message: errors[0] })
         return
       }
 
@@ -1632,7 +1632,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "goal",
         type: "success",
         title: "Meta atualizada",
-        message: `"${goal.name}" foi atualizada.`,
+        message: `"${goal.name}" atualizada.`,
       })
       const alert = goalAlert(goal)
       if (alert) notify(alert)
@@ -1648,7 +1648,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "goal",
         type: "success",
         title: "Meta removida",
-        message: removed ? `"${removed.name}" foi removida.` : "A meta foi removida.",
+        message: removed ? `"${removed.name}" removida.` : "Meta removida.",
       })
     },
     [notify, state.goals],
@@ -1659,7 +1659,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const goal = state.goals.find((g) => g.id === id)
       if (!goal) return
       if (!Number.isFinite(amount) || amount <= 0) {
-        notify({ kind: "error", type: "error", title: "Valor invalido", message: "Informe um aporte maior que zero." })
+        notify({ kind: "error", type: "error", title: "Valor inválido", message: "Informe um valor maior que zero." })
         return
       }
       const updated = { ...goal, current: goal.current + amount }
@@ -1667,8 +1667,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "goal",
         type: "success",
-        title: "Aporte em meta registrado",
-        message: `"${goal.name}" recebeu um novo aporte.`,
+        title: "Aporte registrado",
+        message: `"${goal.name}" recebeu aporte.`,
       })
       const alert = goalAlert(updated)
       if (alert) notify(alert)
@@ -1680,7 +1680,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (limit: Omit<SpendingLimit, "id"> & { id?: string }) => {
       const errors = validateLimit(limit)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Orçamento invalido", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Limite inválido", message: errors[0] })
         return
       }
 
@@ -1693,8 +1693,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "limit",
         type: "success",
-        title: exists ? "Orçamento atualizado" : "Orçamento criado",
-        message: `O orçamento de ${getCategory(payload.category).label} foi ${exists ? "atualizado" : "definido"}.`,
+        title: exists ? "Limite atualizado" : "Limite criado",
+        message: `${getCategory(payload.category).label} — ${exists ? "atualizado" : "definido"}.`,
       })
       const alert = limitAlert(payload, spentForLimit(state.transactions, payload))
       if (alert) notify(alert)
@@ -1709,8 +1709,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "limit",
         type: "success",
-        title: "Orçamento removido",
-        message: removed ? `O orçamento de ${getCategory(removed.category).label} foi removido.` : "O orçamento foi removido.",
+        title: "Limite removido",
+        message: removed ? `${getCategory(removed.category).label} removido.` : "Limite removido.",
       })
     },
     [notify, state.limits],
@@ -1720,7 +1720,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (investment: Omit<Investment, "id" | "movements">) => {
       const errors = validateInvestment(investment)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Investimento invalido", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Investimento inválido", message: errors[0] })
         return
       }
 
@@ -1730,7 +1730,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "investment",
         type: "success",
         title: "Investimento cadastrado",
-        message: `"${created.name}" foi incluido na carteira.`,
+        message: `"${created.name}" adicionado.`,
       })
     },
     [notify],
@@ -1740,7 +1740,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (investment: Investment) => {
       const errors = validateInvestment(investment)
       if (errors.length > 0) {
-        notify({ kind: "error", type: "error", title: "Investimento invalido", message: errors[0] })
+        notify({ kind: "error", type: "error", title: "Investimento inválido", message: errors[0] })
         return
       }
 
@@ -1749,7 +1749,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "investment",
         type: "success",
         title: "Investimento atualizado",
-        message: `"${investment.name}" foi atualizado.`,
+        message: `"${investment.name}" atualizado.`,
       })
     },
     [notify],
@@ -1763,7 +1763,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "investment",
         type: "success",
         title: "Investimento removido",
-        message: removed ? `"${removed.name}" foi removido da carteira.` : "O investimento foi removido.",
+        message: removed ? `"${removed.name}" removido.` : "Investimento removido.",
       })
     },
     [notify, state.investments],
@@ -1779,8 +1779,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       notify({
         kind: "success",
         type: "success",
-        title: "Planejamento atualizado",
-        message: "Seu salário e configuração financeira foram salvos.",
+        title: "Renda atualizada",
+        message: "Salário e renda salvos.",
       })
     },
     [notify],
@@ -1794,11 +1794,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         expectedExtraIncome: number
         monthlyReserve: number
         objective: FinancialObjective
+        incomeType?: FinancialProfile["incomeType"]
+        incomeVariability?: FinancialProfile["incomeVariability"]
+        businessSeparation?: FinancialProfile["businessSeparation"]
       },
       scope: SalaryEffectiveScope,
     ) => {
-      if (!Number.isFinite(input.monthlySalary) || input.monthlySalary <= 0) {
-        notify({ kind: "error", type: "error", title: "Salário inválido", message: "Informe um salário mensal maior que zero." })
+      const incomeType = input.incomeType ?? state.financialProfile.incomeType
+      const allowsZeroIncome = incomeType === "sem-renda" || incomeType === "ocasional" || incomeType === "renda-variavel"
+      if (!Number.isFinite(input.monthlySalary) || (input.monthlySalary <= 0 && !allowsZeroIncome)) {
+        notify({ kind: "error", type: "error", title: "Renda inválida", message: "Informe um valor de renda maior que zero." })
         return
       }
       const updated = applyIncomeUpdate(state.financialProfile, { ...input, scope })
@@ -1808,7 +1813,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "success",
         type: "success",
         title: "Renda atualizada",
-        message: `Salário de ${formatted} — ${SALARY_SCOPE_LABELS[scope]}. Percentuais, orçamentos e projeções foram recalculados.`,
+        message:
+          input.monthlySalary > 0
+            ? `${formatted} — ${SALARY_SCOPE_LABELS[scope]}.`
+            : `Perfil atualizado — ${SALARY_SCOPE_LABELS[scope]}.`,
       })
     },
     [notify, state.financialProfile],
@@ -1822,7 +1830,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (subscription: Omit<Subscription, "id">) => {
       const created = { ...subscription, id: generateId("sub") }
       dispatch({ type: "ADD_SUBSCRIPTION", payload: created })
-      notify({ kind: "subscription", type: "success", title: "Assinatura cadastrada", message: `"${created.name}" foi adicionada ao planejamento.` })
+      notify({ kind: "subscription", type: "success", title: "Assinatura cadastrada", message: `"${created.name}" adicionada.` })
     },
     [notify],
   )
@@ -1830,7 +1838,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateSubscription = useCallback(
     (subscription: Subscription) => {
       dispatch({ type: "UPDATE_SUBSCRIPTION", payload: subscription })
-      notify({ kind: "subscription", type: "success", title: "Assinatura atualizada", message: `"${subscription.name}" foi atualizada.` })
+      notify({ kind: "subscription", type: "success", title: "Assinatura atualizada", message: `"${subscription.name}" atualizada.` })
     },
     [notify],
   )
@@ -1843,7 +1851,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "subscription",
         type: "success",
         title: "Assinatura removida",
-        message: removed ? `"${removed.name}" foi removida.` : "A assinatura foi removida.",
+        message: removed ? `"${removed.name}" removida.` : "Assinatura removida.",
       })
     },
     [notify, state.subscriptions],
@@ -1853,7 +1861,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (installment: Omit<Installment, "id">) => {
       const created = { ...installment, id: generateId("inst") }
       dispatch({ type: "ADD_INSTALLMENT", payload: created })
-      notify({ kind: "installment", type: "success", title: "Parcelamento cadastrado", message: `"${created.name}" foi adicionado ao planejamento.` })
+      notify({ kind: "installment", type: "success", title: "Parcelamento cadastrado", message: `"${created.name}" adicionado.` })
     },
     [notify],
   )
@@ -1861,7 +1869,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateInstallment = useCallback(
     (installment: Installment) => {
       dispatch({ type: "UPDATE_INSTALLMENT", payload: installment })
-      notify({ kind: "installment", type: "success", title: "Parcelamento atualizado", message: `"${installment.name}" foi atualizado.` })
+      notify({ kind: "installment", type: "success", title: "Parcelamento atualizado", message: `"${installment.name}" atualizado.` })
     },
     [notify],
   )
@@ -1874,7 +1882,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "installment",
         type: "success",
         title: "Parcelamento removido",
-        message: removed ? `"${removed.name}" foi removido.` : "O parcelamento foi removido.",
+        message: removed ? `"${removed.name}" removido.` : "Parcelamento removido.",
       })
     },
     [notify, state.installments],
@@ -1884,7 +1892,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (card: Omit<CreditCard, "id">) => {
       const created = { ...card, id: generateId("card") }
       dispatch({ type: "ADD_CREDIT_CARD", payload: created })
-      notify({ kind: "success", type: "success", title: "Cartão cadastrado", message: `"${created.name}" foi adicionado para controle.` })
+      notify({ kind: "success", type: "success", title: "Cartão cadastrado", message: `"${created.name}" adicionado.` })
     },
     [notify],
   )
@@ -1892,7 +1900,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateCreditCard = useCallback(
     (card: CreditCard) => {
       dispatch({ type: "UPDATE_CREDIT_CARD", payload: card })
-      notify({ kind: "success", type: "success", title: "Cartão atualizado", message: `"${card.name}" foi atualizado.` })
+      notify({ kind: "success", type: "success", title: "Cartão atualizado", message: `"${card.name}" atualizado.` })
     },
     [notify],
   )
@@ -1905,7 +1913,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "success",
         type: "success",
         title: "Cartão removido",
-        message: removed ? `"${removed.name}" foi removido.` : "O cartão foi removido.",
+        message: removed ? `"${removed.name}" removido.` : "Cartão removido.",
       })
     },
     [notify, state.creditCards],
@@ -1922,8 +1930,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         notify({
           kind: "error",
           type: "error",
-          title: "Movimentacao invalida",
-          message: errors[0] ?? "Investimento nao encontrado.",
+          title: "Movimentação inválida",
+          message: errors[0] ?? "Investimento não encontrado.",
         })
         return
       }
@@ -1966,7 +1974,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "investment",
         type: "success",
         title: label,
-        message: `"${investment.name}" foi atualizado na carteira.`,
+        message: `"${investment.name}" atualizado.`,
       })
 
       if (updated.expectedReturn !== undefined) {
@@ -1975,7 +1983,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           notify({
             kind: "investment",
             type: "warning",
-            title: "Rentabilidade esperada atingida",
+            title: "Meta de rentabilidade",
             message: `"${updated.name}" atingiu a rentabilidade esperada.`,
             dedupeKey: `investment:${updated.id}:expected-return`,
             persist: true,
@@ -2006,7 +2014,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const demoData = buildSeedState()
     dispatch({ type: "RESET_DEMO", payload: demoData })
     if (state.user) persistUserData(state.user.email, demoData)
-    notify({ kind: "success", type: "success", title: "Dados da demonstração restaurados.", message: "" })
+    notify({ kind: "success", type: "success", title: "Demo restaurada", message: "" })
   }, [notify, state.user])
 
   const addUserCategory = useCallback(
@@ -2016,7 +2024,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "success",
         type: "success",
         title: category.isSubcategory ? "Subcategoria criada" : "Categoria criada",
-        message: `"${category.name}" foi adicionada.`,
+        message: `"${category.name}" adicionada.`,
       })
     },
     [notify],
@@ -2029,7 +2037,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "success",
         type: "success",
         title: "Categoria atualizada",
-        message: `"${category.name}" foi atualizada.`,
+        message: `"${category.name}" atualizada.`,
       })
     },
     [notify],
@@ -2043,7 +2051,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "success",
         type: "success",
         title: "Categoria removida",
-        message: removed ? `"${removed.name}" foi removida.` : "A categoria foi removida.",
+        message: removed ? `"${removed.name}" removida.` : "Categoria removida.",
       })
     },
     [notify, state.userCategories],
@@ -2056,7 +2064,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         kind: "info",
         type: "warning",
         title: "Categoria oculta",
-        message: `${getCategory(id).label} não aparecerá nas listas, mas transações antigas permanecem.`,
+        message: `${getCategory(id).label} oculta — lançamentos antigos ficam.`,
       })
     },
     [notify],

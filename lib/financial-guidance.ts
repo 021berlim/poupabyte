@@ -49,19 +49,19 @@ const SEASONAL_EVENTS: Array<{
     months: [11],
     kind: "income",
     label: "13º salário",
-    note: "Dezembro costuma trazer entrada extra de 13º salário.",
+    note: "Dezembro costuma trazer 13º salário.",
   },
   {
     months: [2, 3],
     kind: "both",
     label: "Imposto de Renda",
-    note: "Março e abril costumam concentrar restituição ou pagamento de IR.",
+    note: "Março e abril: restituição ou pagamento de IR.",
   },
   {
     months: [10, 11, 0],
     kind: "expense",
     label: "Datas comemorativas",
-    note: "Novembro, dezembro e janeiro costumam elevar gastos sazonais.",
+    note: "Nov, dez e jan costumam elevar gastos.",
   },
 ]
 
@@ -230,8 +230,7 @@ export function analyzeEmergencyReserve({
     monthsCovered,
     status,
     referenceRangeMonths: { min: 3, max: 6 },
-    methodology:
-      "Reserva estimada com base em Patrimônio líquido (poupança, CDB e Tesouro) e metas de reserva, dividida pela média de despesas essenciais dos últimos meses.",
+    methodology: "Reserva ÷ média de gastos essenciais (últimos meses).",
   }
 }
 
@@ -323,7 +322,7 @@ export function analyzeBudgetLens503020({
     incomeBase,
     incomeLabel: "renda do mês",
     buckets,
-    methodology: "Comparação do mês atual com a referência 50/30/20 usando categorias do app.",
+    methodology: "Mês atual vs referência 50/30/20.",
     disclaimer:
       "Referência comparativa comum, não regra obrigatória. Sua realidade pode exigir outra divisão.",
   }
@@ -350,8 +349,8 @@ export function analyzeSeasonality({
     if (monthlyExpenseAverage > 0 && item.expense >= monthlyExpenseAverage * 1.2) {
       signals.push({
         kind: "historical-spike",
-        title: `${item.label} foi um mês mais caro`,
-        message: `Despesas de ${item.label} ficaram cerca de ${((item.expense / monthlyExpenseAverage - 1) * 100).toFixed(0)}% acima da sua média recente.`,
+        title: `${item.label} mais caro`,
+        message: `+${((item.expense / monthlyExpenseAverage - 1) * 100).toFixed(0)}% acima da média.`,
         month: item.month,
         monthLabel: item.label,
       })
@@ -374,8 +373,8 @@ export function analyzeSeasonality({
     if (avgIncome >= overallIncomeAvg * 1.25) {
       signals.push({
         kind: "income-spike",
-        title: `${monthLabel(month)} costuma ter entradas maiores`,
-        message: `A renda média em ${monthLabel(month)} ficou acima do seu padrão recente.`,
+        title: `${monthLabel(month)} com mais entrada`,
+        message: `Renda acima do seu padrão recente.`,
         month,
         monthLabel: monthLabel(month),
       })
@@ -401,7 +400,7 @@ export function analyzeSeasonality({
     signals.push({
       kind: "calendar-event",
       title: `Próximo: ${event.label}`,
-      message: `${event.note} Vale antecipar impacto no orçamento do próximo mês.`,
+      message: `${event.note} Reserve no mês.`,
       month: nextMonth,
       monthLabel: monthLabel(nextMonth),
     })
@@ -411,8 +410,7 @@ export function analyzeSeasonality({
     signals: signals.slice(0, 5),
     monthlyExpenseAverage,
     monthsAnalyzed: series.length,
-    methodology:
-      "Padrões detectados a partir do histórico de movimentações e eventos sazonais previsíveis do calendário.",
+    methodology: "Histórico de lançamentos e eventos do calendário.",
   }
 }
 
@@ -466,8 +464,8 @@ export function analyzeIdleMoney({
     invested < balance * 0.35
 
   const message = detected
-    ? `Você manteve cerca de ${idleBalanceEstimate.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} sem função clara recente. Vale definir se isso é reserva, meta de curto prazo ou aporte futuro.`
-    : "Não identifiquei saldo alto parado sem destino nos últimos meses com os dados atuais."
+    ? `~${idleBalanceEstimate.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} parado — defina se é reserva, meta ou aporte.`
+    : "Sem saldo alto parado nos últimos meses."
 
   return {
     detected,
@@ -475,8 +473,7 @@ export function analyzeIdleMoney({
     monthsWithHighBalance,
     recentSavingsContributions,
     message,
-    methodology:
-      "Saldo acumulado comparado a despesas essenciais, aportes recentes e patrimônio investido cadastrado.",
+    methodology: "Saldo vs gastos essenciais, aportes recentes e investimentos cadastrados.",
   }
 }
 

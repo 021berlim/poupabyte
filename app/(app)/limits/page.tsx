@@ -62,7 +62,7 @@ function LimitDialog({ limit, trigger, ctx }: { limit?: SpendingLimit; trigger: 
     event.preventDefault()
     const value = parseAmountInput(amount)
     if (value <= 0) {
-      notify({ kind: "error", type: "error", title: "Orçamento inválido", message: "Informe um valor maior que zero." })
+      notify({ kind: "error", type: "error", title: "Limite inválido", message: "Informe um valor maior que zero." })
       return
     }
     const { category, subcategoryId } = parseCategorySelectValue(categoryValue)
@@ -75,8 +75,8 @@ function LimitDialog({ limit, trigger, ctx }: { limit?: SpendingLimit; trigger: 
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{limit ? "Editar orçamento" : "Novo orçamento"}</DialogTitle>
-          <DialogDescription>Defina orçamento por categoria ou subcategoria.</DialogDescription>
+          <DialogTitle>{limit ? "Editar limite" : "Novo limite"}</DialogTitle>
+          <DialogDescription>Defina um teto por categoria ou subcategoria.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit}>
           <div className="space-y-4 px-6 py-5">
@@ -114,7 +114,7 @@ function LimitDialog({ limit, trigger, ctx }: { limit?: SpendingLimit; trigger: 
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="limit-value">Orçamento mensal</Label>
+              <Label htmlFor="limit-value">Teto mensal</Label>
               <CurrencyInput id="limit-value" value={amount} onChange={setAmount} />
             </div>
           </div>
@@ -123,7 +123,7 @@ function LimitDialog({ limit, trigger, ctx }: { limit?: SpendingLimit; trigger: 
               Cancelar
             </Button>
             <Button type="submit" size="lg" className="flex-1">
-              Salvar orçamento
+              Salvar limite
             </Button>
           </DialogFooter>
         </form>
@@ -151,7 +151,7 @@ function LimitRow({
   const percent = Math.round(usage.percent)
   const over = usage.remaining < 0
   const tone = limitProgressTone(percent)
-  const status = over ? "Estourado" : percent >= 80 ? "Atenção" : "Saudável"
+  const status = over ? "Estourado" : percent >= 80 ? "Atenção" : "Ok"
   const longPress = useLongPress<HTMLDivElement>(() => setActionsOpen(true))
   const createRipple = useRipple<HTMLDivElement>()
   const label = resolved.parentLabel ? `${resolved.parentLabel} › ${resolved.label}` : resolved.label
@@ -202,7 +202,7 @@ function LimitRow({
                 </p>
               </div>
             </div>
-            <Progress value={Math.min(100, percent)} aria-label={`${percent}% do orçamento usado · ${status}`} className={cn("mt-4 h-2.5", tone)} />
+            <Progress value={Math.min(100, percent)} aria-label={`${percent}% do limite usado · ${status}`} className={cn("mt-4 h-2.5", tone)} />
             <div className="mt-3 flex items-center justify-between">
               <CollapsibleTrigger asChild>
                 <button className="app-ripple-surface flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground">
@@ -302,16 +302,16 @@ export default function LimitsPage() {
   return (
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
-        title="Orçamentos"
-        subtitle="Controle quanto gastar por categoria."
-        action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Novo orçamento</Button>} />}
+        title="Limites"
+        subtitle="Quanto gastar por categoria."
+        action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Novo limite</Button>} />}
       />
       {usages.length === 0 ? (
         <EmptyModuleCard
           icon={<Gauge className="h-6 w-6" />}
-          title="Crie seu primeiro orçamento"
-          description="Defina um limite mensal por categoria para acompanhar seus gastos."
-          action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Criar orçamento</Button>} />}
+          title="Crie seu primeiro limite"
+          description="Defina um teto mensal por categoria."
+          action={<LimitDialog ctx={ctx} trigger={<Button><Plus className="h-4 w-4" />Criar limite</Button>} />}
         />
       ) : (
         <>
@@ -320,18 +320,18 @@ export default function LimitsPage() {
               {
                 label: "Gasto do mês",
                 value: formatCurrency(totals.spent),
-                detail: `de ${formatCurrency(totals.limit)} planejados`,
+                detail: `de ${formatCurrency(totals.limit)} no teto`,
               },
               {
                 label: "Uso geral",
                 value: `${totalPercent}%`,
-                detail: `${usages.length} orçamentos`,
+                detail: `${usages.length} limites`,
                 tone: totalPercent > 100 ? "text-destructive" : totalPercent >= 71 ? "text-primary" : "text-success",
               },
               {
                 label: "Estourado",
                 value: formatCurrency(totals.exceeded),
-                detail: totals.exceeded ? "acima do orçamento" : "tudo dentro do limite",
+                detail: totals.exceeded ? "acima do teto" : "tudo dentro do limite",
                 tone: totals.exceeded ? "text-destructive" : "text-success",
               },
             ]}

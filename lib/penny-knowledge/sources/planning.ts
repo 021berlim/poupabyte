@@ -1,3 +1,4 @@
+import { usesFlexiblePlanning } from "../../income"
 import { buildLongTermPlanning } from "../../long-term-planning"
 import { buildMonthlyPlanning, upcomingSubscriptions, activeInstallmentsMonthlyTotal, activeSubscriptionsMonthlyTotal } from "../../planning"
 import { limitUsage } from "../../selectors"
@@ -5,17 +6,17 @@ import type { PennyKnowledgeSource } from "../types"
 
 export const planningSource: PennyKnowledgeSource = {
   id: "monthly-planning",
-  title: "Planejamento mensal pessoal",
-  description: "Salário declarado, orçamento, assinaturas, parcelamentos e quanto ainda pode gastar com segurança.",
+  title: "Planejamento do mês",
+  description: "Renda, limites, assinaturas, parcelas e quanto ainda pode gastar.",
   topics: ["planning", "overview", "cashflow"],
   availableInformation: [
     "salário declarado e renda recebida",
-    "despesas confirmadas e comprometidas",
+    "despesas confirmadas e com destino",
     "quanto ainda pode gastar com segurança",
-    "orçamento por categoria",
+    "limite por categoria",
     "assinaturas e parcelamentos",
     "metas e reserva mensal",
-    "projeção de economia do mês",
+    "previsão de sobra do mês",
   ],
   examples: [
     "Quanto ainda posso gastar este mês?",
@@ -55,14 +56,18 @@ export const planningSource: PennyKnowledgeSource = {
     const upcoming = upcomingSubscriptions(snapshot.subscriptions, 7, analysis.now)
 
     return {
-      reason: "A pergunta envolve planejamento mensal, salário, orçamento ou compromissos futuros.",
+      reason: "A pergunta envolve planejamento do mês, renda, limites ou compromissos futuros.",
       data: {
         incomeDecisionRules: {
-          shortTermUses:
-            "extrato importado com movimentações confirmadas; safeToSpend prioriza saldo disponível do extrato",
-          projectedUses:
-            "salário declarado só entra após confirmação do recebimento nas movimentações do mês atual",
-          longTermUses: "apenas salário fixo declarado",
+          shortTermUses: usesFlexiblePlanning(snapshot.financialProfile.incomeType)
+            ? "entradas confirmadas no mês; planejamento flexível que se ajusta conforme o dinheiro entra"
+            : "extrato importado com movimentações confirmadas; safeToSpend prioriza saldo disponível do extrato",
+          projectedUses: usesFlexiblePlanning(snapshot.financialProfile.incomeType)
+            ? "média declarada como referência conservadora; entradas reais têm prioridade"
+            : "renda declarada só entra após confirmação do recebimento nas movimentações do mês atual",
+          longTermUses: usesFlexiblePlanning(snapshot.financialProfile.incomeType)
+            ? "renda base conservadora (média ajustada pelo tipo de renda)"
+            : "renda fixa declarada",
           extraIncomeGuidance:
             "Renda extra detectada no extrato pode ajudar no mês, mas não deve sustentar compromissos longos recorrentes.",
         },
@@ -75,6 +80,9 @@ export const planningSource: PennyKnowledgeSource = {
           expectedExtraIncome: snapshot.financialProfile.expectedExtraIncome,
           monthlyReserve: snapshot.financialProfile.monthlyReserve,
           salaryHistory: snapshot.financialProfile.salaryHistory,
+          incomeType: snapshot.financialProfile.incomeType,
+          incomeVariability: snapshot.financialProfile.incomeVariability,
+          businessSeparation: snapshot.financialProfile.businessSeparation,
         },
         incomeBreakdown: {
           declaredSalary: planning.declaredSalary,

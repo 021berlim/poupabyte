@@ -33,9 +33,9 @@ const themeScript = `
 `
 
 export const metadata: Metadata = {
- title: "PoupaByte — Sua vida financeira, organizada",
+ title: "PoupaByte — Suas finanças, organizadas",
  description:
-  "Gestão financeira pessoal moderna: controle receitas, despesas, metas e limites em um só lugar.",
+  "Controle receitas, despesas, metas e limites em um só lugar.",
  generator: "v0.app",
 }
 

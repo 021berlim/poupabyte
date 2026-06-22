@@ -30,7 +30,7 @@ export default function LoginPage() {
   setTimeout(() => {
    const res = login(email.trim(), password)
    if (res.ok) {
-    toast.success("Bem-vindo de volta!")
+    toast.success("Bem-vindo!")
     router.replace(APP_HOME)
    } else {
     toast.error(res.error ?? "Não foi possível entrar.")
@@ -44,7 +44,7 @@ export default function LoginPage() {
    <div>
     <h2 className="text-[clamp(1.5rem,6vw,1.75rem)] font-extrabold tracking-tight">Entrar na sua conta</h2>
     <p className="mt-1.5 text-sm text-muted-foreground">
-     Acesse o painel e gerencie suas finanças.
+     Entre e veja suas finanças.
     </p>
 
     <form onSubmit={handleSubmit} className="mt-6 space-y-4">

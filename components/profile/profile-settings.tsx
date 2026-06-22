@@ -151,7 +151,7 @@ export function SecuritySettings() {
      className="app-row-hover -mx-2 flex items-center gap-3 rounded-lg px-2 py-3 text-left"
     >
      <LockKeyhole aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Alterar senha" description="Atualize sua credencial de acesso" />
+     <SettingCopy title="Alterar senha" description="Troque sua senha de acesso" />
      <ChevronRight aria-hidden="true" className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
     </button>
     <Separator />
@@ -234,7 +234,7 @@ export function PreferencesSettings() {
    <div className="flex items-start justify-between gap-4 py-3">
     <div className="flex min-w-0 items-start gap-3">
      <Moon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Tema escuro" description="Reduz o cansaço visual em ambientes com pouca luz" />
+     <SettingCopy title="Tema escuro" description="Melhor para ambientes escuros" />
     </div>
     <Switch aria-label="Tema escuro" className="shrink-0" checked={resolvedTheme === "dark"} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} />
    </div>
@@ -242,21 +242,21 @@ export function PreferencesSettings() {
    <div className="flex items-start justify-between gap-4 py-3">
     <div className="flex min-w-0 items-start gap-3">
      <Bell aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Alertas de orçamento e metas" description="Avise quando seus orçamentos e objetivos precisarem de atenção" />
+     <SettingCopy title="Alertas de limite e metas" description="Avise quando passar do teto ou da meta" />
     </div>
-    <Switch aria-label="Alertas de orçamento e metas" className="shrink-0" checked={notificationsEnabled} onCheckedChange={handleNotificationsChange} />
+    <Switch aria-label="Alertas de limite e metas" className="shrink-0" checked={notificationsEnabled} onCheckedChange={handleNotificationsChange} />
    </div>
    <Separator />
    <div className="flex items-start justify-between gap-4 py-3">
     <div className="flex min-w-0 items-start gap-3">
      <Sparkles aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
      <SettingCopy
-      title="P.E.N.N.Y. pode criar lançamentos"
-      description="Permite que a assistente registre um lançamento por vez, sempre com sua confirmação explícita"
+      title="Penny pode criar lançamentos"
+      description="Registra um lançamento por vez, sempre com sua confirmação"
      />
     </div>
     <Switch
-     aria-label="P.E.N.N.Y. pode criar lançamentos"
+     aria-label="Penny pode criar lançamentos"
      className="shrink-0"
      checked={pennyCreateEnabled}
      onCheckedChange={handlePennyCreateChange}
@@ -327,19 +327,19 @@ export function PrivacySettings() {
    <div className="flex flex-col">
     <button type="button" onClick={() => setExportOpen(true)} className="app-row-hover -mx-2 flex items-center gap-3 rounded-lg px-2 py-3 text-left">
      <Download aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Exportar dados" description="Baixe seu histórico em CSV ou PDF" />
+     <SettingCopy title="Exportar dados" description="Baixe lançamentos em CSV ou PDF" />
      <ChevronRight aria-hidden="true" className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
     </button>
     <Separator />
     <Link href="/terms" className="app-row-hover -mx-2 flex items-center gap-3 rounded-lg px-2 py-3">
      <FileText aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Termos de uso" description="Consulte as regras de utilização do PoupaByte" />
+     <SettingCopy title="Termos de uso" description="Regras de uso do PoupaByte" />
      <ChevronRight aria-hidden="true" className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
     </Link>
     <Separator />
     <Link href="/privacy" className="app-row-hover -mx-2 flex items-center gap-3 rounded-lg px-2 py-3">
      <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
-     <SettingCopy title="Política de privacidade" description="Entenda como seus dados são tratados" />
+     <SettingCopy title="Política de privacidade" description="Como tratamos seus dados" />
      <ChevronRight aria-hidden="true" className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
     </Link>
    </div>

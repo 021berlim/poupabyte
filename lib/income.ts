@@ -1,4 +1,57 @@
-import type { FinancialObjective, FinancialProfile, SalaryEffectiveScope, SalarySnapshot } from "./types"
+import type {
+  FinancialObjective,
+  FinancialProfile,
+  BusinessSeparation,
+  IncomeType,
+  IncomeVariability,
+  SalaryEffectiveScope,
+  SalarySnapshot,
+} from "./types"
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+export function usesFlexiblePlanning(incomeType?: IncomeType): boolean {
+  return (
+    incomeType === "autonomo" ||
+    incomeType === "negocio-proprio" ||
+    incomeType === "renda-variavel" ||
+    incomeType === "ocasional" ||
+    incomeType === "sem-renda"
+  )
+}
+
+export function isPredictableIncome(incomeType?: IncomeType): boolean {
+  return !incomeType || incomeType === "salario-fixo"
+}
+
+export function getIncomePlanningMultiplier(profile: {
+  incomeType?: IncomeType
+  incomeVariability?: IncomeVariability
+}): number {
+  switch (profile.incomeType) {
+    case "salario-fixo":
+      return 1
+    case "autonomo":
+      return profile.incomeVariability === "bastante" ? 0.75 : 0.85
+    case "negocio-proprio":
+      return 0.9
+    case "renda-variavel":
+      return 0.8
+    case "ocasional":
+      return 0.6
+    case "sem-renda":
+      return 0
+    default:
+      return 1
+  }
+}
+
+export function getEffectivePlanningIncome(profile: FinancialProfile, ref = new Date()): number {
+  const declared = getDeclaredSalaryForMonth(profile, ref)
+  return roundMoney(declared * getIncomePlanningMultiplier(profile))
+}
 
 export function monthKey(ref = new Date()): string {
   return `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`
@@ -70,6 +123,9 @@ export interface IncomeUpdateInput {
   monthlyReserve: number
   objective: FinancialObjective
   scope: SalaryEffectiveScope
+  incomeType?: IncomeType
+  incomeVariability?: IncomeVariability
+  businessSeparation?: BusinessSeparation
 }
 
 export function applyIncomeUpdate(profile: FinancialProfile, input: IncomeUpdateInput, ref = new Date()): FinancialProfile {
@@ -120,6 +176,9 @@ export function applyIncomeUpdate(profile: FinancialProfile, input: IncomeUpdate
     expectedExtraIncome: currentSnapshot.expectedExtraIncome,
     monthlyReserve: currentSnapshot.monthlyReserve,
     objective: currentSnapshot.objective,
+    incomeType: input.incomeType ?? profile.incomeType,
+    incomeVariability: input.incomeVariability ?? profile.incomeVariability,
+    businessSeparation: input.businessSeparation ?? profile.businessSeparation,
     configured: true,
     currency: "BRL",
     salaryHistory: history,

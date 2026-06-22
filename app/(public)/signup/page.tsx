@@ -36,7 +36,7 @@ export default function SignupPage() {
   setLoading(true)
   const res = register(name.trim(), email.trim(), password)
   if (res.ok) {
-   toast.success("Conta criada com sucesso!")
+   toast.success("Conta criada!")
    router.replace(ROUTES.onboarding)
    return
   }
@@ -49,7 +49,7 @@ export default function SignupPage() {
    <div>
     <h2 className="text-[clamp(1.5rem,6vw,1.75rem)] font-extrabold tracking-tight">Criar conta</h2>
     <p className="mt-1.5 text-sm text-muted-foreground">
-     Leva menos de um minuto. Comece a organizar seu dinheiro hoje.
+     Leva menos de um minuto.
     </p>
 
     <form onSubmit={handleSubmit} className="mt-6 space-y-4">

@@ -15,7 +15,7 @@ export function PersonalizedWelcome({
 }) {
   if (!profile.configured) return null
 
-  const focus = getDashboardFocus(profile.objective, profile.budgetWeight)
+  const focus = getDashboardFocus(profile.objective, profile.budgetWeight, profile.incomeType)
 
   return (
     <section className="rounded-[clamp(1rem,3vw,1.25rem)] border border-primary/20 bg-primary/5 p-4">

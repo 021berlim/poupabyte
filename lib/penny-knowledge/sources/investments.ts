@@ -20,8 +20,8 @@ function isInvestmentMentioned(investment: Investment, question: string): boolea
 
 export const investmentsSource: PennyKnowledgeSource = {
   id: "investments",
-  title: "Patrimônio",
-  description: "Carteira, desempenho, alocação e movimentações registradas manualmente.",
+  title: "Investimentos",
+  description: "Carteira, desempenho e movimentações cadastradas manualmente.",
   topics: ["investments"],
   availableInformation: [
     "nome, tipo e instituição",

@@ -1,5 +1,5 @@
 import { ESSENTIAL_CATEGORY_IDS } from "./categories"
-import { getDeclaredSalaryForMonth } from "./income"
+import { getDeclaredSalaryForMonth, getEffectivePlanningIncome, isPredictableIncome } from "./income"
 import {
   activeInstallmentsMonthlyTotal,
   activeSubscriptionsMonthlyTotal,
@@ -86,7 +86,9 @@ export function buildLongTermPlanning(
   limits: SpendingLimit[],
   ref = new Date(),
 ): LongTermPlanning {
-  const fixedSalary = getDeclaredSalaryForMonth(profile, ref)
+  const fixedSalary = isPredictableIncome(profile.incomeType)
+    ? getDeclaredSalaryForMonth(profile, ref)
+    : getEffectivePlanningIncome(profile, ref)
   const monthKey = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`
   const monthTxs = transactions.filter((t) => t.date.slice(0, 7) === monthKey)
 
@@ -124,14 +126,16 @@ export function buildLongTermPlanning(
 export function evaluateLongTermCommitment(
   monthlyAmount: number,
   planning: LongTermPlanning,
+  incomeLabel = "renda base",
 ): { feasible: boolean; percentOfSalary: number; message: string } {
   const percentOfSalary = planning.fixedSalary > 0 ? (monthlyAmount / planning.fixedSalary) * 100 : 0
   const remaining = planning.safeMargin - monthlyAmount
   const feasible = remaining >= 0
 
+  const formatted = monthlyAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
   const message = feasible
-    ? `A parcela de ${monthlyAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} comprometeria ${percentOfSalary.toFixed(1)}% do seu salário fixo. Parece possível dentro da margem segura.`
-    : `A parcela de ${monthlyAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} comprometeria ${percentOfSalary.toFixed(1)}% do salário fixo e ultrapassaria sua margem segura em ${Math.abs(remaining).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`
+    ? `${formatted} — ${percentOfSalary.toFixed(1)}% da ${incomeLabel}. Cabe na margem.`
+    : `${formatted} — ${percentOfSalary.toFixed(1)}% da ${incomeLabel}. Passa ${Math.abs(remaining).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} da margem.`
 
   return { feasible, percentOfSalary, message }
 }

@@ -44,7 +44,7 @@ function GoalDialog({ goal, trigger }: { goal?: Goal; trigger: ReactNode }) {
   if (goal) updateGoal({ ...payload, id: goal.id }); else addGoal(payload)
   setOpen(false)
  }
- return <Dialog open={open} onOpenChange={onOpenChange}><DialogTrigger asChild>{trigger}</DialogTrigger><DialogContent><DialogHeader><DialogTitle>{goal ? "Editar meta" : "Nova meta"}</DialogTitle><DialogDescription>Defina o objetivo, o valor atual e o prazo.</DialogDescription></DialogHeader><form onSubmit={submit}><div className="space-y-4 px-6 py-5"><div className="space-y-1.5"><Label htmlFor="goal-name">Nome</Label><Input id="goal-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Viagem para o Chile" /></div><div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="goal-target">Objetivo</Label><CurrencyInput id="goal-target" value={target} onChange={setTarget} /></div><div className="space-y-1.5"><Label htmlFor="goal-current">Valor atual</Label><CurrencyInput id="goal-current" value={current} onChange={setCurrent} /></div></div><div className="space-y-1.5"><Label htmlFor="goal-deadline">Prazo</Label><Input id="goal-deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div></div><DialogFooter><Button type="button" variant="outline" size="lg" className="flex-1" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" size="lg" className="flex-1">Salvar meta</Button></DialogFooter></form></DialogContent></Dialog>
+ return <Dialog open={open} onOpenChange={onOpenChange}><DialogTrigger asChild>{trigger}</DialogTrigger><DialogContent><DialogHeader><DialogTitle>{goal ? "Editar meta" : "Nova meta"}</DialogTitle><DialogDescription>Nome, valor e prazo.</DialogDescription></DialogHeader><form onSubmit={submit}><div className="space-y-4 px-6 py-5"><div className="space-y-1.5"><Label htmlFor="goal-name">Nome</Label><Input id="goal-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Viagem para o Chile" /></div><div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="goal-target">Valor da meta</Label><CurrencyInput id="goal-target" value={target} onChange={setTarget} /></div><div className="space-y-1.5"><Label htmlFor="goal-current">Valor atual</Label><CurrencyInput id="goal-current" value={current} onChange={setCurrent} /></div></div><div className="space-y-1.5"><Label htmlFor="goal-deadline">Prazo</Label><Input id="goal-deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div></div><DialogFooter><Button type="button" variant="outline" size="lg" className="flex-1" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" size="lg" className="flex-1">Salvar meta</Button></DialogFooter></form></DialogContent></Dialog>
 }
 
 function GoalRow({ goal }: { goal: Goal }) {
@@ -80,13 +80,13 @@ function GoalRow({ goal }: { goal: Goal }) {
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
        <p className="text-xs text-muted-foreground">{formatCurrency(goal.current)} de {formatCurrency(goal.target)} · {progress.estimate}</p>
        <StatusBadge tone={progress.completed ? "success" : progress.atRisk ? "danger" : "neutral"}>
-        {progress.completed ? "Concluído" : progress.atRisk ? "Prazo em risco" : "No ritmo"}
+        {progress.completed ? "Concluída" : progress.atRisk ? "Atrasada" : "No ritmo"}
        </StatusBadge>
       </div>
       <p className="mt-2 text-xs font-medium text-foreground/80">{shortGoalViabilityMessage(viability)}</p>
       <div className="mt-3 flex justify-end">
-       <GoalDialog goal={goal} trigger={<Button variant="ghost" size="icon" aria-label="Editar objetivo"><Pencil className="h-4 w-4" /></Button>} />
-       <Button variant="ghost" size="icon" className="text-destructive" aria-label="Excluir objetivo" onClick={() => deleteGoal(goal.id)}><Trash2 className="h-4 w-4" /></Button>
+       <GoalDialog goal={goal} trigger={<Button variant="ghost" size="icon" aria-label="Editar meta"><Pencil className="h-4 w-4" /></Button>} />
+       <Button variant="ghost" size="icon" className="text-destructive" aria-label="Excluir meta" onClick={() => deleteGoal(goal.id)}><Trash2 className="h-4 w-4" /></Button>
       </div>
      </div>
     </div>
@@ -106,17 +106,17 @@ export default function GoalsPage() {
  return (
   <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
    <PageHeader
-    title="Objetivos"
-    subtitle="Defina metas e acompanhe o progresso."
-    action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Novo objetivo</Button>} />}
+    title="Metas"
+    subtitle="Defina e acompanhe o progresso."
+    action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Nova meta</Button>} />}
    />
 
    {goals.length === 0 ? (
     <EmptyModuleCard
      icon={<Target className="h-6 w-6" />}
-     title="Crie seu primeiro objetivo"
-     description="Defina uma meta com valor e prazo para acompanhar seu progresso."
-     action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Criar objetivo</Button>} />}
+     title="Crie sua primeira meta"
+     description="Defina valor e prazo para acompanhar."
+     action={<GoalDialog trigger={<Button><Plus className="h-4 w-4" />Criar meta</Button>} />}
     />
    ) : (
     <>

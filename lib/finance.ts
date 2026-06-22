@@ -63,12 +63,12 @@ export interface TransactionInput {
 export function validateTransaction(input: TransactionInput): string[] {
   const errors: string[] = []
   if (input.type !== "income" && input.type !== "expense" && input.type !== "transfer") {
-    errors.push("Selecione se a movimentacao e receita, despesa ou transferencia.")
+    errors.push("Selecione receita, despesa ou transferência.")
   }
-  if (!hasValue(input.description)) errors.push("Informe uma descricao.")
+  if (!hasValue(input.description)) errors.push("Informe uma descrição.")
   if (!isPositiveAmount(input.amount ?? Number.NaN)) errors.push("Informe um valor maior que zero.")
   if (!hasValue(input.category)) errors.push("Selecione uma categoria.")
-  if (!isValidDateValue(input.date)) errors.push("Informe uma data valida.")
+  if (!isValidDateValue(input.date)) errors.push("Informe uma data válida.")
   return errors
 }
 
@@ -78,13 +78,13 @@ export function validateGoal(input: Partial<GoalInput>): string[] {
   const errors: string[] = []
   if (!hasValue(input.name)) errors.push("Informe o nome da meta.")
   if (!isPositiveAmount(input.target ?? Number.NaN)) errors.push("Informe um valor alvo maior que zero.")
-  if (!isNonNegativeAmount(input.current ?? Number.NaN)) errors.push("Informe um valor atual valido.")
-  if (!isValidDateValue(input.deadline)) errors.push("Informe uma data limite valida.")
+  if (!isNonNegativeAmount(input.current ?? Number.NaN)) errors.push("Informe um valor atual válido.")
+  if (!isValidDateValue(input.deadline)) errors.push("Informe uma data limite válida.")
   if (input.deadline && input.deadline.length === 10 && isPastDateInput(input.deadline)) {
-    errors.push("A data limite nao pode estar no passado.")
+    errors.push("A data limite não pode ser no passado.")
   }
   if (input.deadline && input.deadline.length > 10 && isPastDateInput(isoToDateInput(input.deadline))) {
-    errors.push("A data limite nao pode estar no passado.")
+    errors.push("A data limite não pode ser no passado.")
   }
   return errors
 }
@@ -92,7 +92,7 @@ export function validateGoal(input: Partial<GoalInput>): string[] {
 export function validateLimit(input: Partial<SpendingLimit>): string[] {
   const errors: string[] = []
   if (!hasValue(input.category)) errors.push("Selecione uma categoria.")
-  if (!isPositiveAmount(input.amount ?? Number.NaN)) errors.push("Informe um orçamento maior que zero.")
+  if (!isPositiveAmount(input.amount ?? Number.NaN)) errors.push("Informe um limite maior que zero.")
   return errors
 }
 
@@ -113,9 +113,9 @@ export function validateInvestment(input: InvestmentInput): string[] {
   if (!hasValue(input.name)) errors.push("Informe o nome do investimento.")
   if (!hasValue(input.type)) errors.push("Selecione o tipo do investimento.")
   if (!isPositiveAmount(input.investedAmount ?? Number.NaN)) errors.push("Informe um valor aplicado maior que zero.")
-  if (!isNonNegativeAmount(input.currentValue ?? Number.NaN)) errors.push("O valor atual nao pode ser negativo.")
-  if (!isValidDateValue(input.applicationDate)) errors.push("Informe uma data de aplicacao valida.")
-  if (input.maturityDate && !isValidDateValue(input.maturityDate)) errors.push("Informe uma data de vencimento valida.")
+  if (!isNonNegativeAmount(input.currentValue ?? Number.NaN)) errors.push("O valor atual não pode ser negativo.")
+  if (!isValidDateValue(input.applicationDate)) errors.push("Informe uma data de aplicação válida.")
+  if (input.maturityDate && !isValidDateValue(input.maturityDate)) errors.push("Informe uma data de vencimento válida.")
   if (
     input.maturityDate &&
     input.applicationDate &&
@@ -123,11 +123,11 @@ export function validateInvestment(input: InvestmentInput): string[] {
     isValidDateValue(input.applicationDate) &&
     new Date(input.maturityDate).getTime() < new Date(input.applicationDate).getTime()
   ) {
-    errors.push("O vencimento nao pode ser anterior a aplicacao.")
+    errors.push("O vencimento não pode ser antes da aplicação.")
   }
   if (input.expectedReturn !== undefined) {
-    if (!Number.isFinite(input.expectedReturn)) errors.push("Informe uma rentabilidade esperada valida.")
-    else if (input.expectedReturn < 0) errors.push("A rentabilidade esperada nao pode ser negativa.")
+    if (!Number.isFinite(input.expectedReturn)) errors.push("Informe uma rentabilidade válida.")
+    else if (input.expectedReturn < 0) errors.push("A rentabilidade não pode ser negativa.")
   }
   return errors
 }
@@ -141,18 +141,18 @@ export interface InvestmentMovementInput {
 
 export function validateInvestmentMovement(input: InvestmentMovementInput, investment?: Investment): string[] {
   const errors: string[] = []
-  if (!investment) errors.push("Investimento nao encontrado.")
+  if (!investment) errors.push("Investimento não encontrado.")
   if (input.type !== "contribution" && input.type !== "withdrawal" && input.type !== "value-update") {
-    errors.push("Selecione o tipo de movimentacao.")
+    errors.push("Selecione o tipo de movimentação.")
   }
   if (input.type === "value-update") {
-    if (!isNonNegativeAmount(input.amount ?? Number.NaN)) errors.push("Informe um valor atual valido.")
+    if (!isNonNegativeAmount(input.amount ?? Number.NaN)) errors.push("Informe um valor atual válido.")
   } else if (!isPositiveAmount(input.amount ?? Number.NaN)) {
     errors.push("Informe um valor maior que zero.")
   }
-  if (!isValidDateValue(input.date)) errors.push("Informe uma data valida.")
+  if (!isValidDateValue(input.date)) errors.push("Informe uma data válida.")
   if (investment && input.type === "withdrawal" && (input.amount ?? 0) > investment.currentValue) {
-    errors.push("O resgate nao pode ser maior que o valor atual.")
+    errors.push("O resgate não pode ser maior que o valor atual.")
   }
   return errors
 }

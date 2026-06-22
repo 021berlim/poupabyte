@@ -99,6 +99,21 @@ export type FinancialObjective =
 /** Frequência de renda extra coletada no onboarding */
 export type ExtraIncomeFrequency = "none" | "sometimes" | "monthly"
 
+/** Como o usuário recebe sua renda principal — define campos e comportamento do sistema */
+export type IncomeType =
+  | "salario-fixo"
+  | "autonomo"
+  | "negocio-proprio"
+  | "renda-variavel"
+  | "ocasional"
+  | "sem-renda"
+
+/** Variabilidade da renda — autônomos */
+export type IncomeVariability = "pouco" | "bastante" | "nao-sei"
+
+/** Separação entre dinheiro pessoal e do negócio */
+export type BusinessSeparation = "sim" | "ainda-nao" | "as-vezes"
+
 /** Maior peso do orçamento — influencia limites e sugestões iniciais */
 export type BudgetWeight =
   | "alimentacao"
@@ -131,6 +146,9 @@ export interface FinancialProfile {
   salaryHistory: SalarySnapshot[]
   extraIncomeFrequency?: ExtraIncomeFrequency
   budgetWeight?: BudgetWeight
+  incomeType?: IncomeType
+  incomeVariability?: IncomeVariability
+  businessSeparation?: BusinessSeparation
 }
 
 export interface ImportSummary {

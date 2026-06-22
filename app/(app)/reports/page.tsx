@@ -213,10 +213,10 @@ export default function ReportsPage() {
   const range = useMemo(() => periodRange(period), [period])
   const periodContext = useMemo(() => periodDescription(period), [period])
   const pageSubtitle = useMemo(() => {
-    if (period === "year") return `Resumo financeiro de ${new Date().getFullYear()}.`
-    if (period === "month") return "Resumo financeiro do mês atual."
-    if (period === "3m") return "Resumo financeiro dos últimos 3 meses."
-    return "Resumo financeiro de todo o histórico."
+    if (period === "year") return `Resumo de ${new Date().getFullYear()}.`
+    if (period === "month") return "Resumo do mês."
+    if (period === "3m") return "Resumo dos últimos 3 meses."
+    return "Resumo de todo o histórico."
   }, [period])
   const selectedCategoryLabel =
     category === "all" ? null : (CATEGORY_LIST.find((item) => item.id === category)?.label ?? getCategory(category).label)
@@ -363,7 +363,7 @@ export default function ReportsPage() {
 
   return (
     <div className="reports-layout min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
-      <PageHeader title="Análises" subtitle={pageSubtitle} />
+      <PageHeader title="Relatórios" subtitle={pageSubtitle} />
 
       <div className="border-b">
         <div className="grid min-w-0 grid-cols-4">
@@ -389,16 +389,16 @@ export default function ReportsPage() {
         { label: "Receitas do período", value: formatCurrency(summary.income), tone: "text-success", detail: `${incomeCount} lançamentos` },
         { label: "Despesas do período", value: formatCurrency(summary.expense), tone: "text-destructive", detail: `${expenseCount} lançamentos` },
         { label: "Resultado", value: formatCurrency(summary.balance), tone: summary.balance >= 0 ? "text-success" : "text-destructive", detail: "receitas menos despesas" },
-        { label: "Renda comprometida", value: `${Math.round(buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits).monthCommittedPercent)}%`, detail: `salário declarado: ${formatCurrency(financialProfile.monthlySalary)}` },
+        { label: "Renda já usada", value: `${Math.round(buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits).monthCommittedPercent)}%`, detail: `salário: ${formatCurrency(financialProfile.monthlySalary)}` },
       ]} />
 
       {insights.length > 0 ? (
         <section className="app-open-section flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Leituras rápidas na visão geral. Interpretações detalhadas com a P.E.N.N.Y.
+            Resumo rápido aqui. Detalhes com a Penny.
           </p>
           <Button variant="outline" asChild className="shrink-0">
-            <Link href={ROUTES.assistant}>Perguntar à P.E.N.N.Y.</Link>
+            <Link href={ROUTES.assistant}>Perguntar à Penny</Link>
           </Button>
         </section>
       ) : null}
@@ -429,7 +429,7 @@ export default function ReportsPage() {
       {!hasFinancialData ? (
         <section className="app-open-section flex flex-col items-center gap-2 py-[clamp(3rem,12vh,4rem)] text-center">
           <PieChartIcon className="h-8 w-8 text-muted-foreground/50" />
-          <p className="font-semibold">Não há dados financeiros suficientes para gerar relatórios neste período.</p>
+          <p className="font-semibold">Sem dados suficientes neste período.</p>
         </section>
       ) : (
         <>
@@ -437,7 +437,7 @@ export default function ReportsPage() {
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
                 <h2 className="text-sm font-medium text-foreground">Despesas por categoria</h2>
-                <p className="text-xs text-muted-foreground">Distribuicao dos gastos filtrados</p>
+                <p className="text-xs text-muted-foreground">Gastos do período</p>
               </div>
               {categoryData.length === 0 ? (
                 <EmptyChart icon={<PieChartIcon className="h-8 w-8" />} text="Nenhuma despesa para exibir." />
@@ -517,7 +517,7 @@ export default function ReportsPage() {
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
                 <h2 className="text-sm font-medium text-foreground">Comparativo mensal</h2>
-                <p className="text-xs text-muted-foreground">Receitas e despesas por mes</p>
+                <p className="text-xs text-muted-foreground">Receitas e despesas por mês</p>
               </div>
               <ReportsInlineLegend
                 items={[
@@ -564,8 +564,8 @@ export default function ReportsPage() {
           <div className="grid min-w-0 gap-8 lg:grid-cols-2">
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
-                <h2 className="text-sm font-medium text-foreground">Planejado versus realizado</h2>
-                <p className="text-xs text-muted-foreground">Gastos reais comparados aos limites definidos</p>
+                <h2 className="text-sm font-medium text-foreground">Planejado vs realizado</h2>
+                <p className="text-xs text-muted-foreground">Gastos reais e limites</p>
               </div>
               {plannedVsActual.length === 0 ? (
                 <EmptyChart icon={<Activity className="h-8 w-8" />} text="Nenhum limite definido para comparar." />
@@ -673,7 +673,7 @@ export default function ReportsPage() {
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
                 <h2 className="text-sm font-medium text-foreground">Resumo de metas</h2>
-                <p className="text-xs text-muted-foreground">Desempenho do planejamento financeiro</p>
+                <p className="text-xs text-muted-foreground">Progresso das metas</p>
               </div>
               <dl className="grid h-[clamp(14rem,42vh,18rem)] content-center gap-4">
                 {[
@@ -693,8 +693,8 @@ export default function ReportsPage() {
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-medium text-foreground">Distribuicao de investimentos</h2>
-                  <p className="text-xs text-muted-foreground">Patrimonio total investido: {formatCurrency(investmentStats.currentValue)}</p>
+                  <h2 className="text-sm font-medium text-foreground">Investimentos por tipo</h2>
+                  <p className="text-xs text-muted-foreground">Total investido: {formatCurrency(investmentStats.currentValue)}</p>
                 </div>
                 <Landmark className="h-5 w-5 text-primary" />
               </div>
@@ -777,8 +777,8 @@ export default function ReportsPage() {
 
             <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
               <div className="mb-4">
-                <h2 className="text-sm font-medium text-foreground">Comparacao entre ativos</h2>
-                <p className="text-xs text-muted-foreground">Aplicado, atual e rendimento por investimento</p>
+                <h2 className="text-sm font-medium text-foreground">Comparar ativos</h2>
+                <p className="text-xs text-muted-foreground">Aplicado, atual e rendimento</p>
               </div>
               {investmentComparison.length === 0 ? (
                 <EmptyChart icon={<Target className="h-8 w-8" />} text="Nenhum ativo para comparar." />
@@ -840,8 +840,8 @@ export default function ReportsPage() {
 
           <section className="flex min-w-0 flex-col gap-1 py-[clamp(1rem,3vw,1.25rem)]">
             <div className="mb-4">
-              <h2 className="text-sm font-medium text-foreground">Evolucao patrimonial investida</h2>
-              <p className="text-xs text-muted-foreground">Valor aplicado versus valor atual da carteira</p>
+              <h2 className="text-sm font-medium text-foreground">Evolução da carteira</h2>
+              <p className="text-xs text-muted-foreground">Aplicado vs valor atual</p>
             </div>
             {investmentEvolution.every((item) => item.current === 0 && item.invested === 0) ? (
               <EmptyChart icon={<Landmark className="h-8 w-8" />} text="Sem historico de carteira para exibir." />

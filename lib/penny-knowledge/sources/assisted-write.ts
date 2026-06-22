@@ -72,7 +72,7 @@ export const assistedWriteSource: PennyKnowledgeSource = {
             ? createEnabled
               ? "Se plan.proposedTransaction estiver ausente, peça valor e descrição objetivos antes de propor."
               : "Se createTransactionsEnabled for false, oriente ativar em Minha conta → Preferências e não diga que registrou."
-            : "Se plan for null ou transactionIds vazio, diga que não encontrou lançamentos compatíveis e oriente revisar em Movimentações.",
+            : "Se plan for null ou transactionIds vazio, diga que não encontrou lançamentos compatíveis e oriente revisar em Lançamentos.",
         },
         availableCategories: CATEGORY_LIST.filter(
           (category) => category.defaultType === "expense" || category.defaultType === "both",

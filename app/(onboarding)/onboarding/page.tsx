@@ -32,7 +32,7 @@ function OnboardingWizard() {
   const [answers, setAnswers] = useState<Partial<OnboardingAnswers>>({})
 
   function finish(goal?: OnboardingAnswers["goal"]) {
-    if (!answers.income || !answers.objective || !answers.budgetWeight) {
+    if (!answers.income?.incomeType || !answers.objective || !answers.budgetWeight) {
       completeOnboarding()
       router.replace(APP_HOME)
       return
@@ -45,9 +45,7 @@ function OnboardingWizard() {
       goal,
     })
 
-    toast.success("Tudo pronto!", {
-      description: "Seu caminho financeiro personalizado está no ar.",
-    })
+    toast.success("Tudo pronto.")
     router.replace(APP_HOME)
   }
 

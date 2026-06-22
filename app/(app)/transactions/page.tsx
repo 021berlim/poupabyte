@@ -111,12 +111,12 @@ export default function TransactionsPage() {
  return (
   <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
    <PageHeader
-    title="Movimentações"
-    subtitle="Revise e organize seus lançamentos."
+    title="Lançamentos"
+    subtitle="Revise e organize tudo."
     action={(
      <div className="flex w-full items-center gap-2 sm:w-auto">
       <StatementImportSheet />
-      <TransactionDialog trigger={<Button><Plus className="h-4 w-4" />Nova transação</Button>} />
+      <TransactionDialog trigger={<Button><Plus className="h-4 w-4" />Novo lançamento</Button>} />
      </div>
     )}
    />
@@ -129,7 +129,7 @@ export default function TransactionsPage() {
     <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
      <SheetTrigger asChild><Button variant="outline" aria-label="Abrir filtros"><ListFilter className="h-4 w-4" /><span className="hidden sm:inline">Filtros</span>{filterCount > 0 ? <span className="text-primary">{filterCount}</span> : null}</Button></SheetTrigger>
      <SheetContent side="responsive" className="overflow-hidden">
-      <SheetHeader><SheetTitle>Filtrar transações</SheetTitle><SheetDescription>Refine por tipo, categoria ou período.</SheetDescription></SheetHeader>
+      <SheetHeader><SheetTitle>Filtrar lançamentos</SheetTitle><SheetDescription>Tipo, categoria ou período.</SheetDescription></SheetHeader>
       <div className="app-responsive-modal-body space-y-4 px-6 py-5">{filters}</div>
       <SheetFooter>
        <Button variant="outline" onClick={clearFilters}><X className="h-4 w-4" />Limpar</Button>
@@ -156,7 +156,7 @@ export default function TransactionsPage() {
 
    <PullToRefresh onRefresh={() => router.refresh()}>
    {filtered.length === 0 ? (
-    <div className="app-open-section flex flex-col items-center gap-2 py-14 text-center"><Receipt className="h-8 w-8 text-muted-foreground/50" /><p className="font-semibold">Nenhuma transação encontrada</p><p className="text-sm text-muted-foreground">Ajuste os filtros ou adicione uma nova transação.</p></div>
+    <div className="app-open-section flex flex-col items-center gap-2 py-14 text-center"><Receipt className="h-8 w-8 text-muted-foreground/50" /><p className="font-semibold">Nenhum lançamento encontrado</p><p className="text-sm text-muted-foreground">Ajuste os filtros ou adicione um lançamento.</p></div>
    ) : (
     <div className="app-list-section">
      <p className="border-b px-[clamp(0.75rem,3vw,1rem)] py-3 text-sm text-muted-foreground">

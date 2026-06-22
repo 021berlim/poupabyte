@@ -21,8 +21,8 @@ const DESCRIPTION_STOP_WORDS = new Set([
 
 export const transactionsSource: PennyKnowledgeSource = {
   id: "transactions",
-  title: "Movimentações",
-  description: "Lançamentos reais e agregações de receitas e despesas.",
+  title: "Lançamentos",
+  description: "Receitas, despesas e totais do período.",
   topics: ["transactions"],
   availableInformation: [
     "descrição, valor, categoria, tipo e data",

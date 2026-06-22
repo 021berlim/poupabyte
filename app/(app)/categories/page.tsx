@@ -29,7 +29,7 @@ import { Copy, EyeOff, FolderTree, Lock, MoreVertical, Pencil, Plus, Trash2 } fr
 const KIND_LABELS: Record<CategoryKind, string> = {
   income: "Receita",
   expense: "Despesa",
-  goal: "Objetivo",
+  goal: "Meta",
   investment: "Investimento",
   transfer: "Transferência",
 }
@@ -94,7 +94,7 @@ function CategoryDialog({
             {editing ? "Editar categoria" : parentId ? "Nova subcategoria" : "Nova categoria"}
           </DialogTitle>
           <DialogDescription>
-            {parentId ? "Detalhe gastos dentro de uma categoria." : "Use em movimentações e orçamentos."}
+            {parentId ? "Detalhe gastos dentro de uma categoria." : "Use em lançamentos e limites."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit}>
@@ -375,7 +375,7 @@ export default function CategoriesPage() {
     <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
       <PageHeader
         title="Categorias"
-        subtitle="Organize como você classifica gastos."
+        subtitle="Como você classifica gastos."
         action={
           <CategoryDialog
             trigger={

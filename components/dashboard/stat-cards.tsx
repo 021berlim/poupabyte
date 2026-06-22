@@ -22,7 +22,7 @@ export function StatCards() {
   {
    label: "Saldo total",
    value: balance,
-   helper: "Receitas menos despesas",
+   helper: "Entradas menos saídas",
    icon: Wallet,
    tone: "text-primary",
    iconTone: "bg-primary/10 text-primary",
@@ -46,7 +46,7 @@ export function StatCards() {
   {
    label: "Economia acumulada",
    value: savings,
-   helper: savings >= 0 ? "Resultado positivo" : "Atenção ao saldo",
+   helper: savings >= 0 ? "No positivo" : "No negativo",
    icon: PiggyBank,
    tone: savings >= 0 ? "text-success" : "text-destructive",
    iconTone: "bg-secondary/10 text-foreground",

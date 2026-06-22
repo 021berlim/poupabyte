@@ -422,7 +422,7 @@ export function StatementImportSheet() {
         kind: "transaction",
         type: "success",
         title: "Importação concluída",
-        message: `${imported} movimentações importadas · ${formatCurrency(incomeTotal)} em receitas · ${formatCurrency(expenseTotal)} em despesas${pendingReview > 0 ? ` · ${pendingReview} precisam de revisão` : ""}.`,
+        message: `${imported} lançamentos importados · ${formatCurrency(incomeTotal)} em receitas · ${formatCurrency(expenseTotal)} em despesas${pendingReview > 0 ? ` · ${pendingReview} para revisar` : ""}.`,
       })
       handleOpenChange(false)
     }
@@ -438,7 +438,7 @@ export function StatementImportSheet() {
           <>
             <SheetHeader>
               <SheetTitle>Importar extrato</SheetTitle>
-              <SheetDescription>Envie o PDF do extrato bancário. Você revisará tudo antes de salvar.</SheetDescription>
+              <SheetDescription>Envie o PDF do extrato. Revise antes de salvar.</SheetDescription>
             </SheetHeader>
             <div className="app-responsive-modal-body space-y-5 px-6 py-5">
               <div
@@ -513,7 +513,7 @@ export function StatementImportSheet() {
             <SheetHeader>
               <div className="flex items-center gap-2"><SheetTitle>Revisar importação</SheetTitle><Badge variant="outline">{BANK_LABELS[detectedBank]}</Badge></div>
               <SheetDescription>
-                Encontramos {reviewSummary.total} movimentações no seu PDF. Revise antes de importar.
+                Encontramos {reviewSummary.total} lançamentos no PDF. Revise antes de importar.
               </SheetDescription>
             </SheetHeader>
             <div className="shrink-0 space-y-2 border-b px-6 py-3 text-xs text-muted-foreground">
@@ -542,7 +542,7 @@ export function StatementImportSheet() {
               ))}
             </div>
             <SheetFooter className="flex-col [&>[data-slot=button]]:w-full">
-              <Button disabled={selectedCount === 0} onClick={importSelected}>Importar {selectedCount} {selectedCount === 1 ? "transação" : "transações"}</Button>
+              <Button disabled={selectedCount === 0} onClick={importSelected}>Importar {selectedCount} {selectedCount === 1 ? "lançamento" : "lançamentos"}</Button>
               <Button variant="ghost" size="sm" onClick={() => { setStage("upload"); setError("") }}><RotateCcw className="size-4" />Escolher outro arquivo</Button>
             </SheetFooter>
           </>

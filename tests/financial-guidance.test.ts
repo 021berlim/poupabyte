@@ -75,7 +75,7 @@ describe("financial guidance analytics", () => {
     const december = new Date("2026-12-10T12:00:00-03:00")
     const analysis = analyzeSeasonality({ transactions: baseTransactions, ref: december })
     expect(analysis.signals.some((signal) => signal.kind === "calendar-event")).toBe(true)
-    expect(analysis.methodology).toContain("histórico")
+    expect(analysis.methodology.toLowerCase()).toContain("histórico")
   })
 
   it("does not claim debt strategy diagnosis without structured debt data", () => {
@@ -103,6 +103,6 @@ describe("financial guidance analytics", () => {
     })
 
     expect(typeof analysis.detected).toBe("boolean")
-    expect(analysis.methodology).toContain("Saldo acumulado")
+    expect(analysis.methodology).toContain("Saldo vs gastos essenciais")
   })
 })

@@ -8,7 +8,7 @@ export const financialGuidanceSource: PennyKnowledgeSource = {
   id: "financial-guidance",
   title: "Orientação financeira educativa",
   description:
-    "Análises de reserva de emergência, lente 50/30/20, sazonalidade e dinheiro parado com base nos dados reais do usuário.",
+    "Reserva de emergência, lente 50/30/20, sazonalidade e dinheiro parado — com seus dados.",
   topics: ["guidance"],
   availableInformation: [
     "meses cobertos pela reserva",

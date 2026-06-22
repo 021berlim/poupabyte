@@ -1,30 +1,18 @@
 import type { AiErrorCode, AiProviderId } from "./types"
 
 const USER_MESSAGES: Record<AiErrorCode, string> = {
-  missing_api_key:
-    "O provedor de IA não está configurado no servidor. Entre em contato com o administrador.",
-  invalid_api_key:
-    "A credencial do provedor de IA é inválida. Entre em contato com o administrador.",
-  timeout:
-    "A resposta demorou mais do que o esperado. Tente novamente em instantes.",
-  rate_limit:
-    "O limite de uso do provedor de IA foi atingido. Aguarde um momento e tente novamente.",
-  service_unavailable:
-    "A P.E.N.N.Y está temporariamente indisponível. Tente novamente em instantes.",
-  connection_error:
-    "Não foi possível conectar ao provedor de IA. Verifique sua conexão e tente novamente.",
-  invalid_response:
-    "O provedor de IA retornou uma resposta inválida. Tente novamente em instantes.",
-  invalid_request:
-    "A solicitação não pôde ser processada pelo provedor de IA.",
-  usage_limit:
-    "O limite de uso configurado foi excedido. Tente novamente mais tarde.",
-  model_not_found:
-    "O modelo de IA configurado não foi encontrado. Entre em contato com o administrador.",
-  model_unavailable:
-    "O modelo de IA está temporariamente indisponível. Tente novamente em instantes.",
-  unknown:
-    "A P.E.N.N.Y está temporariamente indisponível. Tente novamente em instantes.",
+  missing_api_key: "IA não configurada. Fale com o suporte.",
+  invalid_api_key: "IA com credencial inválida. Fale com o suporte.",
+  timeout: "Demorou demais. Tente de novo.",
+  rate_limit: "Muitas perguntas seguidas. Espere um pouco.",
+  service_unavailable: "Penny indisponível. Tente de novo.",
+  connection_error: "Sem conexão. Verifique a internet.",
+  invalid_response: "Resposta inválida. Tente de novo.",
+  invalid_request: "Não deu pra processar. Tente de novo.",
+  usage_limit: "Limite de uso atingido. Tente mais tarde.",
+  model_not_found: "Modelo de IA não encontrado. Fale com o suporte.",
+  model_unavailable: "Modelo indisponível. Tente de novo.",
+  unknown: "Penny indisponível. Tente de novo.",
 }
 
 export function userMessageForError(code: AiErrorCode): string {

@@ -67,8 +67,8 @@ export function buildAttentionPanelItem({
     return {
       type: "pending-review",
       title: "Revisar lançamentos",
-      message: `${pendingReview} movimentação(ões) aguardando confirmação`,
-      screen: "Movimentações",
+      message: `${pendingReview} pra revisar`,
+      screen: "Lançamentos",
     }
   }
 
@@ -78,9 +78,9 @@ export function buildAttentionPanelItem({
     const category = getCategory(item.limit.category).label
     return {
       type: "budget",
-      title: `Orçamento de ${category}`,
-      message: `${Math.round(item.percent)}% utilizado`,
-      screen: "Orçamentos",
+      title: `Limite de ${category}`,
+      message: `${Math.round(item.percent)}%${item.percent >= 100 ? " — passou do teto" : item.percent >= 91 ? " — quase no teto" : " — em atenção"}`,
+      screen: "Limites",
     }
   }
 
@@ -92,8 +92,8 @@ export function buildAttentionPanelItem({
     return {
       type: "goal-at-risk",
       title: `Meta em risco: ${goal.name}`,
-      message: `${progress.percent}% concluída`,
-      screen: "Objetivos",
+      message: `${progress.percent}% — faltam ${progress.estimate}`,
+      screen: "Metas",
     }
   }
 
@@ -101,9 +101,9 @@ export function buildAttentionPanelItem({
   if (upcoming.length > 0) {
     return {
       type: "upcoming-subscription",
-      title: "Assinaturas nos próximos 7 dias",
-      message: `${upcoming.length} cobrança(s) prevista(s)`,
-      screen: "Movimentações",
+      title: "Assinaturas próximas",
+      message: `${upcoming.length} cobrança(s) em 7 dias`,
+      screen: "Lançamentos",
     }
   }
 
@@ -291,9 +291,9 @@ export function buildPennyFinancialContext({
     alerts.push({
       key: expense.key,
       type: "exorbitant-expense",
-      title: `Gasto fora do padrão em ${expense.category}`,
-      message: `Identifiquei um gasto de ${money(expense.amount)} em ${expense.category}, equivalente a ${expense.multipleOfAverage.toFixed(1)} vezes a sua média histórica nessa categoria.`,
-      impact: `A média dos últimos três meses é ${money(expense.historicalAverage)}.`,
+      title: `Gasto alto em ${expense.category}`,
+      message: `${money(expense.amount)} — ${expense.multipleOfAverage.toFixed(1)}x a média.`,
+      impact: `Média: ${money(expense.historicalAverage)}.`,
     })
   }
   for (const usage of currentLimitUsage) {
@@ -302,20 +302,20 @@ export function buildPennyFinancialContext({
     alerts.push({
       key: `limit:${usage.limit.category}:${monthKey(now)}:${severity}`,
       type: "critical-limit",
-      title: `Orçamento crítico em ${category}`,
-      message: `Seu uso em ${category} chegou a ${usage.percent.toFixed(0)}% do orçamento mensal.`,
+      title: `Limite de ${category}`,
+      message: `${category}: ${usage.percent.toFixed(0)}%${usage.percent >= 100 ? " — passou do teto" : " — quase no teto"}.`,
       impact: usage.remaining >= 0
-        ? `Restam ${money(usage.remaining)} no orçamento. Sugestão: até ${money(usage.dailySuggestion)} por dia.`
-        : `O orçamento foi estourado em ${money(Math.abs(usage.remaining))}.`,
+        ? `Restam ${money(usage.remaining)}.`
+        : `Estourou ${money(Math.abs(usage.remaining))}.`,
     })
   }
   if (scoreVariation < -5) {
     alerts.push({
       key: `health:${baselineScore}:${health.score}`,
       type: "health-drop",
-      title: "Queda relevante na saúde financeira",
-      message: `Sua saúde financeira caiu de ${baselineScore} para ${health.score} pontos.`,
-      impact: `A variação registrada foi de ${scoreVariation} pontos.`,
+      title: "Saúde financeira caiu",
+      message: `De ${baselineScore} para ${health.score} pontos.`,
+      impact: `Variação: ${scoreVariation} pontos.`,
     })
   }
 
@@ -380,7 +380,7 @@ export function buildPennyFinancialContext({
 }
 
 export function proactivePennyMessage(alert: PennyAlert): string {
-  return `${alert.message} ${alert.impact} Deseja que eu analise como isso afeta o restante do seu mês?`
+  return `${alert.message} ${alert.impact} Quer ver o impacto no mês?`
 }
 
 function normalizedQuestion(question: string): string {

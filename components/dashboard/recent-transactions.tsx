@@ -18,9 +18,9 @@ export function RecentTransactions({ animationDelay = 0 }: { animationDelay?: nu
   <FeatureCard tone="surface" delay={animationDelay} className="min-w-0 p-[clamp(1rem,3vw,1.5rem)]">
    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <div className="min-w-0">
-     <p className="text-xs font-semibold text-primary">Atividade recente</p>
-     <h2 className="mt-1 text-xl font-extrabold text-foreground">Últimas movimentações</h2>
-     <p className="mt-1 text-sm text-muted-foreground">Transações mais recentes da sua conta</p>
+     <p className="text-xs font-semibold text-primary">Lançamentos</p>
+     <h2 className="mt-1 text-xl font-extrabold text-foreground">Recentes</h2>
+     <p className="mt-1 text-sm text-muted-foreground">Os últimos da sua conta</p>
     </div>
     <Button asChild variant="ghost" size="sm" className="w-fit rounded-2xl border bg-background/70 text-primary hover:bg-accent">
      <Link href={ROUTES.transactions}>
@@ -35,8 +35,8 @@ export function RecentTransactions({ animationDelay = 0 }: { animationDelay?: nu
       <Receipt className="h-5 w-5" />
      </span>
      <div>
-      <p className="text-sm font-bold">Nenhuma transação ainda</p>
-      <p className="mt-1 text-xs text-muted-foreground">Adicione sua primeira movimentação.</p>
+      <p className="text-sm font-bold">Nenhum lançamento ainda</p>
+      <p className="mt-1 text-xs text-muted-foreground">Adicione o primeiro.</p>
      </div>
     </div>
    ) : (

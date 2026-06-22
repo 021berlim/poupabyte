@@ -185,8 +185,8 @@ describe("P.E.N.N.Y knowledge catalog", () => {
       attentionPanel: {
         type: "pending-review",
         title: "Revisar lançamentos",
-        message: "1 movimentação(ões) aguardando confirmação",
-        screen: "Movimentações",
+        message: "1 pra revisar",
+        screen: "Lançamentos",
       },
     })
   })

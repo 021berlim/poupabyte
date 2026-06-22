@@ -18,7 +18,7 @@ export function FinancialMomentStep({
 
   return (
     <OnboardingChoiceLayout
-      title="Hoje, o que você mais quer melhorar?"
+      title="O que quer melhorar?"
       actions={
         <OnboardingActions
           onContinue={() => selected && onContinue(selected)}
