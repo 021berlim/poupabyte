@@ -19,7 +19,7 @@ const PERIODS: { value: Period; label: string; months: number }[] = [
 ]
 
 export default function CashflowPage() {
- const { financialProfile, transactions, subscriptions, installments, goals, limits } = useStore()
+ const { financialProfile, transactions, subscriptions, installments, goals, limits, lastImport } = useStore()
  const [period, setPeriod] = useState<Period>("6m")
  const months = PERIODS.find((item) => item.value === period)?.months ?? 6
 
@@ -29,8 +29,8 @@ export default function CashflowPage() {
  )
 
  const currentPlanning = useMemo(
-  () => buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits),
-  [financialProfile, transactions, goals, subscriptions, installments, limits],
+  () => buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits, new Date(), lastImport),
+  [financialProfile, transactions, goals, subscriptions, installments, limits, lastImport],
  )
 
  const current = rows.at(-1)

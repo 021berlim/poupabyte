@@ -40,6 +40,7 @@ export const planningSource: PennyKnowledgeSource = {
       snapshot.installments,
       snapshot.limits,
       analysis.now,
+      snapshot.lastImport ?? null,
     )
     const longTerm = buildLongTermPlanning(
       snapshot.financialProfile,
@@ -57,11 +58,13 @@ export const planningSource: PennyKnowledgeSource = {
       reason: "A pergunta envolve planejamento mensal, salário, orçamento ou compromissos futuros.",
       data: {
         incomeDecisionRules: {
-          shortTermUses: "entradas confirmadas no mês (safeToSpend usa apenas o que já entrou na conta)",
-          projectedUses: "renda prevista do mês (salário declarado + renda extra esperada) para projeções",
+          shortTermUses:
+            "extrato importado com movimentações confirmadas; safeToSpend prioriza saldo disponível do extrato",
+          projectedUses:
+            "salário declarado só entra após confirmação do recebimento nas movimentações do mês atual",
           longTermUses: "apenas salário fixo declarado",
           extraIncomeGuidance:
-            "Renda extra pode ajudar no mês, mas não deve sustentar compromissos longos recorrentes.",
+            "Renda extra detectada no extrato pode ajudar no mês, mas não deve sustentar compromissos longos recorrentes.",
         },
         longTermPlanning: longTerm,
         financialProfile: {

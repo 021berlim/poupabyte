@@ -15,7 +15,8 @@ import type { CategoryContext } from "@/lib/category-system"
 import { CATEGORY_LIST, getCategory } from "@/lib/categories"
 import { formatCurrency } from "@/lib/format"
 import { apiUrl } from "@/lib/api-url"
-import type { ParsedStatementTransaction, StatementBank } from "@/lib/statement-import"
+import type { ParsedStatementTransaction, StatementBank, StatementParseResult } from "@/lib/statement-import"
+import { extractAvailableBalanceFromParseResult } from "@/lib/statement-cash"
 import { useStore } from "@/lib/store"
 import {
   applyRecurrenceFlags,
@@ -240,6 +241,7 @@ export function StatementImportSheet() {
   const [passwordRequired, setPasswordRequired] = useState(false)
   const [error, setError] = useState("")
   const [items, setItems] = useState<ReviewItem[]>([])
+  const [availableBalance, setAvailableBalance] = useState<number | undefined>()
 
   const selectedCount = items.filter((item) => item.selected).length
   const allSelected = items.length > 0 && selectedCount === items.length
@@ -273,6 +275,7 @@ export function StatementImportSheet() {
     setPasswordRequired(false)
     setError("")
     setItems([])
+    setAvailableBalance(undefined)
     if (inputRef.current) inputRef.current.value = ""
   }
 
@@ -317,7 +320,7 @@ export function StatementImportSheet() {
 
     try {
       const response = await fetch(apiUrl("/api/import-statement"), { method: "POST", body })
-      const result = (await response.json()) as {
+      const result = (await response.json()) as Partial<StatementParseResult> & {
         code?: string
         message?: string
         bank?: StatementBank
@@ -346,6 +349,16 @@ export function StatementImportSheet() {
         }
       })
       setDetectedBank(result.bank ?? bank)
+      setAvailableBalance(
+        extractAvailableBalanceFromParseResult({
+          bank: result.bank ?? "inter",
+          transactions: result.transactions,
+          usedAi: result.usedAi ?? false,
+          interValidation: result.interValidation,
+          bradescoValidation: result.bradescoValidation,
+          bradescoStructured: result.bradescoStructured,
+        }),
+      )
       setItems(reviewItems)
       setStage("review")
     } catch {
@@ -403,6 +416,7 @@ export function StatementImportSheet() {
         pendingReview,
         duplicates,
         categoriesUpdated,
+        availableBalance,
       })
       notify({
         kind: "transaction",

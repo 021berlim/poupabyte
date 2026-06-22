@@ -2,9 +2,17 @@ import { isSameMonth } from "./format"
 import { getDeclaredSalaryForMonth, getExpectedIncomeForMonth } from "./income"
 import { buildMonthlyIncomeBreakdown } from "./long-term-planning"
 import { goalProgress } from "./selectors"
+import {
+  buildPlanningIncomeBase,
+  confirmedImportedExpenses,
+  confirmedSalaryIncome,
+  resolveStatementAvailableBalance,
+  salaryConfirmedThisMonth,
+} from "./statement-cash"
 import type {
   FinancialProfile,
   Goal,
+  ImportSummary,
   Installment,
   SpendingLimit,
   Subscription,
@@ -54,6 +62,10 @@ export interface MonthlyPlanning {
   monthCommittedPercent: number
   daysLeft: number
   salaryReceived: boolean
+  salaryConfirmed: boolean
+  statementAvailableBalance: number | null
+  importBasedIncome: number
+  importBasedExpenses: number
   endOfMonthProjection: number
 }
 
@@ -91,13 +103,7 @@ export function monthlyGoalReservation(goals: Goal[], ref = new Date()): number 
 }
 
 export function salaryReceivedThisMonth(txs: Transaction[], profile: FinancialProfile, ref = new Date()): boolean {
-  const declared = getDeclaredSalaryForMonth(profile, ref)
-  return txs.some(
-    (t) =>
-      t.type === "income" &&
-      (t.category === "salario" || t.description.toLowerCase().includes("salário") || t.description.toLowerCase().includes("salario")) &&
-      isSameMonth(t.date, ref),
-  ) || monthIncomeFromTransactions(txs, ref) >= declared * 0.5
+  return salaryConfirmedThisMonth(txs, profile, ref)
 }
 
 export function buildMonthlyPlanning(
@@ -108,14 +114,22 @@ export function buildMonthlyPlanning(
   installments: Installment[],
   limits: SpendingLimit[],
   ref = new Date(),
+  lastImport: ImportSummary | null = null,
 ): MonthlyPlanning {
   const declaredSalary = getDeclaredSalaryForMonth(profile, ref)
-  const incomeBreakdownMonth = buildMonthlyIncomeBreakdown(profile, transactions, ref)
+  const incomeBreakdownMonth = buildMonthlyIncomeBreakdown(profile, transactions, ref, lastImport)
   const expectedExtraIncome = getExpectedIncomeForMonth(profile, ref) - declaredSalary
   const expectedIncome = getExpectedIncomeForMonth(profile, ref)
-  const receivedIncome = monthIncomeFromTransactions(transactions, ref)
-  const monthlyIncome = incomeBreakdownMonth.monthlyIncome
-  const confirmedExpenses = monthExpenses(transactions, ref)
+  const incomeBase = buildPlanningIncomeBase(profile, transactions, ref)
+
+  const importBasedIncome = incomeBase.importIncome
+  const importBasedExpenses = incomeBase.importExpenses
+  const receivedIncome = importBasedIncome
+  const monthlyIncome = incomeBase.planningIncome
+  const confirmedExpenses = importBasedExpenses
+  const salaryConfirmed = incomeBase.salaryConfirmed
+  const statementAvailableBalance = resolveStatementAvailableBalance(lastImport, ref)
+
   const subscriptionTotal = activeSubscriptionsMonthlyTotal(subscriptions)
   const installmentTotal = activeInstallmentsMonthlyTotal(installments)
   const goalReservation = monthlyGoalReservation(goals, ref)
@@ -124,11 +138,20 @@ export function buildMonthlyPlanning(
 
   const registeredCommittedFixed = registeredCommittedFixedExpenses(transactions, ref)
   const pendingFixedExpenses = Math.max(0, subscriptionTotal + installmentTotal - registeredCommittedFixed)
-  const confirmedIncomeBase = receivedIncome
-  const committedMoney = confirmedExpenses + pendingFixedExpenses + reservedForGoals
-  const availableMoney = Math.max(0, confirmedIncomeBase - committedMoney)
+  const futureCommitments = pendingFixedExpenses + reservedForGoals
+
+  const importCashBase = Math.max(0, importBasedIncome - importBasedExpenses)
+  const availableFromImport = Math.max(0, importCashBase - futureCommitments)
+  const availableFromStatement =
+    statementAvailableBalance !== null
+      ? Math.max(0, statementAvailableBalance - futureCommitments)
+      : null
+
+  const safeToSpend = availableFromStatement ?? availableFromImport
+  const confirmedIncomeBase = salaryConfirmed ? monthlyIncome : importBasedIncome
+  const committedMoney = confirmedExpenses + futureCommitments
+  const availableMoney = safeToSpend
   const projectedSavings = monthlyIncome - confirmedExpenses - subscriptionTotal - installmentTotal - reservedForGoals
-  const safeToSpend = Math.max(0, availableMoney)
   const salaryUsedPercent =
     confirmedIncomeBase > 0
       ? Math.min(100, (committedMoney / confirmedIncomeBase) * 100)
@@ -153,7 +176,7 @@ export function buildMonthlyPlanning(
     expectedIncome,
     receivedIncome,
     extraIncomeDetected: incomeBreakdownMonth.extraIncomeDetected,
-    salaryPortionReceived: Math.min(incomeBreakdownMonth.salaryIncomeReceived, declaredSalary),
+    salaryPortionReceived: Math.min(confirmedSalaryIncome(transactions, ref), declaredSalary),
     confirmedExpenses,
     pendingFixedExpenses,
     committedMoney,
@@ -166,7 +189,11 @@ export function buildMonthlyPlanning(
     safeToSpend,
     monthCommittedPercent: salaryUsedPercent,
     daysLeft,
-    salaryReceived: salaryReceivedThisMonth(transactions, profile, ref),
+    salaryReceived: salaryConfirmed,
+    salaryConfirmed,
+    statementAvailableBalance,
+    importBasedIncome,
+    importBasedExpenses,
     endOfMonthProjection,
   }
 }
@@ -197,12 +224,12 @@ export function monthlyCashflowPlanning(
 
   for (let i = months - 1; i >= 0; i--) {
     const monthRef = new Date(ref.getFullYear(), ref.getMonth() - i, 1)
-    const realizedIncome = monthIncomeFromTransactions(transactions, monthRef)
-    const realizedExpense = monthExpenses(transactions, monthRef)
+    const incomeBase = buildPlanningIncomeBase(profile, transactions, monthRef)
+    const realizedIncome = incomeBase.importIncome
+    const realizedExpense = confirmedImportedExpenses(transactions, monthRef)
     const realizedBalance = realizedIncome - realizedExpense
     const isCurrent = isSameMonth(monthRef.toISOString(), ref)
-    const monthExpected = getExpectedIncomeForMonth(profile, monthRef)
-    const projectedIncome = isCurrent ? Math.max(monthExpected, realizedIncome) : monthExpected
+    const projectedIncome = isCurrent ? incomeBase.planningIncome : realizedIncome
     const projectedExpense = realizedExpense + (isCurrent ? subscriptionMonthly + installmentMonthly : 0)
     const projectedBalance = projectedIncome - projectedExpense
 

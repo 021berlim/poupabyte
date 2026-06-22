@@ -31,13 +31,14 @@ function monthCommitmentHistory(
   subscriptions: ReturnType<typeof useStore>["subscriptions"],
   installments: ReturnType<typeof useStore>["installments"],
   limits: ReturnType<typeof useStore>["limits"],
+  lastImport: ReturnType<typeof useStore>["lastImport"],
   months = 6,
 ) {
  const options = []
  const now = new Date()
  for (let i = months - 1; i >= 0; i--) {
   const ref = new Date(now.getFullYear(), now.getMonth() - i, 1)
-  const planning = buildMonthlyPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
+  const planning = buildMonthlyPlanning(profile, transactions, goals, subscriptions, installments, limits, ref, lastImport)
   options.push({
    key: `${ref.getFullYear()}-${ref.getMonth()}`,
    label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(ref).replace(".", ""),
@@ -50,7 +51,7 @@ function monthCommitmentHistory(
 }
 
 export default function DashboardPage() {
- const { financialProfile, transactions, goals, limits, subscriptions, installments, userCategories, hiddenSystemCategories } = useStore()
+ const { financialProfile, transactions, goals, limits, subscriptions, installments, userCategories, hiddenSystemCategories, lastImport } = useStore()
  const [balanceVisible, setBalanceVisible] = useState(true)
  const [incomeDialogOpen, setIncomeDialogOpen] = useState(false)
  const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
@@ -63,8 +64,8 @@ export default function DashboardPage() {
  )
 
  const monthHistory = useMemo(
-  () => monthCommitmentHistory(financialProfile, transactions, goals, subscriptions, installments, limits, 6),
-  [financialProfile, transactions, goals, subscriptions, installments, limits],
+  () => monthCommitmentHistory(financialProfile, transactions, goals, subscriptions, installments, limits, lastImport, 6),
+  [financialProfile, transactions, goals, subscriptions, installments, limits, lastImport],
  )
 
  const activeMonth = monthHistory.find((month) => month.key === selectedMonth) ?? monthHistory.at(-1)
@@ -77,8 +78,8 @@ export default function DashboardPage() {
  }, [activeMonth?.key])
 
  const activePlanning = useMemo(
-  () => buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits, activeMonthRef),
-  [financialProfile, transactions, goals, subscriptions, installments, limits, activeMonthRef],
+  () => buildMonthlyPlanning(financialProfile, transactions, goals, subscriptions, installments, limits, activeMonthRef, lastImport),
+  [financialProfile, transactions, goals, subscriptions, installments, limits, activeMonthRef, lastImport],
  )
 
  const displayValue = activePlanning.safeToSpend
@@ -148,22 +149,60 @@ export default function DashboardPage() {
   return null
  }, [pendingReview, limitAlerts, goalAlerts, upcoming])
 
+ const incomeContext = useMemo(() => {
+  if (activePlanning.statementAvailableBalance !== null) {
+   return {
+    subtitle: `Saldo do extrato: ${formatCurrency(activePlanning.statementAvailableBalance)}`,
+    entriesDetail: "Entradas confirmadas no extrato",
+   }
+  }
+  if (activePlanning.importBasedIncome === 0) {
+   return {
+    subtitle: "Baseado no extrato importado",
+    entriesDetail: "Importe e confirme movimentações",
+   }
+  }
+  if (activePlanning.salaryConfirmed) {
+   return {
+    subtitle: `Entrou no extrato: ${formatCurrency(activePlanning.importBasedIncome)} · planejamento com salário`,
+    entriesDetail:
+     activePlanning.extraIncomeDetected > 0
+      ? `Salário confirmado + ${formatCurrency(activePlanning.extraIncomeDetected)} extras`
+      : "Salário confirmado nas movimentações",
+   }
+  }
+  return {
+   subtitle: `Entrou no extrato: ${formatCurrency(activePlanning.importBasedIncome)}`,
+   entriesDetail: "Somente movimentações confirmadas",
+  }
+ }, [activePlanning])
+
  const heroMetrics = [
   {
    label: "Entradas",
    value: formatCurrency(activePlanning.receivedIncome),
-   detail: activePlanning.extraIncomeDetected > 0
-    ? `Salário ${formatCurrency(activePlanning.declaredSalary)} + extra ${formatCurrency(activePlanning.extraIncomeDetected)}`
-    : `Salário ${formatCurrency(activePlanning.declaredSalary)}`,
+   detail: incomeContext.entriesDetail,
    tone: "text-emerald-300",
   },
-  { label: "Despesas", value: formatCurrency(activePlanning.confirmedExpenses), detail: "confirmadas no mês", tone: "text-red-300" },
+  {
+   label: "Despesas",
+   value: formatCurrency(activePlanning.confirmedExpenses),
+   detail: "confirmadas no extrato",
+   tone: "text-red-300",
+  },
   {
    label: "Comprometido",
    value: `${Math.round(activePlanning.monthCommittedPercent)}%`,
-   detail: `${formatCurrency(activePlanning.receivedIncome)} entraram · ${formatCurrency(activePlanning.committedMoney)} comprometidos`,
+   detail: `${formatCurrency(activePlanning.receivedIncome)} no extrato · ${formatCurrency(activePlanning.committedMoney)} comprometidos`,
   },
-  { label: "Economia prevista", value: formatCurrency(activePlanning.projectedSavings), detail: `Reserva: ${formatCurrency(activePlanning.monthlyReserve)}`, tone: activePlanning.projectedSavings >= 0 ? "text-emerald-300" : "text-red-300" },
+  {
+   label: "Economia prevista",
+   value: formatCurrency(activePlanning.projectedSavings),
+   detail: activePlanning.salaryConfirmed
+    ? `Com salário confirmado até dia ${financialProfile.salaryDay}`
+    : "Confirme o salário para projetar o mês",
+   tone: activePlanning.projectedSavings >= 0 ? "text-emerald-300" : "text-red-300",
+  },
  ]
 
  return (
@@ -203,8 +242,8 @@ export default function DashboardPage() {
         Disponível para gastar
        </p>
        <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
-        Entrou no mês: {formatCurrency(activePlanning.receivedIncome)}
-        {activePlanning.monthlyIncome > activePlanning.receivedIncome
+        {incomeContext.subtitle}
+        {activePlanning.salaryConfirmed && activePlanning.monthlyIncome > activePlanning.importBasedIncome
           ? ` · previsto ${formatCurrency(activePlanning.monthlyIncome)}`
           : ""}
        </p>

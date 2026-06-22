@@ -1,12 +1,26 @@
 import { ESSENTIAL_CATEGORY_IDS } from "./categories"
-import { getDeclaredSalaryForMonth, salaryIncomeFromTransactions } from "./income"
+import { getDeclaredSalaryForMonth } from "./income"
 import {
   activeInstallmentsMonthlyTotal,
   activeSubscriptionsMonthlyTotal,
   monthlyGoalReservation,
   monthExpenses,
 } from "./planning"
-import type { FinancialProfile, Goal, Installment, SpendingLimit, Subscription, Transaction } from "./types"
+import {
+  buildPlanningIncomeBase,
+  confirmedImportedIncome,
+  confirmedNonSalaryImportedIncome,
+  confirmedSalaryIncome,
+} from "./statement-cash"
+import type {
+  FinancialProfile,
+  Goal,
+  ImportSummary,
+  Installment,
+  SpendingLimit,
+  Subscription,
+  Transaction,
+} from "./types"
 
 export interface LongTermPlanning {
   fixedSalary: number
@@ -38,20 +52,16 @@ export function buildMonthlyIncomeBreakdown(
   profile: FinancialProfile,
   transactions: Transaction[],
   ref = new Date(),
+  _lastImport: ImportSummary | null = null,
 ): MonthlyIncomeBreakdown {
-  const monthKey = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`
   const declaredSalary = getDeclaredSalaryForMonth(profile, ref)
   const expectedExtra = profile.expectedExtraIncome ?? 0
-  const receivedIncome = transactions
-    .filter((t) => t.type === "income" && t.date.slice(0, 7) === monthKey)
-    .reduce((a, t) => a + t.amount, 0)
-  const importedIncome = transactions
-    .filter((t) => t.type === "income" && t.source === "pdf-import" && t.date.slice(0, 7) === monthKey)
-    .reduce((a, t) => a + t.amount, 0)
-  const salaryIncomeReceived = salaryIncomeFromTransactions(transactions, ref)
-  const otherIncomeReceived = Math.max(0, receivedIncome - salaryIncomeReceived)
-  const monthlyIncome =
-    Math.max(declaredSalary, salaryIncomeReceived) + Math.max(expectedExtra, otherIncomeReceived)
+  const incomeBase = buildPlanningIncomeBase(profile, transactions, ref)
+  const importedIncome = confirmedImportedIncome(transactions, ref)
+  const salaryIncomeReceived = confirmedSalaryIncome(transactions, ref)
+  const otherIncomeReceived = confirmedNonSalaryImportedIncome(transactions, ref)
+  const receivedIncome = incomeBase.importIncome
+  const monthlyIncome = incomeBase.planningIncome
   const extraIncomeDetected = otherIncomeReceived
 
   return {

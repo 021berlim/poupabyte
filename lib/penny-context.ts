@@ -10,6 +10,7 @@ import {
 import type {
   FinancialProfile,
   Goal,
+  ImportSummary,
   Installment,
   Investment,
   SpendingLimit,
@@ -29,6 +30,7 @@ type ContextInput = {
   investments: Investment[]
   previousScore?: number
   mentionedAlertKeys?: ReadonlySet<string>
+  lastImport?: ImportSummary | null
   now?: Date
 }
 
@@ -204,6 +206,7 @@ export function buildPennyFinancialContext({
   investments,
   previousScore,
   mentionedAlertKeys = new Set(),
+  lastImport = null,
   now = new Date(),
 }: ContextInput): PennyFinancialContext {
   const monthlyPlanning = buildMonthlyPlanning(
@@ -214,6 +217,7 @@ export function buildPennyFinancialContext({
     installments,
     limits,
     now,
+    lastImport,
   )
   const currentMonthStart = startOfMonth(now)
   const historyStart = new Date(now.getFullYear(), now.getMonth() - THREE_MONTHS, 1)

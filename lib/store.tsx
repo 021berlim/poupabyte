@@ -661,6 +661,8 @@ function normalizeLastImport(value: unknown): ImportSummary | null {
     pendingReview: finiteNumber(item.pendingReview),
     duplicates: finiteNumber(item.duplicates),
     categoriesUpdated: finiteNumber(item.categoriesUpdated),
+    availableBalance:
+      item.availableBalance === undefined ? undefined : finiteNumber(item.availableBalance),
   }
 }
 
@@ -885,6 +887,8 @@ function planningAlert(data: DataState): NotificationPayload | null {
     data.subscriptions,
     data.installments,
     data.limits,
+    new Date(),
+    data.lastImport,
   )
   if (planning.projectedSavings >= 0) return null
   return {
@@ -905,8 +909,10 @@ function salaryAlert(data: DataState): NotificationPayload | null {
     data.subscriptions,
     data.installments,
     data.limits,
+    new Date(),
+    data.lastImport,
   )
-  if (!data.financialProfile.configured || planning.salaryReceived) return null
+  if (!data.financialProfile.configured || planning.salaryConfirmed) return null
   const today = new Date().getDate()
   if (today < data.financialProfile.salaryDay) return null
   return {
@@ -953,6 +959,8 @@ function extraIncomeAlert(data: DataState): NotificationPayload | null {
     data.subscriptions,
     data.installments,
     data.limits,
+    new Date(),
+    data.lastImport,
   )
   if (planning.extraIncomeDetected <= 100) return null
   return {
@@ -1015,6 +1023,8 @@ function reserveBelowPlannedAlert(data: DataState): NotificationPayload | null {
     data.subscriptions,
     data.installments,
     data.limits,
+    new Date(),
+    data.lastImport,
   )
   const reserveTx = data.transactions
     .filter((t) => t.type === "expense" && (t.category === "reserva-emergencia" || t.category === "aportes") && isSameMonth(t.date))

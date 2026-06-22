@@ -48,6 +48,7 @@ export const overviewSource: PennyKnowledgeSource = {
       investments: snapshot.investments,
       previousScore: snapshot.previousHealthScore,
       mentionedAlertKeys: snapshot.mentionedAlertKeys,
+      lastImport: snapshot.lastImport ?? null,
       now: analysis.now,
     })
     const alertKeys = insights.pendingAlerts.map((alert) => alert.key)

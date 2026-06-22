@@ -144,6 +144,8 @@ export interface ImportSummary {
   pendingReview: number
   duplicates: number
   categoriesUpdated: number
+  /** Saldo disponível informado no extrato (quando o parser identifica). */
+  availableBalance?: number
 }
 
 export type SubscriptionFrequency = "monthly" | "yearly"
