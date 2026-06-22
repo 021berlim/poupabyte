@@ -22,7 +22,6 @@ export function IncomeStep({
   const [salaryDay, setSalaryDay] = useState("5")
   const [extraFrequency, setExtraFrequency] = useState<ExtraIncomeFrequency>("none")
   const [extraIncome, setExtraIncome] = useState("")
-  const [wantsExtraAverage, setWantsExtraAverage] = useState<boolean | null>(null)
 
   const monthlySalary = parseAmountInput(salary)
   const canContinue = monthlySalary > 0
@@ -33,9 +32,7 @@ export function IncomeStep({
     const day = Number.parseInt(salaryDay, 10)
     let expectedExtraIncome = 0
 
-    if (extraFrequency === "monthly") {
-      expectedExtraIncome = Math.max(0, parseAmountInput(extraIncome))
-    } else if (extraFrequency === "sometimes" && wantsExtraAverage === true) {
+    if (extraFrequency === "monthly" || extraFrequency === "sometimes") {
       expectedExtraIncome = Math.max(0, parseAmountInput(extraIncome))
     }
 
@@ -79,18 +76,16 @@ export function IncomeStep({
 
         <div className="space-y-2">
           <p className="text-sm font-semibold">Você tem renda extra?</p>
-          <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-2">
             {EXTRA_INCOME_OPTIONS.map((option) => (
               <OptionButton
                 key={option.value}
+                layout="inline"
                 label={option.label}
                 selected={extraFrequency === option.value}
                 onClick={() => {
                   setExtraFrequency(option.value)
-                  if (option.value === "none") {
-                    setExtraIncome("")
-                    setWantsExtraAverage(null)
-                  }
+                  if (option.value === "none") setExtraIncome("")
                 }}
               />
             ))}
@@ -98,34 +93,14 @@ export function IncomeStep({
         </div>
 
         {extraFrequency === "sometimes" ? (
-          <div className="space-y-2 rounded-2xl border border-border bg-muted/30 p-4">
-            <p className="text-sm font-semibold">Quer informar uma média aproximada?</p>
-            <div className="space-y-2">
-              <OptionButton
-                label="Sim, informar"
-                selected={wantsExtraAverage === true}
-                onClick={() => setWantsExtraAverage(true)}
-              />
-              <OptionButton
-                label="Pular"
-                selected={wantsExtraAverage === false}
-                onClick={() => {
-                  setWantsExtraAverage(false)
-                  setExtraIncome("")
-                }}
-              />
-            </div>
-            {wantsExtraAverage === true ? (
-              <div className="space-y-1.5 pt-1">
-                <Label htmlFor="onboarding-extra-sometimes">Média aproximada</Label>
-                <CurrencyInput
-                  id="onboarding-extra-sometimes"
-                  value={extraIncome}
-                  onChange={setExtraIncome}
-                  placeholder="Opcional"
-                />
-              </div>
-            ) : null}
+          <div className="space-y-1.5">
+            <Label htmlFor="onboarding-extra-sometimes">Média aproximada (opcional)</Label>
+            <CurrencyInput
+              id="onboarding-extra-sometimes"
+              value={extraIncome}
+              onChange={setExtraIncome}
+              placeholder="Pode pular se não souber"
+            />
           </div>
         ) : null}
 
