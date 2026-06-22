@@ -1,4 +1,6 @@
+import { getCategory } from "./categories"
 import { buildAnalysisInsights, type AnalysisInsight } from "./insights"
+import { getDashboardFocus } from "./onboarding-personalization"
 import { buildMonthlyPlanning } from "./planning"
 import { goalProgress, limitUsage } from "./selectors"
 import type {
@@ -82,6 +84,11 @@ export function shortInsightHint(insight: AnalysisInsight): DashboardSuggestion 
   }
 }
 
+function pushUnique(suggestions: DashboardSuggestion[], item: DashboardSuggestion) {
+  if (suggestions.some((entry) => entry.id === item.id)) return
+  suggestions.push(item)
+}
+
 export function buildDashboardSuggestions(
   transactions: Transaction[],
   profile: FinancialProfile,
@@ -92,13 +99,41 @@ export function buildDashboardSuggestions(
   userCategories: UserCategory[] = [],
   hiddenSystemCategories: CategoryId[] = [],
   ref = new Date(),
-  max = 1,
+  max = 3,
 ): DashboardSuggestion[] {
   const planning = buildMonthlyPlanning(profile, transactions, goals, subscriptions, installments, limits, ref)
+  const focus = getDashboardFocus(profile.objective, profile.budgetWeight)
   const suggestions: DashboardSuggestion[] = []
 
-  if (planning.safeToSpend > 0) {
-    suggestions.push({
+  const pendingReview = transactions.filter((tx) => tx.needsReview || tx.category === "nao-categorizado").length
+  if (pendingReview > 0) {
+    pushUnique(suggestions, {
+      id: "pending-review",
+      title: "Lançamentos para revisar",
+      hint: `${pendingReview} movimentação(ões) aguardando confirmação.`,
+      long: false,
+    })
+  }
+
+  if (profile.objective === "entender-gastos") {
+    pushUnique(suggestions, {
+      id: "track-spending",
+      title: "Registre seus gastos",
+      hint: "Quanto mais lançamentos, melhor a visão por categoria.",
+      long: false,
+    })
+    if (profile.budgetWeight && profile.budgetWeight !== "nao-sei") {
+      pushUnique(suggestions, {
+        id: "focus-category",
+        title: `Acompanhe ${getCategory(profile.budgetWeight).label.toLowerCase()}`,
+        hint: "Essa categoria pesa no seu orçamento — vale observar de perto.",
+        long: false,
+      })
+    }
+  }
+
+  if (profile.objective === "controlar-gastos" && planning.safeToSpend > 0) {
+    pushUnique(suggestions, {
       id: "safe-to-spend",
       title: "Disponível para gastar",
       hint: `Ainda pode gastar ${planning.safeToSpend.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
@@ -107,8 +142,8 @@ export function buildDashboardSuggestions(
   }
 
   const limitAlerts = limitUsage(limits, transactions).filter((item) => item.status !== "healthy")
-  if (limitAlerts.length > 0) {
-    suggestions.push({
+  if (focus.showLimitsProminent && limitAlerts.length > 0) {
+    pushUnique(suggestions, {
       id: "limit-alerts",
       title: "Orçamentos em atenção",
       hint: `${limitAlerts.length} categoria(s) perto ou acima do limite.`,
@@ -116,22 +151,30 @@ export function buildDashboardSuggestions(
     })
   }
 
-  const atRiskGoals = goals.filter((goal) => goalProgress(goal).atRisk)
-  if (atRiskGoals.length > 0) {
-    suggestions.push({
-      id: "goals-at-risk",
-      title: "Metas em risco",
-      hint: `${atRiskGoals.length} meta(s) precisam de ajuste.`,
+  if (profile.objective === "sair-dividas" && planning.monthCommittedPercent > 0) {
+    pushUnique(suggestions, {
+      id: "salary-committed",
+      title: "Renda comprometida",
+      hint: `${Math.round(planning.monthCommittedPercent)}% da renda já tem destino neste mês.`,
       long: false,
     })
   }
 
-  const pendingReview = transactions.filter((tx) => tx.needsReview || tx.category === "nao-categorizado").length
-  if (pendingReview > 0) {
-    suggestions.push({
-      id: "pending-review",
-      title: "Lançamentos para revisar",
-      hint: `${pendingReview} movimentação(ões) aguardando confirmação.`,
+  if (focus.showReserveSplit && profile.monthlyReserve > 0) {
+    pushUnique(suggestions, {
+      id: "monthly-reserve",
+      title: "Reserva mensal sugerida",
+      hint: `Separe ${profile.monthlyReserve.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} para guardar.`,
+      long: false,
+    })
+  }
+
+  const atRiskGoals = goals.filter((goal) => goalProgress(goal).atRisk)
+  if (profile.objective === "planejar-metas" && atRiskGoals.length > 0) {
+    pushUnique(suggestions, {
+      id: "goals-at-risk",
+      title: "Metas em risco",
+      hint: `${atRiskGoals.length} meta(s) precisam de ajuste de prazo ou valor.`,
       long: false,
     })
   }
@@ -149,8 +192,7 @@ export function buildDashboardSuggestions(
   )
 
   for (const insight of insights) {
-    if (suggestions.some((item) => item.id === insight.id)) continue
-    suggestions.push(shortInsightHint(insight))
+    pushUnique(suggestions, shortInsightHint(insight))
     if (suggestions.length >= max) break
   }
 

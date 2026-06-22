@@ -5,63 +5,68 @@ import { CurrencyInput } from "@/components/ui/currency-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { parseAmountInput } from "@/lib/finance"
+import { EXTRA_INCOME_OPTIONS, type OnboardingIncomeData } from "@/lib/onboarding-personalization"
+import type { ExtraIncomeFrequency } from "@/lib/types"
 import { OnboardingActions } from "../onboarding-actions"
 import { OnboardingStepHeader } from "../onboarding-shell"
+import { OptionButton } from "../option-button"
 
 export function IncomeStep({
   onContinue,
   onSkip,
 }: {
-  onContinue: (data: { monthlySalary: number; salaryDay: number; expectedExtraIncome: number } | null) => void
+  onContinue: (data: OnboardingIncomeData) => void
   onSkip: () => void
 }) {
   const [salary, setSalary] = useState("")
-  const [extraIncome, setExtraIncome] = useState("")
   const [salaryDay, setSalaryDay] = useState("5")
+  const [extraFrequency, setExtraFrequency] = useState<ExtraIncomeFrequency>("none")
+  const [extraIncome, setExtraIncome] = useState("")
+  const [wantsExtraAverage, setWantsExtraAverage] = useState<boolean | null>(null)
+
+  const monthlySalary = parseAmountInput(salary)
+  const canContinue = monthlySalary > 0
 
   function handleContinue() {
-    const monthlySalary = parseAmountInput(salary)
-    if (monthlySalary <= 0) {
-      onContinue(null)
-      return
-    }
+    if (!canContinue) return
+
     const day = Number.parseInt(salaryDay, 10)
+    let expectedExtraIncome = 0
+
+    if (extraFrequency === "monthly") {
+      expectedExtraIncome = Math.max(0, parseAmountInput(extraIncome))
+    } else if (extraFrequency === "sometimes" && wantsExtraAverage === true) {
+      expectedExtraIncome = Math.max(0, parseAmountInput(extraIncome))
+    }
+
     onContinue({
       monthlySalary,
       salaryDay: Number.isFinite(day) && day >= 1 && day <= 31 ? day : 5,
-      expectedExtraIncome: Math.max(0, parseAmountInput(extraIncome)),
+      expectedExtraIncome,
+      extraIncomeFrequency: extraFrequency,
     })
   }
 
   return (
     <div>
       <OnboardingStepHeader
-        title="Configure sua renda"
-        description="Informe quanto você recebe por mês para calcular quanto pode gastar com segurança."
+        title="Sua renda"
+        description="Só o essencial para a Penny montar seu caminho financeiro."
       />
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-5">
         <div className="space-y-1.5">
           <Label htmlFor="onboarding-salary">Renda mensal principal</Label>
           <CurrencyInput
             id="onboarding-salary"
             value={salary}
             onChange={setSalary}
+            placeholder="Quanto você recebe por mês?"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="onboarding-extra">Renda extra (opcional)</Label>
-          <CurrencyInput
-            id="onboarding-extra"
-            value={extraIncome}
-            onChange={setExtraIncome}
-            placeholder="Freelas, bônus, aluguéis…"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="onboarding-day">Dia do recebimento (opcional)</Label>
+          <Label htmlFor="onboarding-day">Dia que costuma receber</Label>
           <Input
             id="onboarding-day"
             type="number"
@@ -71,9 +76,78 @@ export function IncomeStep({
             onChange={(e) => setSalaryDay(e.target.value)}
           />
         </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">Você tem renda extra?</p>
+          <div className="space-y-2">
+            {EXTRA_INCOME_OPTIONS.map((option) => (
+              <OptionButton
+                key={option.value}
+                label={option.label}
+                selected={extraFrequency === option.value}
+                onClick={() => {
+                  setExtraFrequency(option.value)
+                  if (option.value === "none") {
+                    setExtraIncome("")
+                    setWantsExtraAverage(null)
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {extraFrequency === "sometimes" ? (
+          <div className="space-y-2 rounded-2xl border border-border bg-muted/30 p-4">
+            <p className="text-sm font-semibold">Quer informar uma média aproximada?</p>
+            <div className="space-y-2">
+              <OptionButton
+                label="Sim, informar"
+                selected={wantsExtraAverage === true}
+                onClick={() => setWantsExtraAverage(true)}
+              />
+              <OptionButton
+                label="Pular"
+                selected={wantsExtraAverage === false}
+                onClick={() => {
+                  setWantsExtraAverage(false)
+                  setExtraIncome("")
+                }}
+              />
+            </div>
+            {wantsExtraAverage === true ? (
+              <div className="space-y-1.5 pt-1">
+                <Label htmlFor="onboarding-extra-sometimes">Média aproximada</Label>
+                <CurrencyInput
+                  id="onboarding-extra-sometimes"
+                  value={extraIncome}
+                  onChange={setExtraIncome}
+                  placeholder="Opcional"
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {extraFrequency === "monthly" ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="onboarding-extra-monthly">Valor médio da renda extra</Label>
+            <CurrencyInput
+              id="onboarding-extra-monthly"
+              value={extraIncome}
+              onChange={setExtraIncome}
+              placeholder="Freelas, bônus, aluguéis…"
+            />
+          </div>
+        ) : null}
       </div>
 
-      <OnboardingActions onContinue={handleContinue} onSkip={onSkip} />
+      <OnboardingActions
+        onContinue={handleContinue}
+        onSkip={onSkip}
+        continueDisabled={!canContinue}
+        continueLabel="Continuar"
+      />
     </div>
   )
 }

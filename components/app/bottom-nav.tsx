@@ -26,10 +26,19 @@ function isActiveRoute(pathname: string, href: string) {
 export function BottomNav() {
  const pathname = usePathname()
  const [moreOpen, setMoreOpen] = useState(false)
- const { transactions, goals, investments, subscriptions, installments } = useStore()
+ const { transactions, goals, investments, subscriptions, installments, financialProfile } = useStore()
  const nav = useMemo(
-  () => resolveVisibleNav({ transactions, goals, investments, subscriptions, installments }),
-  [transactions, goals, investments, subscriptions, installments],
+  () =>
+   resolveVisibleNav({
+    transactions,
+    goals,
+    investments,
+    subscriptions,
+    installments,
+    objective: financialProfile.objective,
+    profileConfigured: financialProfile.configured,
+   }),
+  [transactions, goals, investments, subscriptions, installments, financialProfile.objective, financialProfile.configured],
  )
 
  const barItems = nav.primary.slice(0, 3)

@@ -38,10 +38,19 @@ function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>) {
 export function MobileSidebarSheet({ handleLogout }: { handleLogout: () => void }) {
  const pathname = usePathname()
  const { mobileOpen, setMobileOpen } = useSidebarState()
- const { transactions, goals, investments, subscriptions, installments } = useStore()
+ const { transactions, goals, investments, subscriptions, installments, financialProfile } = useStore()
  const nav = useMemo(
-  () => resolveVisibleNav({ transactions, goals, investments, subscriptions, installments }),
-  [transactions, goals, investments, subscriptions, installments],
+  () =>
+   resolveVisibleNav({
+    transactions,
+    goals,
+    investments,
+    subscriptions,
+    installments,
+    objective: financialProfile.objective,
+    profileConfigured: financialProfile.configured,
+   }),
+  [transactions, goals, investments, subscriptions, installments, financialProfile.objective, financialProfile.configured],
  )
 
  return (

@@ -35,7 +35,7 @@ function futureDate(monthsAhead: number, day = 15): string {
 export const EMPTY_FINANCIAL_PROFILE: FinancialProfile = {
   monthlySalary: 0,
   salaryDay: 1,
-  objective: "organizar-salario",
+  objective: "entender-gastos",
   currency: "BRL",
   configured: false,
   expectedExtraIncome: 0,

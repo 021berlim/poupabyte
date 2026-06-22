@@ -33,11 +33,20 @@ function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>) {
 export function AppSidebar() {
  const pathname = usePathname()
  const router = useRouter()
- const { logout, transactions, goals, investments, subscriptions, installments } = useStore()
+ const { logout, transactions, goals, investments, subscriptions, installments, financialProfile } = useStore()
  const { isCollapsed } = useSidebarState()
  const nav = useMemo(
-  () => resolveVisibleNav({ transactions, goals, investments, subscriptions, installments }),
-  [transactions, goals, investments, subscriptions, installments],
+  () =>
+   resolveVisibleNav({
+    transactions,
+    goals,
+    investments,
+    subscriptions,
+    installments,
+    objective: financialProfile.objective,
+    profileConfigured: financialProfile.configured,
+   }),
+  [transactions, goals, investments, subscriptions, installments, financialProfile.objective, financialProfile.configured],
  )
 
  function handleLogout() {

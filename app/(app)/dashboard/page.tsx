@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils"
 import { EditIncomeDialog } from "@/components/app/edit-income-dialog"
 import { Button } from "@/components/ui/button"
 import { scaleIn } from "@/src/lib/animations"
+import { PersonalizedWelcome } from "@/components/dashboard/personalized-welcome"
+import { getDashboardFocus } from "@/lib/onboarding-personalization"
 import { buildDashboardSuggestions } from "@/lib/ui-suggestions"
 import { AlertTriangle, ArrowRight, ChevronDown, Eye, EyeOff, Pencil, Sparkles, Target } from "lucide-react"
 
@@ -53,6 +55,12 @@ export default function DashboardPage() {
  const [incomeDialogOpen, setIncomeDialogOpen] = useState(false)
  const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
  const [detailsOpen, setDetailsOpen] = useState(false)
+ const [pennyAnalysisOpen, setPennyAnalysisOpen] = useState(false)
+
+ const dashboardFocus = useMemo(
+  () => getDashboardFocus(financialProfile.objective, financialProfile.budgetWeight),
+  [financialProfile.objective, financialProfile.budgetWeight],
+ )
 
  const monthHistory = useMemo(
   () => monthCommitmentHistory(financialProfile, transactions, goals, subscriptions, installments, limits, 6),
@@ -89,20 +97,22 @@ export default function DashboardPage() {
 
  const suggestions = useMemo(
   () =>
-   pendingReview > 0
-    ? []
-    : buildDashboardSuggestions(
-       transactions,
-       financialProfile,
-       goals,
-       limits,
-       subscriptions,
-       installments,
-       userCategories,
-       hiddenSystemCategories,
-      ),
-  [transactions, financialProfile, goals, limits, subscriptions, installments, userCategories, hiddenSystemCategories, pendingReview],
+   buildDashboardSuggestions(
+    transactions,
+    financialProfile,
+    goals,
+    limits,
+    subscriptions,
+    installments,
+    userCategories,
+    hiddenSystemCategories,
+   ),
+  [transactions, financialProfile, goals, limits, subscriptions, installments, userCategories, hiddenSystemCategories],
  )
+
+ const showGoalsSection = upcomingGoals.length > 0
+ const showRecentTransactions =
+  recentTransactions.length > 0 && (!dashboardFocus.showGoalsFirst || upcomingGoals.length === 0)
 
  const topAlert = useMemo(() => {
   if (pendingReview > 0) {
@@ -158,6 +168,8 @@ export default function DashboardPage() {
 
  return (
   <div className="-mt-16 min-w-0 space-y-[clamp(1.5rem,4vw,2.5rem)] pt-20 md:mt-0 md:pt-0">
+   <PersonalizedWelcome profile={financialProfile} onAskPenny={() => setPennyAnalysisOpen(true)} />
+
    <section className="space-y-5">
     <AnimatedSection as="div" className="md:hidden">
      <h1 className="flex min-h-10 items-center text-2xl font-extrabold tracking-tight text-balance">Visão geral</h1>
@@ -233,7 +245,9 @@ export default function DashboardPage() {
         </div>
        )}
        <p className="mt-2 text-sm font-medium text-white/55">
-        Ainda deve sobrar {formatCurrency(activePlanning.projectedSavings)}.
+        {dashboardFocus.showReserveSplit && financialProfile.monthlyReserve > 0
+          ? `Reserva sugerida: ${formatCurrency(financialProfile.monthlyReserve)} · disponível ${formatCurrency(displayValue)}`
+          : `Ainda deve sobrar ${formatCurrency(activePlanning.projectedSavings)}.`}
        </p>
       </div>
      </div>
@@ -303,29 +317,57 @@ export default function DashboardPage() {
     </AnimatedSection>
    </section>
 
-   {suggestions.length > 0 ? (
+   {pennyAnalysisOpen && suggestions.length > 0 ? (
     <section className="flex min-w-0 flex-col">
      <SectionHeading
-      eyebrow="Dica"
-      title="Sugestão do mês"
-      action={<Link href={ROUTES.assistant} className="text-sm font-bold text-primary hover:underline">Perguntar à P.E.N.N.Y.</Link>}
+      eyebrow="Penny"
+      title="Análise personalizada"
+      action={<Link href={ROUTES.assistant} className="text-sm font-bold text-primary hover:underline">Abrir assistente</Link>}
      />
      <div className="app-list-section border-t">
-      <div className="flex min-h-[5.5rem] items-start gap-3 px-1 py-3.5">
-       <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <Sparkles className="h-4 w-4" />
-       </span>
-       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold">{suggestions[0].title}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{suggestions[0].hint}</p>
-       </div>
-      </div>
+      <ul className="divide-y">
+       {suggestions.map((item) => (
+        <li key={item.id} className="flex min-h-[4.5rem] items-start gap-3 px-1 py-3.5">
+         <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Sparkles className="h-4 w-4" />
+         </span>
+         <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold">{item.title}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{item.hint}</p>
+         </div>
+        </li>
+       ))}
+      </ul>
      </div>
     </section>
    ) : null}
 
-   <div className={cn("grid min-w-0 items-stretch gap-8", upcomingGoals.length > 0 && "lg:grid-cols-2")}>
-    {upcomingGoals.length > 0 ? (
+   {dashboardFocus.showLimitsProminent && limitAlerts.length > 0 ? (
+    <section className="flex min-w-0 flex-col">
+     <SectionHeading
+      eyebrow="Limites"
+      title="Orçamentos em atenção"
+      action={<Link href={ROUTES.limits} className="text-sm font-bold text-primary hover:underline">Ver limites</Link>}
+     />
+     <div className="app-list-section border-t">
+      <ul className="divide-y">
+       {limitAlerts.slice(0, 3).map((item) => (
+        <li key={item.limit.id}>
+         <InsightListRow
+          href={ROUTES.limits}
+          accent="primary"
+          title={getCategory(item.limit.category).label}
+          subtitle={`${Math.round(item.percent)}% do limite utilizado`}
+         />
+        </li>
+       ))}
+      </ul>
+     </div>
+    </section>
+   ) : null}
+
+   <div className={cn("grid min-w-0 items-stretch gap-8", showGoalsSection && showRecentTransactions && "lg:grid-cols-2")}>
+    {showGoalsSection ? (
      <section className="flex min-w-0 flex-col">
       <SectionHeading
        eyebrow="Objetivos"
@@ -352,7 +394,7 @@ export default function DashboardPage() {
      </section>
     ) : null}
 
-    {recentTransactions.length > 0 ? (
+    {showRecentTransactions ? (
      <section className="flex min-w-0 flex-col">
       <SectionHeading
        eyebrow="Movimentações"

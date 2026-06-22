@@ -96,6 +96,19 @@ export type FinancialObjective =
   | "planejar-metas"
   | "entender-gastos"
 
+/** Frequência de renda extra coletada no onboarding */
+export type ExtraIncomeFrequency = "none" | "sometimes" | "monthly"
+
+/** Maior peso do orçamento — influencia limites e sugestões iniciais */
+export type BudgetWeight =
+  | "alimentacao"
+  | "transporte"
+  | "moradia"
+  | "cartao-credito"
+  | "dividas"
+  | "lazer"
+  | "nao-sei"
+
 export type SalaryEffectiveScope = "current-month" | "next-month" | "all-months"
 
 export interface SalarySnapshot {
@@ -116,6 +129,8 @@ export interface FinancialProfile {
   expectedExtraIncome: number
   monthlyReserve: number
   salaryHistory: SalarySnapshot[]
+  extraIncomeFrequency?: ExtraIncomeFrequency
+  budgetWeight?: BudgetWeight
 }
 
 export interface ImportSummary {

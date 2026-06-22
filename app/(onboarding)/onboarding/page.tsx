@@ -6,13 +6,16 @@ import { OnboardingGuard } from "@/components/onboarding-guard"
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress"
 import { OnboardingShell } from "@/components/onboarding/onboarding-shell"
 import { IncomeStep } from "@/components/onboarding/steps/income-step"
-import { CategoriesStep, applyCategoryStepData } from "@/components/onboarding/steps/categories-step"
-import { ImportStep } from "@/components/onboarding/steps/import-step"
+import { FinancialMomentStep } from "@/components/onboarding/steps/financial-moment-step"
+import { BudgetWeightStep } from "@/components/onboarding/steps/budget-weight-step"
+import { FirstGoalStep } from "@/components/onboarding/steps/first-goal-step"
 import { APP_HOME } from "@/lib/routes"
+import type { OnboardingAnswers } from "@/lib/onboarding-personalization"
+import type { BudgetWeight, FinancialObjective } from "@/lib/types"
 import { useStore } from "@/lib/store"
 import { toast } from "sonner"
 
-const TOTAL_STEPS = 3
+const TOTAL_STEPS = 4
 
 export default function OnboardingPage() {
   return (
@@ -24,25 +27,32 @@ export default function OnboardingPage() {
 
 function OnboardingWizard() {
   const router = useRouter()
-  const {
-    saveOnboardingIncome,
-    addUserCategorySilent,
-    showSystemCategory,
-    completeOnboarding,
-  } = useStore()
+  const { finishOnboarding, completeOnboarding } = useStore()
   const [step, setStep] = useState(1)
+  const [answers, setAnswers] = useState<Partial<OnboardingAnswers>>({})
 
-  function finish() {
-    completeOnboarding()
-    toast.success("Configuração inicial concluída!", {
-      description: "Seu dashboard já está pronto para uso.",
+  function finish(goal?: OnboardingAnswers["goal"]) {
+    if (!answers.income || !answers.objective || !answers.budgetWeight) {
+      completeOnboarding()
+      router.replace(APP_HOME)
+      return
+    }
+
+    finishOnboarding({
+      income: answers.income,
+      objective: answers.objective,
+      budgetWeight: answers.budgetWeight,
+      goal,
+    })
+
+    toast.success("Tudo pronto!", {
+      description: "Seu caminho financeiro personalizado está no ar.",
     })
     router.replace(APP_HOME)
   }
 
   function goNext() {
     if (step < TOTAL_STEPS) setStep((current) => current + 1)
-    else finish()
   }
 
   return (
@@ -51,8 +61,8 @@ function OnboardingWizard() {
 
       {step === 1 ? (
         <IncomeStep
-          onContinue={(data) => {
-            if (data) saveOnboardingIncome(data)
+          onContinue={(income) => {
+            setAnswers((current) => ({ ...current, income }))
             goNext()
           }}
           onSkip={goNext}
@@ -60,11 +70,9 @@ function OnboardingWizard() {
       ) : null}
 
       {step === 2 ? (
-        <CategoriesStep
-          onContinue={(data) => {
-            if (data.suggested.length > 0 || data.customNames.length > 0) {
-              applyCategoryStepData(data, addUserCategorySilent, showSystemCategory)
-            }
+        <FinancialMomentStep
+          onContinue={(objective: FinancialObjective) => {
+            setAnswers((current) => ({ ...current, objective }))
             goNext()
           }}
           onSkip={goNext}
@@ -72,8 +80,16 @@ function OnboardingWizard() {
       ) : null}
 
       {step === 3 ? (
-        <ImportStep onContinue={() => finish()} onSkip={finish} />
+        <BudgetWeightStep
+          onContinue={(budgetWeight: BudgetWeight) => {
+            setAnswers((current) => ({ ...current, budgetWeight }))
+            goNext()
+          }}
+          onSkip={goNext}
+        />
       ) : null}
+
+      {step === 4 ? <FirstGoalStep onFinish={finish} /> : null}
     </OnboardingShell>
   )
 }

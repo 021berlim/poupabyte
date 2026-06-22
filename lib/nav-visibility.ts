@@ -1,6 +1,13 @@
 import { NAV_ITEMS, type NavItem } from "@/lib/nav"
 import { ROUTES, type Screen } from "@/lib/routes"
-import type { Goal, Installment, Investment, Subscription, Transaction } from "@/lib/types"
+import type {
+  FinancialObjective,
+  Goal,
+  Installment,
+  Investment,
+  Subscription,
+  Transaction,
+} from "@/lib/types"
 
 export const ALWAYS_PRIMARY_ROUTES: Screen[] = [
   ROUTES.dashboard,
@@ -22,6 +29,20 @@ export interface NavVisibilityData {
   investments: Investment[]
   subscriptions: Subscription[]
   installments: Installment[]
+  objective?: FinancialObjective
+  profileConfigured?: boolean
+}
+
+const OBJECTIVE_PROMOTED_ROUTES: Partial<Record<FinancialObjective, Screen>> = {
+  "entender-gastos": ROUTES.reports,
+  "planejar-metas": ROUTES.goals,
+  "reserva-emergencia": ROUTES.investments,
+  "sair-dividas": ROUTES.cashflow,
+}
+
+function hasObjectivePromotion(href: Screen, data: NavVisibilityData): boolean {
+  if (!data.profileConfigured || !data.objective) return false
+  return OBJECTIVE_PROMOTED_ROUTES[data.objective] === href
 }
 
 export function hasModuleData(href: Screen, data: NavVisibilityData): boolean {
@@ -46,11 +67,15 @@ export function resolveVisibleNav(data: NavVisibilityData) {
     (item): item is NavItem => Boolean(item),
   )
 
-  const promoted = OPTIONAL_ROUTES.filter((href) => hasModuleData(href, data))
+  const promoted = OPTIONAL_ROUTES.filter(
+    (href) => hasModuleData(href, data) || hasObjectivePromotion(href, data),
+  )
     .map((href) => byHref.get(href))
     .filter((item): item is NavItem => Boolean(item))
 
-  const more = OPTIONAL_ROUTES.filter((href) => !hasModuleData(href, data))
+  const more = OPTIONAL_ROUTES.filter(
+    (href) => !hasModuleData(href, data) && !hasObjectivePromotion(href, data),
+  )
     .map((href) => byHref.get(href))
     .filter((item): item is NavItem => Boolean(item))
 

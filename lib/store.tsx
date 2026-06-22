@@ -47,6 +47,7 @@ import {
 } from "./finance"
 import { goalProgress, investmentPerformance, investmentSummary } from "./selectors"
 import { migrateLegacyTransactions } from "./transaction-cash"
+import { applyOnboardingAnswers, type OnboardingAnswers } from "./onboarding-personalization"
 import { toast } from "sonner"
 
 const DATA_KEY = "poupabyte:data"
@@ -110,6 +111,10 @@ type Action =
   | { type: "SHOW_SYSTEM_CATEGORY"; payload: CategoryId }
   | { type: "SET_CATEGORY_RULES"; payload: CategoryRule[] }
   | { type: "COMPLETE_ONBOARDING" }
+  | {
+      type: "FINISH_ONBOARDING"
+      payload: { profile: FinancialProfile; limits: SpendingLimit[]; goal?: Goal }
+    }
   | { type: "SET_FINANCIAL_PROFILE_SILENT"; payload: FinancialProfile }
   | { type: "ADD_USER_CATEGORY_SILENT"; payload: UserCategory }
 
@@ -296,6 +301,24 @@ function reducer(state: FullState, action: Action): FullState {
       return { ...state, categoryRules: action.payload }
     case "COMPLETE_ONBOARDING":
       return { ...state, onboardingCompleted: true }
+    case "FINISH_ONBOARDING": {
+      const mergedLimits = [...state.limits]
+      for (const limit of action.payload.limits) {
+        const limitKey = `${limit.category}:${limit.subcategoryId ?? ""}`
+        const index = mergedLimits.findIndex(
+          (item) => `${item.category}:${item.subcategoryId ?? ""}` === limitKey,
+        )
+        if (index >= 0) mergedLimits[index] = limit
+        else mergedLimits.push(limit)
+      }
+      return {
+        ...state,
+        onboardingCompleted: true,
+        financialProfile: action.payload.profile,
+        limits: mergedLimits,
+        goals: action.payload.goal ? [...state.goals, action.payload.goal] : state.goals,
+      }
+    }
     case "SET_FINANCIAL_PROFILE_SILENT":
       return { ...state, financialProfile: action.payload }
     case "ADD_USER_CATEGORY_SILENT":
@@ -373,6 +396,7 @@ interface StoreContextValue extends FullState {
   showSystemCategory: (id: CategoryId) => void
   learnFromTransaction: (tx: Transaction) => void
   completeOnboarding: () => void
+  finishOnboarding: (answers: OnboardingAnswers) => void
   saveOnboardingIncome: (input: {
     monthlySalary: number
     salaryDay: number
@@ -570,6 +594,8 @@ function normalizeFinancialProfile(profile: unknown): FinancialProfile {
     expectedExtraIncome: finiteNumber(value.expectedExtraIncome, 0),
     monthlyReserve: finiteNumber(value.monthlyReserve, 0),
     salaryHistory: Array.isArray(value.salaryHistory) ? value.salaryHistory : [],
+    extraIncomeFrequency: value.extraIncomeFrequency,
+    budgetWeight: value.budgetWeight,
   })
 }
 
@@ -2051,6 +2077,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "COMPLETE_ONBOARDING" })
   }, [])
 
+  const finishOnboarding = useCallback(
+    (answers: OnboardingAnswers) => {
+      const { profile, limits, goal } = applyOnboardingAnswers(answers, state.financialProfile)
+      dispatch({
+        type: "FINISH_ONBOARDING",
+        payload: {
+          profile,
+          limits,
+          goal: goal ? { ...goal, id: generateId("goal") } : undefined,
+        },
+      })
+    },
+    [state.financialProfile],
+  )
+
   const saveOnboardingIncome = useCallback(
     (input: { monthlySalary: number; salaryDay: number; expectedExtraIncome: number }) => {
       if (!Number.isFinite(input.monthlySalary) || input.monthlySalary <= 0) return
@@ -2127,6 +2168,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       showSystemCategory,
       learnFromTransaction,
       completeOnboarding,
+      finishOnboarding,
       saveOnboardingIncome,
       addUserCategorySilent,
     }),
@@ -2181,6 +2223,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       showSystemCategory,
       learnFromTransaction,
       completeOnboarding,
+      finishOnboarding,
       saveOnboardingIncome,
       addUserCategorySilent,
     ],
