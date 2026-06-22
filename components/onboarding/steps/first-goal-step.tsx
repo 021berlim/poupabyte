@@ -51,6 +51,7 @@ export function FirstGoalStep({
 
   return (
     <OnboardingChoiceLayout
+      step={4}
       title="Quer criar uma meta agora?"
       description="Você pode começar com uma meta simples ou deixar para depois."
       actions={
@@ -64,7 +65,7 @@ export function FirstGoalStep({
         />
       }
     >
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-2">
         <OptionButton
           layout="chip"
           label="Criar uma meta"
@@ -80,22 +81,22 @@ export function FirstGoalStep({
       </div>
 
       {wantsGoal === true ? (
-        <div className="mt-3 space-y-2.5">
-          <div className="space-y-1">
-            <Label htmlFor="onboarding-goal-name" className="text-xs">
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="onboarding-goal-name" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Nome da meta
             </Label>
             <Input
               id="onboarding-goal-name"
-              className="h-10"
+              className="h-11 rounded-xl bg-card"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: reserva, celular, viagem, curso"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="onboarding-goal-target" className="text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="onboarding-goal-target" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Valor desejado
               </Label>
               <CurrencyInput
@@ -103,15 +104,16 @@ export function FirstGoalStep({
                 value={target}
                 onChange={setTarget}
                 placeholder="0,00"
+                className="h-11 rounded-xl bg-card"
               />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="onboarding-goal-deadline" className="text-xs">
+            <div className="space-y-1.5">
+              <Label htmlFor="onboarding-goal-deadline" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Prazo
               </Label>
               <Input
                 id="onboarding-goal-deadline"
-                className="h-10"
+                className="h-11 rounded-xl bg-card"
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}

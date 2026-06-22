@@ -6,6 +6,8 @@ import {
   buildPlanningIncomeBase,
   confirmedImportedExpenses,
   confirmedSalaryIncome,
+  importedStatementInflows,
+  importedStatementOutflows,
   resolveStatementAvailableBalance,
   salaryConfirmedThisMonth,
 } from "./statement-cash"
@@ -66,6 +68,10 @@ export interface MonthlyPlanning {
   statementAvailableBalance: number | null
   importBasedIncome: number
   importBasedExpenses: number
+  /** Entradas exibidas no resumo: todo valor positivo do extrato, sem transferências entre contas. */
+  statementInflows: number
+  /** Saídas exibidas no resumo: todo valor negativo do extrato, sem transferências entre contas. */
+  statementOutflows: number
   statementNet: number
   statementCommittedPercent: number
   pendingObligations: number
@@ -131,6 +137,8 @@ export function buildMonthlyPlanning(
 
   const importBasedIncome = incomeBase.importIncome
   const importBasedExpenses = incomeBase.importExpenses
+  const statementInflows = importedStatementInflows(transactions, ref)
+  const statementOutflows = importedStatementOutflows(transactions, ref)
   const receivedIncome = importBasedIncome
   const monthlyIncome = incomeBase.planningIncome
   const confirmedExpenses = importBasedExpenses
@@ -155,12 +163,12 @@ export function buildMonthlyPlanning(
       : null
 
   const safeToSpend = availableFromStatement ?? availableFromImport
-  const statementNet = importBasedIncome - importBasedExpenses
+  const statementNet = statementInflows - statementOutflows
   const pendingObligations = futureCommitments
   const statementCommittedPercent =
-    importBasedIncome > 0
-      ? Math.min(100, ((importBasedExpenses + pendingObligations) / importBasedIncome) * 100)
-      : pendingObligations > 0
+    statementInflows > 0
+      ? Math.min(100, ((statementOutflows + pendingObligations) / statementInflows) * 100)
+      : statementOutflows > 0 || pendingObligations > 0
         ? 100
         : 0
   const confirmedIncomeBase = salaryConfirmed ? monthlyIncome : importBasedIncome
@@ -209,6 +217,8 @@ export function buildMonthlyPlanning(
     statementAvailableBalance,
     importBasedIncome,
     importBasedExpenses,
+    statementInflows,
+    statementOutflows,
     statementNet,
     statementCommittedPercent,
     pendingObligations,

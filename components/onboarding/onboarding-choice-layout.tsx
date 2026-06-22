@@ -6,19 +6,21 @@ import { OnboardingStepHeader } from "./onboarding-shell"
 export function OnboardingChoiceLayout({
   title,
   description,
+  step,
   children,
   actions,
 }: {
   title: string
   description?: string
+  step?: number
   children: ReactNode
   actions: ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-3">
-      <OnboardingStepHeader title={title} description={description} />
-      <div>{children}</div>
-      <div className="pt-0.5">{actions}</div>
+    <div className="flex flex-col gap-5">
+      <OnboardingStepHeader title={title} description={description} step={step} />
+      <div className="space-y-4">{children}</div>
+      {actions}
     </div>
   )
 }
@@ -31,9 +33,11 @@ export function ChoiceGroup({
   children: ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {label ? (
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/90">
+          {label}
+        </p>
       ) : null}
       {children}
     </div>

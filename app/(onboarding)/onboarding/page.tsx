@@ -55,7 +55,7 @@ function OnboardingWizard() {
   }
 
   return (
-    <OnboardingShell>
+    <OnboardingShell step={step}>
       <OnboardingProgress step={step} total={TOTAL_STEPS} />
 
       {step === 1 ? (

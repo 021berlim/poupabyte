@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 import {
   buildPlanningIncomeBase,
   confirmedImportedIncome,
+  importedStatementInflows,
+  importedStatementOutflows,
   salaryConfirmedThisMonth,
 } from "@/lib/statement-cash"
 import { EMPTY_FINANCIAL_PROFILE } from "@/lib/seed"
@@ -35,6 +37,46 @@ describe("statement cash rules", () => {
     ]
 
     expect(confirmedImportedIncome(transactions, ref)).toBe(120)
+    expect(importedStatementInflows(transactions, ref)).toBe(200)
+  })
+
+  it("exclui transferências entre contas próprias do resumo do extrato", () => {
+    const transactions: Transaction[] = [
+      {
+        id: "in",
+        type: "income",
+        description: "PIX recebido",
+        amount: 300,
+        category: "renda-extra",
+        date: "2026-06-10T12:00:00.000Z",
+        source: "pdf-import",
+        needsReview: false,
+      },
+      {
+        id: "transfer",
+        type: "transfer",
+        description: "PIX entre contas",
+        amount: 300,
+        category: "transferencias",
+        date: "2026-06-11T12:00:00.000Z",
+        source: "pdf-import",
+        needsReview: false,
+      },
+      {
+        id: "out",
+        type: "expense",
+        description: "Compra",
+        amount: 50,
+        category: "alimentacao",
+        date: "2026-06-12T12:00:00.000Z",
+        source: "pdf-import",
+        needsReview: true,
+      },
+    ]
+
+    expect(importedStatementInflows(transactions, ref)).toBe(300)
+    expect(importedStatementOutflows(transactions, ref)).toBe(50)
+    expect(confirmedImportedIncome(transactions, ref)).toBe(300)
   })
 
   it("libera salário no planejamento somente após confirmação", () => {

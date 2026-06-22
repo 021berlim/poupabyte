@@ -17,14 +17,12 @@ import {
 } from "@/lib/onboarding-personalization"
 import type { BusinessSeparation, IncomeType, IncomeVariability } from "@/lib/types"
 import { OnboardingActions } from "../onboarding-actions"
-import { OnboardingStepHeader } from "../onboarding-shell"
+import {
+  OnboardingFieldHelp,
+  OnboardingPennyTip,
+  OnboardingStepHeader,
+} from "../onboarding-shell"
 import { OptionButton } from "../option-button"
-
-function FieldHelp({ children }: { children: string }) {
-  return (
-    <p className="text-xs leading-relaxed text-muted-foreground">{children}</p>
-  )
-}
 
 export function IncomeStep({
   onContinue,
@@ -88,13 +86,14 @@ export function IncomeStep({
   }
 
   return (
-    <div>
+    <div className="space-y-5">
       <OnboardingStepHeader
+        step={1}
         title="Como seu dinheiro entra?"
         description="Isso ajuda a Penny a montar um controle adequado ao seu tipo de renda."
       />
 
-      <div className="mt-5 grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-2">
         {INCOME_TYPE_OPTIONS.map((option) => (
           <OptionButton
             key={option.value}
@@ -107,18 +106,23 @@ export function IncomeStep({
       </div>
 
       {incomeType === "salario-fixo" ? (
-        <div className="mt-5 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income">Valor mensal</Label>
+            <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Valor mensal
+            </Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
               placeholder="0,00"
+              className="h-11 rounded-xl bg-card"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-day">Dia em que você recebe</Label>
+            <Label htmlFor="onboarding-day" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Dia em que você recebe
+            </Label>
             <Input
               id="onboarding-day"
               type="number"
@@ -126,29 +130,33 @@ export function IncomeStep({
               max={31}
               value={salaryDay}
               onChange={(e) => setSalaryDay(e.target.value)}
+              className="h-11 rounded-xl bg-card"
             />
           </div>
-          <FieldHelp>{incomeFieldHelp("salario-fixo")}</FieldHelp>
+          <OnboardingFieldHelp>{incomeFieldHelp("salario-fixo")}</OnboardingFieldHelp>
         </div>
       ) : null}
 
       {incomeType === "autonomo" ? (
-        <div className="mt-5 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income">Média mensal</Label>
+            <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Média mensal
+            </Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
               placeholder="0,00"
+              className="h-11 rounded-xl bg-card"
             />
-            <FieldHelp>{incomeFieldHelp("autonomo")}</FieldHelp>
+            <OnboardingFieldHelp>{incomeFieldHelp("autonomo")}</OnboardingFieldHelp>
           </div>
           <div className="space-y-2">
             <p className="text-sm font-semibold">
               Varia muito? <span className="font-normal text-muted-foreground">opcional</span>
             </p>
-            <div className="grid grid-cols-1 gap-1.5">
+            <div className="grid grid-cols-1 gap-2">
               {INCOME_VARIABILITY_OPTIONS.map((option) => (
                 <OptionButton
                   key={option.value}
@@ -164,22 +172,25 @@ export function IncomeStep({
       ) : null}
 
       {incomeType === "negocio-proprio" ? (
-        <div className="mt-5 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income">Retirada mensal pessoal</Label>
+            <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Retirada mensal pessoal
+            </Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
               placeholder="0,00"
+              className="h-11 rounded-xl bg-card"
             />
-            <FieldHelp>{incomeFieldHelp("negocio-proprio")}</FieldHelp>
+            <OnboardingFieldHelp>{incomeFieldHelp("negocio-proprio")}</OnboardingFieldHelp>
           </div>
           <div className="space-y-2">
             <p className="text-sm font-semibold">
               Separa pessoal e negócio? <span className="font-normal text-muted-foreground">opcional</span>
             </p>
-            <div className="grid grid-cols-1 gap-1.5">
+            <div className="grid grid-cols-1 gap-2">
               {BUSINESS_SEPARATION_OPTIONS.map((option) => (
                 <OptionButton
                   key={option.value}
@@ -195,41 +206,43 @@ export function IncomeStep({
       ) : null}
 
       {incomeType === "renda-variavel" ? (
-        <div className="mt-5 space-y-1.5">
-          <Label htmlFor="onboarding-income">Média aproximada</Label>
+        <div className="space-y-1.5 rounded-2xl border border-border/70 bg-muted/30 p-4">
+          <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Média aproximada
+          </Label>
           <CurrencyInput
             id="onboarding-income"
             value={monthlyIncome}
             onChange={setMonthlyIncome}
             placeholder="0,00"
+            className="h-11 rounded-xl bg-card"
           />
-          <FieldHelp>{incomeFieldHelp("renda-variavel")}</FieldHelp>
+          <OnboardingFieldHelp>{incomeFieldHelp("renda-variavel")}</OnboardingFieldHelp>
         </div>
       ) : null}
 
       {incomeType === "ocasional" ? (
-        <div className="mt-5 space-y-1.5">
-          <Label htmlFor="onboarding-income">Valor aproximado quando recebe</Label>
+        <div className="space-y-1.5 rounded-2xl border border-border/70 bg-muted/30 p-4">
+          <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Valor aproximado quando recebe
+          </Label>
           <CurrencyInput
             id="onboarding-income"
             value={monthlyIncome}
             onChange={setMonthlyIncome}
             placeholder="0,00"
+            className="h-11 rounded-xl bg-card"
           />
-          <FieldHelp>{incomeFieldHelp("ocasional")}</FieldHelp>
+          <OnboardingFieldHelp>{incomeFieldHelp("ocasional")}</OnboardingFieldHelp>
         </div>
       ) : null}
 
       {incomeType === "sem-renda" ? (
-        <p className="mt-5 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-          {incomeFieldHelp("sem-renda")}
-        </p>
+        <OnboardingPennyTip>{incomeFieldHelp("sem-renda")}</OnboardingPennyTip>
       ) : null}
 
       {incomeType && incomeType !== "sem-renda" ? (
-        <p className="mt-4 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-          {pennyIncomeMessage(incomeType)}
-        </p>
+        <OnboardingPennyTip>{pennyIncomeMessage(incomeType)}</OnboardingPennyTip>
       ) : null}
 
       <OnboardingActions

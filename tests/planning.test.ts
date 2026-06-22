@@ -52,6 +52,8 @@ describe("monthly planning income", () => {
 
     expect(planning.safeToSpend).toBe(0)
     expect(planning.importBasedIncome).toBe(0)
+    expect(planning.statementInflows).toBe(1.8)
+    expect(planning.statementOutflows).toBe(50)
   })
 
   it("prioriza saldo disponível informado no extrato", () => {

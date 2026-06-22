@@ -12,6 +12,31 @@ export function isImportedTransaction(tx: Transaction): boolean {
   return tx.source === "pdf-import"
 }
 
+/** Transferência entre contas próprias — o usuário sinaliza no lançamento. */
+export function isOwnAccountTransfer(tx: Pick<Transaction, "type">): boolean {
+  return tx.type === "transfer"
+}
+
+export function importedStatementTransactions(transactions: Transaction[], ref = new Date()): Transaction[] {
+  return transactions.filter(
+    (tx) => isImportedTransaction(tx) && isSameMonth(tx.date, ref) && !isOwnAccountTransfer(tx),
+  )
+}
+
+/** Entradas do extrato: valores positivos importados (tipo income), inclusive pendentes de revisão. */
+export function importedStatementInflows(transactions: Transaction[], ref = new Date()): number {
+  return importedStatementTransactions(transactions, ref)
+    .filter((tx) => tx.type === "income")
+    .reduce((acc, tx) => acc + tx.amount, 0)
+}
+
+/** Saídas do extrato: valores negativos importados (tipo expense), inclusive pendentes de revisão. */
+export function importedStatementOutflows(transactions: Transaction[], ref = new Date()): number {
+  return importedStatementTransactions(transactions, ref)
+    .filter((tx) => tx.type === "expense")
+    .reduce((acc, tx) => acc + tx.amount, 0)
+}
+
 export function isSalaryTransaction(tx: Pick<Transaction, "type" | "category" | "description">): boolean {
   if (tx.type !== "income") return false
   const desc = tx.description.toLowerCase()
@@ -20,7 +45,11 @@ export function isSalaryTransaction(tx: Pick<Transaction, "type" | "category" | 
 
 export function confirmedImportedTransactions(transactions: Transaction[], ref = new Date()): Transaction[] {
   return transactions.filter(
-    (tx) => isImportedTransaction(tx) && isConfirmedTransaction(tx) && isSameMonth(tx.date, ref),
+    (tx) =>
+      isImportedTransaction(tx) &&
+      isConfirmedTransaction(tx) &&
+      isSameMonth(tx.date, ref) &&
+      !isOwnAccountTransfer(tx),
   )
 }
 

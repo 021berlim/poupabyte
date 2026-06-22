@@ -25,6 +25,7 @@ export function FinancialMomentStep({
 
   return (
     <OnboardingChoiceLayout
+      step={2}
       title="O que você quer organizar primeiro?"
       description="A Penny vai usar essa escolha para destacar as funções mais úteis para você."
       actions={
@@ -35,7 +36,7 @@ export function FinancialMomentStep({
         />
       }
     >
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {FINANCIAL_MOMENT_LAYOUT.map((row, rowIndex) => (
           <div
             key={rowIndex}

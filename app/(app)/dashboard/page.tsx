@@ -159,27 +159,27 @@ export default function DashboardPage() {
     subtitle: `Saldo no extrato: ${formatCurrency(activePlanning.statementAvailableBalance)}`,
    }
   }
-  if (activePlanning.importBasedIncome === 0 && activePlanning.importBasedExpenses === 0) {
+  if (activePlanning.statementInflows === 0 && activePlanning.statementOutflows === 0) {
    return {
     subtitle: "Importe o extrato para ver entradas e saídas",
    }
   }
   return {
-   subtitle: `Entrou ${formatCurrency(activePlanning.importBasedIncome)} · saiu ${formatCurrency(activePlanning.importBasedExpenses)}`,
+   subtitle: `Entrou ${formatCurrency(activePlanning.statementInflows)} · saiu ${formatCurrency(activePlanning.statementOutflows)}`,
   }
  }, [activePlanning])
 
  const heroMetrics = [
   {
    label: "Entrou",
-   value: formatCurrency(activePlanning.importBasedIncome),
-   detail: "confirmado no extrato",
+   value: formatCurrency(activePlanning.statementInflows),
+   detail: "valores positivos do extrato",
    tone: "text-emerald-300",
   },
   {
    label: "Saiu",
-   value: formatCurrency(activePlanning.importBasedExpenses),
-   detail: "confirmado no extrato",
+   value: formatCurrency(activePlanning.statementOutflows),
+   detail: "valores negativos do extrato",
    tone: "text-red-300",
   },
   {
