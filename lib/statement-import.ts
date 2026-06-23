@@ -1,4 +1,4 @@
-import { suggestCategory } from "./auto-categorize"
+import { suggestImportCategory } from "./auto-categorize"
 import type { CategoryContext } from "./category-system"
 import {
   parseInterStatementStructured,
@@ -120,7 +120,7 @@ export function suggestStatementCategory(
     userCategories: ctx.userCategories ?? [],
     hiddenSystemCategories: ctx.hiddenSystemCategories ?? [],
   }
-  const result = suggestCategory(description, type, categoryCtx, ctx.categoryRules ?? [])
+  const result = suggestImportCategory(description, type, categoryCtx, ctx.categoryRules ?? [])
   return {
     category: result.category,
     subcategoryId: result.subcategoryId,

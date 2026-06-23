@@ -166,6 +166,19 @@ export function suggestCategory(
   return { category: "nao-categorizado", confidence: 0.35, source: "default" }
 }
 
+export function suggestImportCategory(
+  description: string,
+  type: TransactionType,
+  ctx: CategoryContext,
+  rules: CategoryRule[] = [],
+): CategorizationResult {
+  const result = suggestCategory(description, type, ctx, rules)
+  if (type === "expense" && result.category === "nao-categorizado") {
+    return { ...result, category: "outros-gastos", confidence: Math.max(result.confidence, 0.6) }
+  }
+  return result
+}
+
 export function formatCategoryLabel(
   categoryId: CategoryRef,
   subcategoryId: `uc_${string}` | undefined,

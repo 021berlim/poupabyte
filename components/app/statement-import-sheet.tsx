@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { METRICS, TOAST, TRANSACTION_TYPES } from "@/lib/copy"
-import { suggestCategory } from "@/lib/auto-categorize"
+import { suggestImportCategory } from "@/lib/auto-categorize"
 import type { CategoryContext } from "@/lib/category-system"
 import { CATEGORY_LIST, getCategory } from "@/lib/categories"
 import { formatCurrency } from "@/lib/format"
@@ -337,7 +337,7 @@ export function StatementImportSheet() {
       const categoryCtx: CategoryContext = { userCategories, hiddenSystemCategories }
       const reviewItems = result.transactions.map((transaction, index) => {
         const duplicate = isExistingDuplicate(transaction, transactions)
-        const suggestion = suggestCategory(transaction.description, transaction.type, categoryCtx, categoryRules)
+        const suggestion = suggestImportCategory(transaction.description, transaction.type, categoryCtx, categoryRules)
         return {
           ...transaction,
           category: suggestion.category,

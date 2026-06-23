@@ -4,7 +4,7 @@ import { useRef, useState, type DragEvent } from "react"
 import { AlertCircle, CheckCircle2, FileText, UploadCloud } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { suggestCategory } from "@/lib/auto-categorize"
+import { suggestImportCategory } from "@/lib/auto-categorize"
 import type { CategoryContext } from "@/lib/category-system"
 import { apiUrl } from "@/lib/api-url"
 import { parseCsvStatement, parseOfxStatement } from "@/lib/parse-tabular-statement"
@@ -103,7 +103,7 @@ export function ImportStep({
       throw new Error(result.message ?? "Não foi possível processar este extrato.")
     }
     return result.transactions.map((transaction) => {
-      const suggestion = suggestCategory(transaction.description, transaction.type, categoryCtx, categoryRules)
+      const suggestion = suggestImportCategory(transaction.description, transaction.type, categoryCtx, categoryRules)
       return {
         ...transaction,
         category: suggestion.category,
