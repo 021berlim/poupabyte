@@ -32,7 +32,10 @@ import { readPennyCreateTransactionsEnabled } from "@/lib/penny-preferences";
 import { financialHealthScore } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-url";
-import { buildPennyStarterSuggestions, PENNY_STARTER_SUGGESTIONS } from "@/lib/ui-suggestions";
+import {
+  buildPennyStarterSuggestions,
+  PENNY_STARTER_SUGGESTIONS,
+} from "@/lib/ui-suggestions";
 import { EMPTY_STATES, PAGE_SUBTITLES, TOAST } from "@/lib/copy";
 import { SendHorizontal, Sparkles, Square } from "lucide-react";
 import { useRipple } from "@/hooks/use-ripple";
@@ -87,7 +90,9 @@ function SuggestionChips({
         <Sparkles className="h-5 w-5" aria-hidden="true" />
       </span>
       <div className="space-y-1">
-        <p className="font-semibold text-foreground">{EMPTY_STATES.penny.title}</p>
+        <p className="font-semibold text-foreground">
+          {EMPTY_STATES.penny.title}
+        </p>
         <p className="text-sm text-muted-foreground">
           {EMPTY_STATES.penny.description}
         </p>
@@ -328,7 +333,8 @@ export default function AssistantPage() {
   );
 
   useEffect(() => {
-    const syncPreference = () => setPennyCreateEnabled(readPennyCreateTransactionsEnabled());
+    const syncPreference = () =>
+      setPennyCreateEnabled(readPennyCreateTransactionsEnabled());
     window.addEventListener("storage", syncPreference);
     window.addEventListener("focus", syncPreference);
     return () => {
@@ -350,10 +356,20 @@ export default function AssistantPage() {
         subscriptions,
         installments,
       ),
-    [transactions, financialProfile, goals, limits, subscriptions, installments],
+    [
+      transactions,
+      financialProfile,
+      goals,
+      limits,
+      subscriptions,
+      installments,
+    ],
   );
   const pennyMoreSuggestions = useMemo(
-    () => PENNY_STARTER_SUGGESTIONS.filter((item) => !pennySuggestions.includes(item)),
+    () =>
+      PENNY_STARTER_SUGGESTIONS.filter(
+        (item) => !pennySuggestions.includes(item),
+      ),
     [pennySuggestions],
   );
 
@@ -374,7 +390,8 @@ export default function AssistantPage() {
       const content = text.trim();
       if (!content || isStreaming) return;
 
-      const activePendingPlan = pendingWritePlan ?? readPendingAssistedWritePlan();
+      const activePendingPlan =
+        pendingWritePlan ?? readPendingAssistedWritePlan();
 
       if (isExplicitConfirmation(content) && activePendingPlan) {
         const userMessage: ChatMessage = {
@@ -394,7 +411,10 @@ export default function AssistantPage() {
           {
             id: `assistant-${Date.now() + 1}`,
             role: "assistant",
-            content: formatAssistedWriteSuccess(activePendingPlan, updatedCount),
+            content: formatAssistedWriteSuccess(
+              activePendingPlan,
+              updatedCount,
+            ),
           },
         ]);
         setInput("");
@@ -447,7 +467,9 @@ export default function AssistantPage() {
       });
       const pendingAlertKeys = knowledgeContext.routing.alertKeys;
       const assistedPlan = (
-        knowledgeContext.data["assisted-write"] as { plan?: AssistedWritePlan | null } | undefined
+        knowledgeContext.data["assisted-write"] as
+          | { plan?: AssistedWritePlan | null }
+          | undefined
       )?.plan;
       if (
         assistedPlan?.transactionIds?.length ||
@@ -488,10 +510,7 @@ export default function AssistantPage() {
           const payload = (await response.json().catch(() => null)) as {
             error?: string;
           } | null;
-          throw new Error(
-            payload?.error ||
-              TOAST.error.pennyResponse,
-          );
+          throw new Error(payload?.error || TOAST.error.pennyResponse);
         }
         if (!response.body)
           throw new Error("O servidor não iniciou o fluxo de resposta.");
@@ -560,10 +579,10 @@ export default function AssistantPage() {
                   const pause = /[.!?]\s?$/.test(typedPart)
                     ? 72
                     : /[,;:]\s?$/.test(typedPart)
-                      ? 42
-                      : typedPart.includes("\n")
-                        ? 52
-                        : 18;
+                    ? 42
+                    : typedPart.includes("\n")
+                    ? 52
+                    : 18;
                   await new Promise((resolve) =>
                     window.setTimeout(resolve, pause),
                   );
@@ -608,9 +627,7 @@ export default function AssistantPage() {
             current.filter((message) => message.id !== assistantId),
           );
           setError(
-            caught instanceof Error
-              ? caught.message
-              : TOAST.error.pennyQuery,
+            caught instanceof Error ? caught.message : TOAST.error.pennyQuery,
           );
         }
       } finally {
@@ -648,10 +665,7 @@ export default function AssistantPage() {
       data-assistant-page
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
     >
-      <PageHeader
-        title="Penny"
-        subtitle={PAGE_SUBTITLES.assistant}
-      />
+      <PageHeader title="Penny" subtitle={PAGE_SUBTITLES.assistant} />
 
       <div className="flex min-h-0 flex-1 flex-col pt-4 md:pt-0">
         <div className="shrink-0 pb-4 md:hidden">
@@ -731,7 +745,8 @@ export default function AssistantPage() {
               )}
             </form>
             <p className="pt-2 text-center text-[11px] leading-4 text-muted-foreground">
-              Penny organiza e cria lançamentos com sua autorização (Minha conta), e sempre confirma antes de agir.
+              A Penny pode cometer erros. Por isso, lembre-se de conferir
+              informações relevantes.
             </p>
           </div>
         </footer>
