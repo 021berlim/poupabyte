@@ -37,9 +37,6 @@
   --success: #16a34a;
   --success-foreground: #ffffff;
 
-  --warning: #d97706;
-  --warning-foreground: #ffffff;
-
   --border: #e4e8ef;
   --input: #e4e8ef;
   --ring: #c72c3b;
@@ -89,9 +86,6 @@
 
   --success: #22c55e;
   --success-foreground: #ffffff;
-
-  --warning: #f2a93b;
-  --warning-foreground: #1a1a1d;
 
   --border: #3f4147;
   --input: #383a40;
@@ -143,8 +137,6 @@ html[data-sidebar-state="collapsed"] {
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -880,16 +872,6 @@ html body[data-scroll-locked] {
     transition-duration: 240ms !important;
     transition-property: transform, opacity !important;
   }
-}
-
-html[data-onboarding="true"] {
-  --app-sidebar-width: 0px;
-}
-
-html[data-onboarding="true"] [data-app-sidebar="desktop"],
-html[data-onboarding="true"] .app-sidebar-nav,
-html[data-onboarding="true"] .bottom-nav {
-  display: none !important;
 }
 
 @media (min-width: 1481px) {

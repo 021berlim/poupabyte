@@ -2,9 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { HeroStat } from "@/components/app/hero-stat"
 import { InsightListRow } from "@/components/app/insight-list-row"
-import { PullToRefresh } from "@/components/app/pull-to-refresh"
 import { SectionHeading } from "@/components/app/section-heading"
 import { AnimatedSection } from "@/components/motion/animated-section"
 import { TransactionItem } from "@/components/app/transaction-item"
@@ -20,11 +18,12 @@ import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { EditIncomeDialog } from "@/components/app/edit-income-dialog"
 import { Button } from "@/components/ui/button"
+import { scaleIn } from "@/src/lib/animations"
 import { PersonalizedWelcome } from "@/components/dashboard/personalized-welcome"
 import { getDashboardFocus } from "@/lib/onboarding-personalization"
+import { buildDashboardSuggestions } from "@/lib/ui-suggestions"
 import { ALERTS } from "@/lib/copy"
-import { AlertTriangle, ArrowRight, ChevronDown, Eye, EyeOff, Pencil, ShieldAlert, Target } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { AlertTriangle, ArrowRight, ChevronDown, Eye, EyeOff, Pencil, ShieldAlert, Sparkles, Target } from "lucide-react"
 
 function monthCommitmentHistory(
   profile: ReturnType<typeof useStore>["financialProfile"],
@@ -53,12 +52,12 @@ function monthCommitmentHistory(
 }
 
 export default function DashboardPage() {
- const router = useRouter()
- const { financialProfile, transactions, goals, limits, subscriptions, installments, lastImport } = useStore()
+ const { financialProfile, transactions, goals, limits, subscriptions, installments, userCategories, hiddenSystemCategories, lastImport } = useStore()
  const [balanceVisible, setBalanceVisible] = useState(true)
  const [incomeDialogOpen, setIncomeDialogOpen] = useState(false)
  const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
  const [detailsOpen, setDetailsOpen] = useState(false)
+ const [pennyAnalysisOpen, setPennyAnalysisOpen] = useState(false)
 
  const dashboardFocus = useMemo(
   () => getDashboardFocus(financialProfile.objective, financialProfile.budgetWeight, financialProfile.incomeType),
@@ -98,6 +97,21 @@ export default function DashboardPage() {
   .sort((a, b) => new Date(a.goal.deadline).getTime() - new Date(b.goal.deadline).getTime())
   .slice(0, 3)
 
+ const suggestions = useMemo(
+  () =>
+   buildDashboardSuggestions(
+    transactions,
+    financialProfile,
+    goals,
+    limits,
+    subscriptions,
+    installments,
+    userCategories,
+    hiddenSystemCategories,
+   ),
+  [transactions, financialProfile, goals, limits, subscriptions, installments, userCategories, hiddenSystemCategories],
+ )
+
  const showGoalsSection = upcomingGoals.length > 0
  const showRecentTransactions =
   recentTransactions.length > 0 && (!dashboardFocus.showGoalsFirst || upcomingGoals.length === 0)
@@ -107,7 +121,7 @@ export default function DashboardPage() {
    return {
     href: ROUTES.transactions,
     title: ALERTS.reviewTransactions,
-    subtitle: `${pendingReview} esperando revisão. Confirme em lote por categoria.`,
+    subtitle: `${pendingReview} ${pendingReview === 1 ? "lançamento precisa" : "lançamentos precisam"} de confirmação`,
    }
   }
   if (limitAlerts.length > 0) {
@@ -139,24 +153,21 @@ export default function DashboardPage() {
 
  const hasUnpaidBills = activePlanning.pendingFixedExpenses > 0
 
- const balanceCaption = useMemo(() => {
-  if (activePlanning.statementAvailableBalance === null) {
-   if (activePlanning.statementInflows === 0 && activePlanning.statementOutflows === 0) {
-    return "Importe o extrato para ver entradas e saídas"
+ const incomeContext = useMemo(() => {
+  if (activePlanning.statementAvailableBalance !== null) {
+   return {
+    subtitle: `Saldo no extrato: ${formatCurrency(activePlanning.statementAvailableBalance)}`,
    }
-   return "Baseado nos lançamentos do mês"
   }
-  if (dashboardFocus.showReserveSplit && financialProfile.monthlyReserve > 0) {
-   return `Reserva: ${formatCurrency(financialProfile.monthlyReserve)} · livre ${formatCurrency(displayValue)}`
+  if (activePlanning.statementInflows === 0 && activePlanning.statementOutflows === 0) {
+   return {
+    subtitle: "Importe o extrato para ver entradas e saídas",
+   }
   }
-  if (hasUnpaidBills && displayValue === 0) {
-   return "Contas pendentes — nada livre no extrato"
+  return {
+   subtitle: `Entrou ${formatCurrency(activePlanning.statementInflows)} · saiu ${formatCurrency(activePlanning.statementOutflows)}`,
   }
-  if (activePlanning.pendingObligations > 0) {
-   return "Após saídas e compromissos do mês"
-  }
-  return "Baseado no extrato de hoje"
- }, [activePlanning, dashboardFocus.showReserveSplit, financialProfile.monthlyReserve, displayValue, hasUnpaidBills])
+ }, [activePlanning])
 
  const heroMetrics = [
   {
@@ -195,11 +206,14 @@ export default function DashboardPage() {
  ]
 
  return (
-  <PullToRefresh onRefresh={() => router.refresh()}>
-  <div className="min-w-0 space-y-[clamp(1rem,3vw,1.5rem)]">
-   <PersonalizedWelcome profile={financialProfile} limitsCount={limits.length} />
+  <div className="-mt-16 min-w-0 space-y-[clamp(1.5rem,4vw,2.5rem)] pt-20 md:mt-0 md:pt-0">
+   <PersonalizedWelcome profile={financialProfile} onAskPenny={() => setPennyAnalysisOpen(true)} />
 
-   <section className="space-y-4">
+   <section className="space-y-5">
+    <AnimatedSection as="div" className="md:hidden">
+     <h1 className="flex min-h-10 items-center text-2xl font-extrabold tracking-tight text-balance">Início</h1>
+    </AnimatedSection>
+
     {topAlert ? (
      <AnimatedSection as="div" delay={0.02}>
       <InsightListRow
@@ -216,34 +230,47 @@ export default function DashboardPage() {
      </AnimatedSection>
     ) : null}
 
-    <AnimatedSection as="div" delay={0.04}>
-     <HeroStat
-      title="Saldo disponível"
-      caption={balanceCaption}
-      aside={
-       <div className="flex shrink-0 items-center gap-2">
-        <Button
-         type="button"
-         variant="ghost"
-         size="sm"
-         className="h-8 rounded-xl bg-white/10 px-2.5 text-xs font-semibold text-white hover:bg-white/15 hover:text-white"
-         onClick={() => setIncomeDialogOpen(true)}
-        >
-         <Pencil className="h-3.5 w-3.5" />
-         Editar renda
-        </Button>
-        <button
-         type="button"
-         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white/70 outline-none transition-colors hover:bg-white/15 focus-visible:ring-[3px] focus-visible:ring-white/25"
-         aria-label={balanceVisible ? "Ocultar valores" : "Mostrar valores"}
-         onClick={() => setBalanceVisible((visible) => !visible)}
-        >
-         {balanceVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-        </button>
-       </div>
-      }
-      value={
-       balanceVisible ? (
+    <AnimatedSection
+     as="div"
+     variants={scaleIn}
+     delay={0.04}
+     className="flex min-h-[clamp(12rem,34svh,15rem)] min-w-0 flex-col overflow-hidden rounded-[clamp(1rem,3vw,1.5rem)] bg-[#194b36] p-[clamp(1rem,3vw,1.5rem)] text-white dark:bg-[#143a2b]"
+    >
+     <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+       <p className="text-xs font-bold uppercase tracking-wide text-white/45">Resumo do mês</p>
+       <p className="mt-1 text-xl font-extrabold leading-none tracking-tight text-white sm:text-2xl">
+        Saldo disponível
+       </p>
+       <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
+        {incomeContext.subtitle}
+       </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+       <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 rounded-xl bg-white/10 px-2.5 text-xs font-semibold text-white hover:bg-white/15 hover:text-white"
+        onClick={() => setIncomeDialogOpen(true)}
+       >
+        <Pencil className="h-3.5 w-3.5" />
+        Editar renda
+       </Button>
+       <button
+        type="button"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white/70 outline-none transition-colors hover:bg-white/15 focus-visible:ring-[3px] focus-visible:ring-white/25"
+        aria-label={balanceVisible ? "Ocultar valores" : "Mostrar valores"}
+        onClick={() => setBalanceVisible((visible) => !visible)}
+       >
+        {balanceVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+       </button>
+      </div>
+     </div>
+
+     <div className="flex flex-1 items-center py-4">
+      <div className="min-w-0">
+       {balanceVisible ? (
         <p className="max-w-full text-[clamp(2.5rem,12vw,4.75rem)] font-extrabold leading-none tracking-tight tabular-nums">
          {formatCurrency(displayValue)}
         </p>
@@ -253,9 +280,19 @@ export default function DashboardPage() {
           <span key={index} className="size-[clamp(0.75rem,3vw,1rem)] rounded-2xl bg-white" />
          ))}
         </div>
-       )
-      }
-     >
+       )}
+       <p className="mt-2 text-sm font-medium text-white/55">
+        {dashboardFocus.showReserveSplit && financialProfile.monthlyReserve > 0
+          ? `Reserva: ${formatCurrency(financialProfile.monthlyReserve)} · livre ${formatCurrency(displayValue)}`
+          : hasUnpaidBills && displayValue === 0
+            ? "Contas pendentes — nada livre no extrato"
+            : activePlanning.pendingObligations > 0
+              ? `Sobrou ${formatCurrency(displayValue)} após saídas e compromissos`
+              : `Sobrou ${formatCurrency(displayValue)} no extrato`}
+       </p>
+      </div>
+     </div>
+
      <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
       <CollapsibleTrigger asChild>
        <button
@@ -318,9 +355,33 @@ export default function DashboardPage() {
        </dl>
       </CollapsibleContent>
      </Collapsible>
-     </HeroStat>
     </AnimatedSection>
    </section>
+
+   {pennyAnalysisOpen && suggestions.length > 0 ? (
+    <section className="flex min-w-0 flex-col">
+     <SectionHeading
+      eyebrow="Penny"
+      title="Dicas para você"
+      action={<Link href={ROUTES.assistant} className="text-sm font-bold text-primary hover:underline">Abrir assistente</Link>}
+     />
+     <div className="app-list-section border-t">
+      <ul className="divide-y">
+       {suggestions.map((item) => (
+        <li key={item.id} className="flex min-h-[4.5rem] items-start gap-3 px-1 py-3.5">
+         <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Sparkles className="h-4 w-4" />
+         </span>
+         <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold">{item.title}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{item.hint}</p>
+         </div>
+        </li>
+       ))}
+      </ul>
+     </div>
+    </section>
+   ) : null}
 
    {dashboardFocus.showLimitsProminent && limitAlerts.length > 0 ? (
     <section className="flex min-w-0 flex-col">
@@ -401,6 +462,5 @@ export default function DashboardPage() {
 
    <EditIncomeDialog open={incomeDialogOpen} onOpenChange={setIncomeDialogOpen} />
   </div>
-  </PullToRefresh>
  )
 }
