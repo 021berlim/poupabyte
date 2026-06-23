@@ -27,7 +27,7 @@ const SHORT_INSIGHT_HINTS: Record<string, string> = {
   "worst-month": "Mês mais apertado.",
   "fixed-vs-variable": "Fixos e variáveis do mês.",
   "goals-at-risk": "Metas precisam de atenção.",
-  "negative-projection": "O mês pode fechar no negativo.",
+  "negative-projection": "Nesse ritmo, o mês fecha negativo.",
   "month-projection": "O mês deve fechar no positivo.",
   "extra-income": "Entrada extra neste mês.",
   "safe-margin": "Quanto ainda pode comprometer.",
@@ -207,7 +207,7 @@ export function buildPennyStarterSuggestions(
   const candidates: string[] = []
 
   if (pendingReview > 0) {
-    candidates.push("O que falta revisar?")
+    candidates.unshift("Revisar lançamentos pendentes")
   }
   if (planning.safeToSpend > 0) {
     candidates.push("Quanto ainda posso gastar?")
@@ -236,7 +236,7 @@ export function shortGoalViabilityMessage(fullMessage: string): string {
   if (fullMessage.startsWith("Cabe na renda")) return "Cabe na renda."
   if (fullMessage.startsWith("Dá, mas apertado")) return "Dá, mas apertado."
   if (fullMessage.startsWith("Em risco")) return "Em risco com a renda."
-  if (fullMessage.startsWith("Prazo vencido")) return "Prazo vencido. Ajuste a meta."
+  if (fullMessage.startsWith("Prazo vencido")) return "Prazo vencido. Ajustar meta →"
   if (fullMessage.startsWith("Meta concluída")) return "Meta concluída."
   return fullMessage
 }

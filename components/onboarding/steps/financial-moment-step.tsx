@@ -8,6 +8,7 @@ import {
 import type { FinancialObjective } from "@/lib/types"
 import { OnboardingActions } from "../onboarding-actions"
 import { OnboardingChoiceLayout } from "../onboarding-choice-layout"
+import { OnboardingOptionGrid } from "../onboarding-shell"
 import { OptionButton } from "../option-button"
 
 export function FinancialMomentStep({
@@ -25,7 +26,6 @@ export function FinancialMomentStep({
 
   return (
     <OnboardingChoiceLayout
-      step={2}
       title="O que você quer organizar primeiro?"
       description="A Penny vai usar essa escolha para destacar as funções mais úteis para você."
       actions={
@@ -36,30 +36,26 @@ export function FinancialMomentStep({
         />
       }
     >
-      <div className="space-y-2">
-        {FINANCIAL_MOMENT_LAYOUT.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className={row.length === 1 ? "grid grid-cols-1" : "grid grid-cols-2 gap-1.5"}
-          >
-            {row.map((value) => {
-              const option = optionFor(value)
-              if (!option) return null
+      <OnboardingOptionGrid label="Escolha uma opção">
+        {FINANCIAL_MOMENT_LAYOUT.map((row) =>
+          row.map((value) => {
+            const option = optionFor(value)
+            if (!option) return null
 
-              return (
-                <OptionButton
-                  key={value}
-                  layout="chip"
-                  label={option.label}
-                  selected={selected === value}
-                  onClick={() => setSelected(value)}
-                  className={row.length === 1 ? "col-span-1" : undefined}
-                />
-              )
-            })}
-          </div>
-        ))}
-      </div>
+            return (
+              <OptionButton
+                key={value}
+                layout="grid"
+                label={option.label}
+                description={option.description}
+                selected={selected === value}
+                onClick={() => setSelected(value)}
+                className={row.length === 1 ? "col-span-2" : undefined}
+              />
+            )
+          }),
+        )}
+      </OnboardingOptionGrid>
     </OnboardingChoiceLayout>
   )
 }

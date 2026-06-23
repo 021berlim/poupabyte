@@ -28,14 +28,26 @@ export function TransactionActions({
  tx,
  actionSheetOpen = false,
  onActionSheetOpenChange = () => {},
+ editOpen: controlledEditOpen,
+ onEditOpenChange,
+ deleteOpen: controlledDeleteOpen,
+ onDeleteOpenChange,
 }: {
  tx: Transaction
  actionSheetOpen?: boolean
  onActionSheetOpenChange?: (open: boolean) => void
+ editOpen?: boolean
+ onEditOpenChange?: (open: boolean) => void
+ deleteOpen?: boolean
+ onDeleteOpenChange?: (open: boolean) => void
 }) {
  const { deleteTransaction } = useStore()
- const [editOpen, setEditOpen] = useState(false)
- const [delOpen, setDelOpen] = useState(false)
+ const [internalEditOpen, setInternalEditOpen] = useState(false)
+ const [internalDelOpen, setInternalDelOpen] = useState(false)
+ const editOpen = controlledEditOpen ?? internalEditOpen
+ const setEditOpen = onEditOpenChange ?? setInternalEditOpen
+ const delOpen = controlledDeleteOpen ?? internalDelOpen
+ const setDelOpen = onDeleteOpenChange ?? setInternalDelOpen
 
  return (
   <>

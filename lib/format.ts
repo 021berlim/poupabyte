@@ -58,3 +58,8 @@ export function isSameMonth(iso: string, ref: Date = new Date()): boolean {
   const d = parseCalendarDate(iso)
   return d.getMonth() === ref.getMonth() && d.getFullYear() === ref.getFullYear()
 }
+
+/** Concordância singular/plural com contagem numérica. */
+export function pluralPhrase(count: number, singular: string, plural: string): string {
+  return count === 1 ? `1 ${singular}` : `${count} ${plural}`
+}

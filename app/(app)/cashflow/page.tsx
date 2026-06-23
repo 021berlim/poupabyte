@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useMemo, useState } from "react"
 import { PageHeader } from "@/components/app/page-header"
 import { StatStrip } from "@/components/app/stat-strip"
@@ -9,6 +10,7 @@ import { buildMonthlyPlanning, monthlyCashflowPlanning } from "@/lib/planning"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { NAV_LABELS, PAGE_SUBTITLES } from "@/lib/copy"
+import { ROUTES } from "@/lib/routes"
 import { ArrowDownRight, ArrowUpRight, CalendarRange } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
@@ -52,7 +54,7 @@ export default function CashflowPage() {
    <StatStrip items={[
     { label: "Entradas (realizado)", value: formatCurrency(current?.realizedIncome ?? 0), detail: "confirmadas no período", tone: "text-success" },
     { label: "Gastos (realizado)", value: formatCurrency(current?.realizedExpense ?? 0), detail: "confirmados no período", tone: "text-destructive" },
-    { label: "Saldo no fim do mês", value: formatCurrency(current?.projectedBalance ?? 0), detail: currentPlanning.daysLeft > 0 ? `${currentPlanning.daysLeft} dias restantes` : "mês encerrando", tone: (current?.projectedBalance ?? 0) >= 0 ? "text-success" : "text-destructive" },
+    { label: "Dias restantes", value: currentPlanning.daysLeft, detail: currentPlanning.daysLeft > 0 ? "até o fim do mês" : "mês encerrando", tone: "text-foreground" },
    ]} />
 
    <section className="app-open-section">
@@ -67,10 +69,22 @@ export default function CashflowPage() {
        <span aria-hidden className="w-1 shrink-0 self-stretch rounded-full bg-destructive" />
       ) : null}
       <div className="min-w-0">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Saldo no fim do mês</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Saldo previsto no fim do mês</p>
       <p className="mt-2 text-[clamp(2rem,6vw,3.5rem)] font-extrabold leading-none tabular-nums">{formatCurrency(currentPlanning.endOfMonthProjection)}</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+       {formatCurrency(currentPlanning.receivedIncome)} de entrada · {formatCurrency(currentPlanning.confirmedExpenses)} de gasto · faltam {currentPlanning.daysLeft} dias
+      </p>
       <p className={cn("mt-2 text-sm", currentPlanning.endOfMonthProjection < 0 ? "font-semibold text-destructive" : "text-muted-foreground")}>
-       {currentPlanning.endOfMonthProjection >= 0 ? "Deve fechar no positivo." : "Pode fechar no negativo."}
+       {currentPlanning.endOfMonthProjection >= 0 ? (
+        "Deve fechar no positivo."
+       ) : (
+        <>
+         Nesse ritmo, o mês fecha negativo.{" "}
+         <Link href={ROUTES.assistant} className="font-semibold text-primary hover:underline">
+          Penny pode sugerir 3 gastos pra cortar →
+         </Link>
+        </>
+       )}
       </p>
       <p className={cn("mt-2 text-sm font-semibold", change >= 0 ? "text-success" : "text-destructive")}>
        Realizado vs previsto: {change >= 0 ? "+" : "−"}{formatCurrency(Math.abs(change))}

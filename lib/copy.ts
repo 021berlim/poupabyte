@@ -159,7 +159,7 @@ export const ALERTS = {
   goalDueSoon: "Meta perto do prazo",
   goalDone: "Meta concluída",
   subscriptionsSoon: "Cobranças nos próximos 7 dias",
-  monthNegative: "Mês pode fechar no negativo",
+  monthNegative: "Nesse ritmo, o mês fecha negativo",
   incomeNotRegistered: "Entrada principal não registrada",
   fixedExpensesHigh: "Compromissos fixos altos",
   lowMargin: "Pouco saldo disponível para novos gastos",

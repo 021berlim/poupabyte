@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { PageHeader } from "@/components/app/page-header"
 import { TransactionDialog } from "@/components/app/transaction-dialog"
 import { StatementImportSheet } from "@/components/app/statement-import-sheet"
@@ -18,10 +18,12 @@ import type { CategoryId, TransactionType } from "@/lib/types"
 import { formatImportDate } from "@/lib/transaction-utils"
 import { ListFilter, Plus, Receipt, Search, X } from "lucide-react"
 import { PullToRefresh } from "@/components/app/pull-to-refresh"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { isManageCategoriesSelectValue, ManageCategoriesSelectOption } from "@/components/app/manage-categories-select-option"
 import { ROUTES } from "@/lib/routes"
+import { Banner } from "@/components/app/banner"
 import { EMPTY_STATES, FORM, PAGE_SUBTITLES } from "@/lib/copy"
+import { AlertTriangle } from "lucide-react"
 
 function groupByDay(txs: ReturnType<typeof useStore>["transactions"]) {
  const groups = new Map<string, typeof txs>()
@@ -42,6 +44,7 @@ function periodLabel(from: string, to: string) {
 
 export default function TransactionsPage() {
  const router = useRouter()
+ const searchParams = useSearchParams()
  const { transactions, lastImport } = useStore()
  const [search, setSearch] = useState("")
  const [type, setType] = useState<TransactionType | "all">("all")
@@ -49,6 +52,14 @@ export default function TransactionsPage() {
  const [from, setFrom] = useState("")
  const [to, setTo] = useState("")
  const [filtersOpen, setFiltersOpen] = useState(false)
+ const [newTransactionOpen, setNewTransactionOpen] = useState(false)
+
+ useEffect(() => {
+  if (searchParams.get("new") === "1") {
+   setNewTransactionOpen(true)
+   router.replace(ROUTES.transactions)
+  }
+ }, [router, searchParams])
  const filtered = useMemo(
   () => filterTransactions(transactions, { type, category, search, from, to }),
   [transactions, type, category, search, from, to],
@@ -117,7 +128,11 @@ export default function TransactionsPage() {
     action={(
      <div className="flex w-full items-center gap-2 sm:w-auto">
       <StatementImportSheet />
-      <TransactionDialog trigger={<Button><Plus className="h-4 w-4" />{FORM.newTransaction}</Button>} />
+      <TransactionDialog
+       open={newTransactionOpen}
+       onOpenChange={setNewTransactionOpen}
+       trigger={<Button onClick={() => setNewTransactionOpen(true)}><Plus className="h-4 w-4" />{FORM.newTransaction}</Button>}
+      />
      </div>
     )}
    />
@@ -140,19 +155,16 @@ export default function TransactionsPage() {
     </Sheet>
    </div>
 
-   {(pendingReview > 0 || lastImport) ? (
-    <div className="app-open-section text-sm text-muted-foreground">
-     {pendingReview > 0 ? (
-      <p>
-       <span className="font-bold text-foreground">{pendingReview}</span> {pendingReview === 1 ? "lançamento para revisar" : "lançamentos para revisar"}
-      </p>
-     ) : null}
-     {lastImport ? (
-      <p className="mt-1 text-xs">
-       Última importação: {formatImportDate(lastImport.importedAt)} · {lastImport.importedCount} lançamentos
-      </p>
-     ) : null}
-    </div>
+   {pendingReview > 0 ? (
+    <Banner icon={AlertTriangle} accent="warning">
+     {pendingReview} lançamentos esperando revisão. Selecione por categoria e confirme de uma vez.
+    </Banner>
+   ) : null}
+
+   {lastImport ? (
+    <p className="px-1 text-xs text-muted-foreground">
+     Última importação: {formatImportDate(lastImport.importedAt)} · {lastImport.importedCount} lançamentos
+    </p>
    ) : null}
 
    <PullToRefresh onRefresh={() => router.refresh()}>

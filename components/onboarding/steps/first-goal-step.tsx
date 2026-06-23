@@ -8,6 +8,7 @@ import { parseAmountInput } from "@/lib/finance"
 import type { OnboardingGoalData } from "@/lib/onboarding-personalization"
 import { OnboardingActions } from "../onboarding-actions"
 import { OnboardingChoiceLayout } from "../onboarding-choice-layout"
+import { OnboardingFieldSection, OnboardingOptionList } from "../onboarding-shell"
 import { OptionButton } from "../option-button"
 
 function defaultDeadline(): string {
@@ -51,7 +52,6 @@ export function FirstGoalStep({
 
   return (
     <OnboardingChoiceLayout
-      step={4}
       title="Quer criar uma meta agora?"
       description="Você pode começar com uma meta simples ou deixar para depois."
       actions={
@@ -65,30 +65,27 @@ export function FirstGoalStep({
         />
       }
     >
-      <div className="grid grid-cols-2 gap-2">
+      <OnboardingOptionList label="Sua escolha">
         <OptionButton
-          layout="chip"
+          layout="stack"
           label="Criar uma meta"
           selected={wantsGoal === true}
           onClick={() => setWantsGoal(true)}
         />
         <OptionButton
-          layout="chip"
+          layout="stack"
           label="Pular por enquanto"
           selected={wantsGoal === false}
           onClick={() => setWantsGoal(false)}
         />
-      </div>
+      </OnboardingOptionList>
 
       {wantsGoal === true ? (
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+        <OnboardingFieldSection>
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-goal-name" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Nome da meta
-            </Label>
+            <Label htmlFor="onboarding-goal-name">Nome da meta</Label>
             <Input
               id="onboarding-goal-name"
-              className="h-11 rounded-xl bg-card"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: reserva, celular, viagem, curso"
@@ -96,24 +93,18 @@ export function FirstGoalStep({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="onboarding-goal-target" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Valor desejado
-              </Label>
+              <Label htmlFor="onboarding-goal-target">Valor desejado</Label>
               <CurrencyInput
                 id="onboarding-goal-target"
                 value={target}
                 onChange={setTarget}
                 placeholder="0,00"
-                className="h-11 rounded-xl bg-card"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="onboarding-goal-deadline" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Prazo
-              </Label>
+              <Label htmlFor="onboarding-goal-deadline">Prazo</Label>
               <Input
                 id="onboarding-goal-deadline"
-                className="h-11 rounded-xl bg-card"
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
@@ -123,7 +114,7 @@ export function FirstGoalStep({
           <p className="text-xs leading-relaxed text-muted-foreground">
             A Penny calcula quanto você precisa guardar por mês.
           </p>
-        </div>
+        </OnboardingFieldSection>
       ) : null}
     </OnboardingChoiceLayout>
   )

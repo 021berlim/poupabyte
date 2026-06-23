@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { createElement, useMemo, useState, type FormEvent, type ReactNode } from "react"
+import { createElement, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { EmptyModuleCard } from "@/components/app/empty-module-card"
 import { PageHeader } from "@/components/app/page-header"
 import { StatStrip } from "@/components/app/stat-strip"
@@ -20,12 +20,13 @@ import { isSystemCategoryId } from "@/lib/categories"
 import { resolveCategory, selectableCategories, type CategoryContext } from "@/lib/category-system"
 import { getCategoryIcon } from "@/lib/category-icons"
 import { parseAmountInput } from "@/lib/finance"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, pluralPhrase } from "@/lib/format"
 import { limitMonthlyHistory, limitUsage, type LimitHistoryItem } from "@/lib/selectors"
 import { useStore } from "@/lib/store"
 import type { CategoryRef, SpendingLimit } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { EMPTY_STATES, PAGE_SUBTITLES, TOAST } from "@/lib/copy"
+import { dismissUi, UI_DISMISS_KEYS } from "@/lib/ui-dismiss"
 import { CalendarRange, ChevronDown, Gauge, Pencil, Plus, Trash2 } from "lucide-react"
 import { ActionSheet } from "@/components/app/action-sheet"
 import { useLongPress } from "@/hooks/use-long-press"
@@ -152,7 +153,7 @@ function LimitRow({
   const percent = Math.round(usage.percent)
   const over = usage.remaining < 0
   const tone = limitProgressTone(percent)
-  const status = over ? "Limite ultrapassado" : percent >= 80 ? "Perto do limite" : "Dentro do limite"
+  const status = over ? "Limite ultrapassado" : percent >= 80 ? "Atenção — perto do limite" : "Dentro do limite"
   const longPress = useLongPress<HTMLDivElement>(() => setActionsOpen(true))
   const createRipple = useRipple<HTMLDivElement>()
   const label = resolved.parentLabel ? `${resolved.parentLabel} › ${resolved.label}` : resolved.label
@@ -281,6 +282,10 @@ function LimitRow({
 
 export default function LimitsPage() {
   const { limits, transactions, userCategories, hiddenSystemCategories } = useStore()
+
+  useEffect(() => {
+    if (limits.length > 0) dismissUi(UI_DISMISS_KEYS.limitsTip)
+  }, [limits.length])
   const ctx: CategoryContext = useMemo(
     () => ({ userCategories, hiddenSystemCategories }),
     [userCategories, hiddenSystemCategories],
@@ -326,7 +331,7 @@ export default function LimitsPage() {
               {
                 label: "Uso geral",
                 value: `${totalPercent}%`,
-                detail: `${usages.length} limites`,
+                detail: pluralPhrase(usages.length, "limite", "limites"),
                 tone: totalPercent > 100 ? "text-destructive" : totalPercent >= 71 ? "text-primary" : "text-success",
               },
               {

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { goalProgressTone, Progress } from "@/components/ui/progress"
-import { formatCurrency, relativeDeadline } from "@/lib/format"
+import { formatCurrency, pluralPhrase, relativeDeadline } from "@/lib/format"
 import { parseAmountInput } from "@/lib/finance"
 import { goalViabilityMessage } from "@/lib/insights"
 import { shortGoalViabilityMessage } from "@/lib/ui-suggestions"
@@ -84,7 +84,21 @@ function GoalRow({ goal }: { goal: Goal }) {
         {progress.completed ? "Concluída" : progress.atRisk ? "Atrasada" : "No ritmo"}
        </StatusBadge>
       </div>
-      <p className="mt-2 text-xs font-medium text-foreground/80">{shortGoalViabilityMessage(viability)}</p>
+      {progress.atRisk && viability.startsWith("Prazo vencido") ? (
+       <p className="mt-2 text-xs font-medium text-foreground/80">
+        Prazo vencido.{" "}
+        <GoalDialog
+         goal={goal}
+         trigger={
+          <button type="button" className="font-semibold text-primary hover:underline">
+           Ajustar meta →
+          </button>
+         }
+        />
+       </p>
+      ) : (
+       <p className="mt-2 text-xs font-medium text-foreground/80">{shortGoalViabilityMessage(viability)}</p>
+      )}
       <div className="mt-3 flex justify-end">
        <GoalDialog goal={goal} trigger={<Button variant="ghost" size="icon" aria-label="Editar meta"><Pencil className="h-4 w-4" /></Button>} />
        <Button variant="ghost" size="icon" className="text-destructive" aria-label="Excluir meta" onClick={() => deleteGoal(goal.id)}><Trash2 className="h-4 w-4" /></Button>
@@ -125,7 +139,7 @@ export default function GoalsPage() {
       items={[
        { label: "Total guardado", value: formatCurrency(totals.current), detail: `de ${formatCurrency(totals.target)}` },
        { label: "Progresso geral", value: `${totals.percent}%`, detail: `${totals.completed} de ${goals.length} concluídas`, tone: totals.percent >= 50 ? "text-success" : "text-primary" },
-       { label: "Em risco", value: totals.atRisk, detail: `${totals.nearDeadline} próximas do prazo`, tone: totals.atRisk ? "text-destructive" : "text-success" },
+       { label: "Em risco", value: totals.atRisk, detail: pluralPhrase(totals.nearDeadline, "próxima do prazo", "próximas do prazo"), tone: totals.atRisk ? "text-destructive" : "text-success" },
       ]}
      />
      <div className="app-list-section divide-y divide-border border-t">

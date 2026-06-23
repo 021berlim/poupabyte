@@ -1,16 +1,21 @@
 import { BrandLogo } from "@/components/brand-logo"
+import { cn } from "@/lib/utils"
 import { ShieldCheck, TrendingUp, Target } from "lucide-react"
 
 export function AuthShell({
  children,
  compact = false,
+ branding = true,
+ wide = false,
 }: {
  children: React.ReactNode
  compact?: boolean
+ branding?: boolean
+ wide?: boolean
 }) {
  return (
   <div className="flex min-h-dvh w-full overflow-x-hidden bg-background">
-   {/* Branding panel */}
+   {branding ? (
    <aside className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-secondary p-[clamp(2rem,4vw,3rem)] text-secondary-foreground lg:flex">
     <div
      aria-hidden="true"
@@ -53,16 +58,16 @@ export function AuthShell({
      PoupaByte — Demonstração. Dados simulados, sem integração bancária real.
     </p>
    </aside>
+   ) : null}
 
-   {/* Form panel */}
    <main
-    className={
-     compact
-      ? "flex h-dvh w-full flex-col items-center justify-center overflow-hidden px-[clamp(1rem,5vw,2rem)] py-5 lg:h-auto lg:min-h-dvh lg:w-1/2 lg:py-[clamp(2rem,8svh,3.5rem)]"
-      : "flex min-h-dvh w-full flex-col items-center justify-center px-[clamp(1rem,5vw,2rem)] py-[clamp(2rem,8svh,3.5rem)] lg:w-1/2"
-    }
+    className={cn(
+     "flex min-h-dvh min-w-0 flex-col items-center justify-center overflow-x-hidden px-[clamp(1rem,5vw,2rem)] py-[clamp(2rem,8svh,3.5rem)]",
+     branding && "lg:w-1/2",
+     compact && "h-dvh overflow-hidden py-5 lg:h-auto lg:min-h-dvh",
+    )}
    >
-    <div className="w-full max-w-sm min-w-0">
+    <div className={cn("w-full min-w-0", wide ? "max-w-md" : "max-w-sm")}>
      <div className={compact ? "mb-4 lg:hidden" : "mb-[clamp(1.5rem,6vw,2rem)] lg:hidden"}>
       <BrandLogo size="md" />
      </div>

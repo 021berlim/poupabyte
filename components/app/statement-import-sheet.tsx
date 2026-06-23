@@ -213,7 +213,7 @@ function ReviewImportItem({
             </label>
             <div className="flex flex-wrap items-center gap-2">
               {item.duplicate ? <Badge variant="outline" className="border-amber-500/45 text-amber-700 dark:text-amber-300">Possível duplicata</Badge> : null}
-              {flagged ? <Badge variant="outline" className="border-amber-500/45 text-amber-700 dark:text-amber-300">Verificar categoria</Badge> : null}
+              {flagged ? <Badge variant="outline" className="border-amber-500/45 text-amber-700 dark:text-amber-300">Categoria sugerida — confirme</Badge> : null}
             </div>
           </CollapsibleContent>
         </div>

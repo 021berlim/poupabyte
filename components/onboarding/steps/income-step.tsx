@@ -19,10 +19,17 @@ import type { BusinessSeparation, IncomeType, IncomeVariability } from "@/lib/ty
 import { OnboardingActions } from "../onboarding-actions"
 import {
   OnboardingFieldHelp,
+  OnboardingFieldSection,
+  OnboardingOptionList,
   OnboardingPennyTip,
+  OnboardingSplitFields,
   OnboardingStepHeader,
 } from "../onboarding-shell"
 import { OptionButton } from "../option-button"
+
+function incomeTypeHasDetailInputs(type: IncomeType | null): type is IncomeType {
+  return type !== null && type !== "sem-renda"
+}
 
 export function IncomeStep({
   onContinue,
@@ -40,6 +47,7 @@ export function IncomeStep({
   const parsedIncome = parseAmountInput(monthlyIncome)
   const requiresAmount = incomeType ? incomeTypeRequiresAmount(incomeType) : false
   const optionalAmount = incomeType ? incomeTypeAllowsOptionalAmount(incomeType) : false
+  const splitLayout = incomeTypeHasDetailInputs(incomeType)
 
   const canContinue =
     incomeType !== null &&
@@ -85,44 +93,21 @@ export function IncomeStep({
     if (type !== "negocio-proprio") setBusinessSeparation(null)
   }
 
-  return (
-    <div className="space-y-5">
-      <OnboardingStepHeader
-        step={1}
-        title="Como seu dinheiro entra?"
-        description="Isso ajuda a Penny a montar um controle adequado ao seu tipo de renda."
-      />
-
-      <div className="grid grid-cols-2 gap-2">
-        {INCOME_TYPE_OPTIONS.map((option) => (
-          <OptionButton
-            key={option.value}
-            layout="chip"
-            label={option.label}
-            selected={incomeType === option.value}
-            onClick={() => selectType(option.value)}
-          />
-        ))}
-      </div>
-
-      {incomeType === "salario-fixo" ? (
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+  function renderIncomeDetails() {
+    if (incomeType === "salario-fixo") {
+      return (
+        <OnboardingFieldSection>
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Valor mensal
-            </Label>
+            <Label htmlFor="onboarding-income">Valor mensal</Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
               placeholder="0,00"
-              className="h-11 rounded-xl bg-card"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-day" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Dia em que você recebe
-            </Label>
+            <Label htmlFor="onboarding-day">Dia em que você recebe</Label>
             <Input
               id="onboarding-day"
               type="number"
@@ -130,119 +115,145 @@ export function IncomeStep({
               max={31}
               value={salaryDay}
               onChange={(e) => setSalaryDay(e.target.value)}
-              className="h-11 rounded-xl bg-card"
             />
           </div>
           <OnboardingFieldHelp>{incomeFieldHelp("salario-fixo")}</OnboardingFieldHelp>
-        </div>
-      ) : null}
+        </OnboardingFieldSection>
+      )
+    }
 
-      {incomeType === "autonomo" ? (
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+    if (incomeType === "autonomo") {
+      return (
+        <OnboardingFieldSection>
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Média mensal
-            </Label>
+            <Label htmlFor="onboarding-income">Média mensal</Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
               placeholder="0,00"
-              className="h-11 rounded-xl bg-card"
             />
             <OnboardingFieldHelp>{incomeFieldHelp("autonomo")}</OnboardingFieldHelp>
           </div>
-          <div className="space-y-2">
-            <p className="text-sm font-semibold">
-              Varia muito? <span className="font-normal text-muted-foreground">opcional</span>
-            </p>
-            <div className="grid grid-cols-1 gap-2">
-              {INCOME_VARIABILITY_OPTIONS.map((option) => (
-                <OptionButton
-                  key={option.value}
-                  layout="inline"
-                  label={option.label}
-                  selected={incomeVariability === option.value}
-                  onClick={() => setIncomeVariability(option.value)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
+          <OnboardingOptionList label="Varia muito? (opcional)" compact>
+            {INCOME_VARIABILITY_OPTIONS.map((option) => (
+              <OptionButton
+                key={option.value}
+                layout="chip"
+                label={option.label}
+                selected={incomeVariability === option.value}
+                onClick={() => setIncomeVariability(option.value)}
+              />
+            ))}
+          </OnboardingOptionList>
+        </OnboardingFieldSection>
+      )
+    }
 
-      {incomeType === "negocio-proprio" ? (
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+    if (incomeType === "negocio-proprio") {
+      return (
+        <OnboardingFieldSection>
           <div className="space-y-1.5">
-            <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Retirada mensal pessoal
-            </Label>
+            <Label htmlFor="onboarding-income">Retirada mensal pessoal</Label>
             <CurrencyInput
               id="onboarding-income"
               value={monthlyIncome}
               onChange={setMonthlyIncome}
               placeholder="0,00"
-              className="h-11 rounded-xl bg-card"
             />
             <OnboardingFieldHelp>{incomeFieldHelp("negocio-proprio")}</OnboardingFieldHelp>
           </div>
-          <div className="space-y-2">
-            <p className="text-sm font-semibold">
-              Separa pessoal e negócio? <span className="font-normal text-muted-foreground">opcional</span>
-            </p>
-            <div className="grid grid-cols-1 gap-2">
-              {BUSINESS_SEPARATION_OPTIONS.map((option) => (
-                <OptionButton
-                  key={option.value}
-                  layout="inline"
-                  label={option.label}
-                  selected={businessSeparation === option.value}
-                  onClick={() => setBusinessSeparation(option.value)}
-                />
-              ))}
-            </div>
+          <OnboardingOptionList label="Separa pessoal e negócio? (opcional)" compact>
+            {BUSINESS_SEPARATION_OPTIONS.map((option) => (
+              <OptionButton
+                key={option.value}
+                layout="chip"
+                label={option.label}
+                selected={businessSeparation === option.value}
+                onClick={() => setBusinessSeparation(option.value)}
+              />
+            ))}
+          </OnboardingOptionList>
+        </OnboardingFieldSection>
+      )
+    }
+
+    if (incomeType === "renda-variavel") {
+      return (
+        <OnboardingFieldSection>
+          <div className="space-y-1.5">
+            <Label htmlFor="onboarding-income">Média aproximada</Label>
+            <CurrencyInput
+              id="onboarding-income"
+              value={monthlyIncome}
+              onChange={setMonthlyIncome}
+              placeholder="0,00"
+            />
+            <OnboardingFieldHelp>{incomeFieldHelp("renda-variavel")}</OnboardingFieldHelp>
           </div>
-        </div>
-      ) : null}
+        </OnboardingFieldSection>
+      )
+    }
 
-      {incomeType === "renda-variavel" ? (
-        <div className="space-y-1.5 rounded-2xl border border-border/70 bg-muted/30 p-4">
-          <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            Média aproximada
-          </Label>
-          <CurrencyInput
-            id="onboarding-income"
-            value={monthlyIncome}
-            onChange={setMonthlyIncome}
-            placeholder="0,00"
-            className="h-11 rounded-xl bg-card"
-          />
-          <OnboardingFieldHelp>{incomeFieldHelp("renda-variavel")}</OnboardingFieldHelp>
-        </div>
-      ) : null}
+    if (incomeType === "ocasional") {
+      return (
+        <OnboardingFieldSection>
+          <div className="space-y-1.5">
+            <Label htmlFor="onboarding-income">Valor aproximado quando recebe</Label>
+            <CurrencyInput
+              id="onboarding-income"
+              value={monthlyIncome}
+              onChange={setMonthlyIncome}
+              placeholder="0,00"
+            />
+            <OnboardingFieldHelp>{incomeFieldHelp("ocasional")}</OnboardingFieldHelp>
+          </div>
+        </OnboardingFieldSection>
+      )
+    }
 
-      {incomeType === "ocasional" ? (
-        <div className="space-y-1.5 rounded-2xl border border-border/70 bg-muted/30 p-4">
-          <Label htmlFor="onboarding-income" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            Valor aproximado quando recebe
-          </Label>
-          <CurrencyInput
-            id="onboarding-income"
-            value={monthlyIncome}
-            onChange={setMonthlyIncome}
-            placeholder="0,00"
-            className="h-11 rounded-xl bg-card"
-          />
-          <OnboardingFieldHelp>{incomeFieldHelp("ocasional")}</OnboardingFieldHelp>
-        </div>
-      ) : null}
+    return null
+  }
+
+  const incomeTypeOptions = (
+    <OnboardingOptionList label="Tipo de renda" fill={splitLayout}>
+      {INCOME_TYPE_OPTIONS.map((option) => (
+        <OptionButton
+          key={option.value}
+          layout="stack"
+          label={option.label}
+          selected={incomeType === option.value}
+          onClick={() => selectType(option.value)}
+          className={splitLayout ? "flex-1" : undefined}
+        />
+      ))}
+    </OnboardingOptionList>
+  )
+
+  return (
+    <div className="min-w-0">
+      <OnboardingStepHeader
+        title="Como seu dinheiro entra?"
+        description="Isso ajuda a Penny a montar um controle adequado ao seu tipo de renda."
+      />
+
+      <OnboardingSplitFields
+        split={splitLayout}
+        options={incomeTypeOptions}
+        details={
+          splitLayout ? (
+            <div className="flex h-full min-h-0 flex-col justify-start space-y-4">
+              {renderIncomeDetails()}
+              <OnboardingPennyTip>{pennyIncomeMessage(incomeType)}</OnboardingPennyTip>
+            </div>
+          ) : null
+        }
+      />
 
       {incomeType === "sem-renda" ? (
-        <OnboardingPennyTip>{incomeFieldHelp("sem-renda")}</OnboardingPennyTip>
-      ) : null}
-
-      {incomeType && incomeType !== "sem-renda" ? (
-        <OnboardingPennyTip>{pennyIncomeMessage(incomeType)}</OnboardingPennyTip>
+        <div className="mt-4">
+          <OnboardingPennyTip>{incomeFieldHelp("sem-renda")}</OnboardingPennyTip>
+        </div>
       ) : null}
 
       <OnboardingActions

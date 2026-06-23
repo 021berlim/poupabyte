@@ -1,6 +1,7 @@
 "use client"
 
 import { createElement, type ReactNode } from "react"
+import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 import { ConfirmSimilarButton } from "@/components/app/confirm-similar-button"
 import { Badge } from "@/components/ui/badge"
 import type { Transaction } from "@/lib/types"
@@ -55,11 +56,22 @@ export function TransactionRow({
 }) {
  const { userCategories, hiddenSystemCategories } = useStore()
  const cat = resolveTransactionCategory(tx, { userCategories, hiddenSystemCategories })
- const Icon = getCategoryIcon(tx.category)
+ const uncategorized = tx.category === "nao-categorizado"
  const income = tx.type === "income"
  const neutralTransfer = tx.type === "transfer"
+ const Icon = uncategorized
+  ? income
+    ? ArrowUpRight
+    : tx.type === "expense"
+      ? ArrowDownRight
+      : getCategoryIcon(tx.category)
+  : getCategoryIcon(tx.category)
  const date = ledgerDateParts(tx.date)
- const categoryPath = cat.parentLabel ? `${cat.parentLabel} › ${cat.label}` : cat.label
+ const categoryPath = uncategorized && actionSlot
+  ? "Sem categoria · toque para categorizar"
+  : cat.parentLabel
+    ? `${cat.parentLabel} › ${cat.label}`
+    : cat.label
  const typeLabel = income ? "Receita" : tx.type === "expense" ? "Despesa" : "Transferência"
  const recurrenceLabel = tx.type === "expense" ? formatRecurrenceSummary(tx) : null
 

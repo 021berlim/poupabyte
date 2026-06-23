@@ -214,7 +214,7 @@ export function goalViabilityMessage(
   const progress = goalProgress(goal)
   const planning = buildMonthlyPlanning(profile, transactions, [], subscriptions, installments, limits)
   if (progress.completed) return "Meta concluída."
-  if (progress.daysLeft <= 0) return "Prazo vencido. Ajuste data ou valor."
+  if (progress.daysLeft <= 0) return "Prazo vencido. Ajustar meta →"
   const monthlyNeeded = progress.remaining / Math.max(1, Math.ceil(progress.daysLeft / 30))
   if (monthlyNeeded <= planning.safeToSpend * 0.5) {
     return `Cabe na renda. Guarde ${progress.estimate}/mês.`

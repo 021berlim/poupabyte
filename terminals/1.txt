@@ -1,0 +1,15 @@
+---
+pid: 16200
+cwd: "C:\PoupaByte"
+command: "cd C:\\PoupaByte; npm run start"
+started_at: 2026-06-21T00:43:34.188Z
+running_for_ms: 5770000  
+---
+
+> poupabyte@0.1.0 start
+> next start
+
+▲ Next.js 16.2.7
+- Local:         http://localhost:3000
+- Network:       http://172.16.0.2:3000
+✓ Ready in 297ms

@@ -76,6 +76,7 @@ import {
 } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, XAxis, YAxis } from "recharts"
 import { ActionSheet } from "@/components/app/action-sheet"
+import { InvestmentTable } from "@/components/app/investment-table"
 import { PullToRefresh } from "@/components/app/pull-to-refresh"
 import { useLongPress } from "@/hooks/use-long-press"
 import { useRipple } from "@/hooks/use-ripple"
@@ -590,11 +591,7 @@ export default function InvestmentsPage() {
             {filtered.length === 0 ? (
               <EmptyState icon={<Search className="h-8 w-8 text-muted-foreground/50" />} title={EMPTY_STATES.investmentsFiltered.title} description={EMPTY_STATES.investmentsFiltered.description} />
             ) : (
-              <div className="app-list-section divide-y border-t">
-                {filtered.map((investment, index) => (
-                  <InvestmentCard key={investment.id} investment={investment} index={index} />
-                ))}
-              </div>
+              <InvestmentTable investments={filtered} />
             )}
            </PullToRefresh>
           </TabsContent>

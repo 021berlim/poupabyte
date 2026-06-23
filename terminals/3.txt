@@ -1,0 +1,54 @@
+---
+pid: 18272
+cwd: "C:\PoupaByte"
+command: "cd C:\\PoupaByte; npm run build 2>&1"
+started_at: 2026-06-21T14:51:53.642Z
+running_for_ms: 745001   
+---
+
+> poupabyte@0.1.0 build
+> next build
+
+▲ Next.js 16.2.7 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.2min
+  Skipping validation of types
+  Finished TypeScript config validation in 118ms ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/23) ...
+  Generating static pages using 11 workers (5/23) 
+  Generating static pages using 11 workers (11/23) 
+  Generating static pages using 11 workers (17/23) 
+✓ Generating static pages using 11 workers (23/23) in 1147ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/assistant
+├ ○ /api/assistant/ai-status
+├ ƒ /api/import-statement
+├ ○ /assistant
+├ ○ /cashflow
+├ ○ /categories
+├ ○ /dashboard
+├ ○ /forgot-password
+├ ○ /goals
+├ ○ /investments
+├ ○ /limits
+├ ○ /login
+├ ○ /onboarding
+├ ○ /profile
+├ ○ /profile/preferences
+├ ○ /profile/privacy
+├ ○ /profile/security
+├ ○ /reports
+├ ○ /signup
+└ ○ /transactions
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

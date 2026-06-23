@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { OnboardingGuard } from "@/components/onboarding-guard"
-import { OnboardingProgress } from "@/components/onboarding/onboarding-progress"
 import { OnboardingShell } from "@/components/onboarding/onboarding-shell"
 import { IncomeStep } from "@/components/onboarding/steps/income-step"
 import { FinancialMomentStep } from "@/components/onboarding/steps/financial-moment-step"
@@ -56,8 +55,6 @@ function OnboardingWizard() {
 
   return (
     <OnboardingShell step={step}>
-      <OnboardingProgress step={step} total={TOTAL_STEPS} />
-
       {step === 1 ? (
         <IncomeStep
           onContinue={(income) => {

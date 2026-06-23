@@ -731,8 +731,7 @@ export default function AssistantPage() {
               )}
             </form>
             <p className="pt-2 text-center text-[11px] leading-4 text-muted-foreground">
-              Penny usa seus dados e pode organizar lançamentos — ou criar
-              novos, se você autorizar em Minha conta. Sempre pede confirmação.
+              Penny organiza e cria lançamentos com sua autorização (Minha conta), e sempre confirma antes de agir.
             </p>
           </div>
         </footer>
