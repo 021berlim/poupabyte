@@ -1,6 +1,6 @@
 import Link from "next/link"
-import type { LucideIcon, ReactNode } from "react"
-import { ArrowRight, X } from "lucide-react"
+import type { ReactNode } from "react"
+import { ArrowRight, X, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type BannerAccent = "primary" | "warning" | "success"
